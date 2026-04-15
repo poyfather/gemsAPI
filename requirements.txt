@@ -1,0 +1,4 @@
+# Dev tooling (run from repo root)
+# Backend runtime deps are in backend/requirements.txt
+pytest
+ruff
