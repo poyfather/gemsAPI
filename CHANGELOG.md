@@ -5,10 +5,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 - Prompt version history (gem_versions Supabase table).
-- API key authentication for FastAPI endpoints.
 - SSE streaming in the Next.js chat UI.
 - GitHub Actions CI pipeline (ruff + pytest on PRs).
 - Eval harness for prompt_enhancer gem.
+
+## [0.0.2] - 2026-04-16
+### Added
+- `backend/app/auth.py` — FastAPI `Security` dependency that validates `X-API-Key` request header against `GEMS_API_KEY` environment variable.
+- `frontend/middleware.ts` — Next.js middleware that injects `X-API-Key` server-side on all `/api/*` requests before the rewrite forwards them to FastAPI. Key never reaches the browser bundle.
+
+### Changed
+- `backend/app/routes/gems.py` and `chat.py` — router-level `dependencies=[Depends(require_api_key)]` protects every endpoint automatically.
+- `backend/app/main.py` — startup lifespan validates `GEMS_API_KEY` is present at boot; server refuses to start rather than silently running unprotected.
+- `.env.example` — added `GEMS_API_KEY` field with generation command.
+- `frontend/.env.local.example` — added `GEMS_API_KEY` field with usage note (no `NEXT_PUBLIC_` prefix).
+- `ROADMAP.md` — API Authentication marked Complete.
 
 ## [0.2.0] - 2026-04-15
 ### Added
