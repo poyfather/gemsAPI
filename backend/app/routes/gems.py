@@ -1,8 +1,9 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from app.models import Gem, GemCreate, GemUpdate, ResolveRequest, ResolveResponse
 from app.services import gem_service
+from app.auth import require_api_key
 
-router = APIRouter(prefix="/gems", tags=["gems"])
+router = APIRouter(prefix="/gems", tags=["gems"], dependencies=[Depends(require_api_key)])
 
 
 @router.get("/", response_model=list[Gem], summary="List all gems")

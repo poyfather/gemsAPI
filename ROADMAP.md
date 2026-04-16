@@ -45,11 +45,11 @@ Track gemsAPI development priorities, sequencing, and delivery status.
 
 ### API Authentication
 - Goal: add API key authentication to FastAPI endpoints so the backend can be safely exposed beyond localhost.
-- Status: Planned
+- Status: Complete
 - Owner: poyfather
 - Dependencies: None
 - Success Criteria: unauthenticated requests return 401; authenticated requests work normally.
-- Links: `SECURITY.md`
+- Links: `SECURITY.md`, `backend/app/auth.py`
 
 ### Streaming in Chat UI
 - Goal: wire SSE streaming from FastAPI through to the Next.js chat interface so responses appear token-by-token.

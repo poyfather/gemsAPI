@@ -1,12 +1,13 @@
 import json
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 
 from app.models import ChatRequest, ChatResponse
 from app.services import gem_service
 from app.services.llm_service import complete, complete_stream, MODELS
+from app.auth import require_api_key
 
-router = APIRouter(prefix="/chat", tags=["chat"])
+router = APIRouter(prefix="/chat", tags=["chat"], dependencies=[Depends(require_api_key)])
 
 
 @router.get("/models", summary="List available models")

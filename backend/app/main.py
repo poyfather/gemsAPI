@@ -1,4 +1,5 @@
 import os
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
@@ -7,7 +8,17 @@ from app.routes import gems, chat
 
 load_dotenv()
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Validate required env vars at startup so misconfiguration is caught immediately.
+    from app.auth import _get_configured_key
+    _get_configured_key()   # raises RuntimeError if GEMS_API_KEY is missing
+    yield
+
+
 app = FastAPI(
+    lifespan=lifespan,
     title="gemsAPI",
     description=(
         "Manage and serve reusable LLM prompts (gems) with variable substitution "
