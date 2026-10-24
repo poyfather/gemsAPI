@@ -24,7 +24,7 @@ gemsAPI is a self-hosted prompt library for LLM system prompts. It solves the pr
 ## Current State
 - **What exists**: full working scaffold — FastAPI backend, Next.js frontend, FastMCP server, Supabase schema with seed gems including `prompt_enhancer`, Docker Compose, and this documentation set.
 - **Known limitations**: no authentication on the API (designed for private/local use); streaming uses SSE but the frontend currently renders completed messages only; no prompt versioning beyond Supabase `updated_at`.
-- **Active risks**: API keys must be kept out of version control; Supabase RLS policy is open by default and must be tightened for multi-user deployments.
+- **Active risks**: API keys and the Supabase service role key must be kept out of version control; one shared `GEMS_API_KEY` means one leaked key exposes the whole library (per-client keys are roadmap item 10).
 
 ## Success Signals
 - **Key outcomes**: all prompts live in one place; gems can be resolved and served in <200ms for non-recursive calls; MCP tools work seamlessly in Claude Desktop.
@@ -33,7 +33,7 @@ gemsAPI is a self-hosted prompt library for LLM system prompts. It solves the pr
 
 ## Guardrails
 - Never commit API keys, Supabase service role keys, or any credentials to the repo.
-- Do not disable Supabase RLS without replacing it with an equivalent access control mechanism.
+- Do not add a permissive RLS policy or use the anon key from the backend; the service role is the only trusted database client (ADR-006).
 - Do not allow `{{gem:name}}` resolution to exceed 10 levels of depth (enforced in `gem_service.py`).
 - Do not expose the MCP server on a public network without authentication.
 

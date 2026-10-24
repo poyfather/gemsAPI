@@ -27,7 +27,7 @@ These were found during the audit and fixed because CI could not pass without th
 | 6 | Constant-time key check, no provider errors in responses | Security | S | Now, done |
 | 7 | Patched Next.js, then Next 15 | Security, DX | S then M | Now, done |
 | 8 | Turn the strict TypeScript lint rules back on | DX | S | Now, done |
-| 9 | Decide the Supabase RLS and key model | Security | M to L | Next |
+| 9 | Decide the Supabase RLS and key model | Security | M to L | Next, done |
 | 10 | Per-client API keys, and auth for a hosted MCP server | Security | M | Next |
 | 11 | Rate limits and spend guards on chat | Security, cost | M | Next |
 | 12 | API consistency and versioning | API, MCP | M | Next |
@@ -132,6 +132,8 @@ Things that are broken or that a first contributor would trip over this week.
 Design and security decisions that shape everything after them.
 
 ### 9. Decide the Supabase RLS and key model
+
+**Status: decided and done** (ADR-006 in `DECISIONS.md`): single-tenant, the API key is the gate, the database trusts only the service role. The `allow_all` policy is gone, RLS has no policies for other roles, the anon key path is removed from `database.py` and `.env.example`, and `supabase/lock_down_rls.sql` updates existing installs. Multi-user stays item 21.
 
 - **Why**: `supabase/schema.sql` enables row level security and then adds `allow_all ... USING (true) WITH CHECK (true)`, and the backend uses `SUPABASE_SERVICE_ROLE_KEY`, which bypasses RLS anyway. So RLS protects nothing today, while `SECURITY.md`, `CONTEXT.md` and ADR-001 all say to "tighten it before multi-user use" without saying how. The anon key path offered in `.env.example` would hit the same open policy. Either commit to single-tenant (drop the misleading policy, state that `GEMS_API_KEY` is the only gate, keep the service key off any public network) or design multi-user (an `owner_id` column, policies per user, user JWTs from Supabase Auth instead of the service key).
 - **Size**: M for the single-tenant cleanup, L for multi-user.

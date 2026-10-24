@@ -11,14 +11,14 @@ def get_supabase() -> Client:
     """Return a singleton Supabase client."""
     global _client
     if _client is None:
-        url = os.environ.get("SUPABASE_URL")
-        # Prefer service role key (bypasses RLS) for server-side use.
-        # Fall back to anon key for read-only / RLS-scoped access.
-        key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_ANON_KEY")
+        url = os.environ.get("SUPABASE_URL", "").strip()
+        # Service role only (ADR-006): the server is the one trusted database
+        # client, RLS has no policies for anyone else, and the anon key would
+        # see zero rows.
+        key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "").strip()
         if not url or not key:
             raise EnvironmentError(
-                "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_ANON_KEY) "
-                "must be set in your .env file."
+                "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set in your .env file."
             )
         _client = create_client(url, key)
     return _client

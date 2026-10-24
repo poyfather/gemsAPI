@@ -23,7 +23,7 @@ You will get an acknowledgement within 7 days and a fix or a decision within 30 
 
 ## What to know before deploying
 
-The rest of this file is the operating policy for running gemsAPI. The short version: the only gate on the REST API is the shared `GEMS_API_KEY`, the MCP server talks to Supabase directly with no gate of its own, and the default row level security policy is open. Keep both services on a private network unless you have read [docs/ROADMAP.md](docs/ROADMAP.md) and tightened them.
+The rest of this file is the operating policy for running gemsAPI. The short version: the only gate on the REST API is the shared `GEMS_API_KEY`; the MCP server talks to Supabase directly with no gate of its own; and the database trusts only the service role key, with row level security denying every other Supabase role (ADR-006 in `DECISIONS.md`). Keep both services on a private network or behind TLS and a reverse proxy.
 
 ## Security scope and ownership
 
@@ -35,7 +35,7 @@ The rest of this file is the operating policy for running gemsAPI. The short ver
 
 - Store all secrets (Supabase URL, service role key, LLM API keys, `GEMS_API_KEY`) in `.env` files only. `.env` and `.env.local` are in `.gitignore` and must never be committed.
 - Use `SUPABASE_SERVICE_ROLE_KEY` for server-side backend access. Never expose this key in frontend code or public endpoints.
-- Use least privilege: if read-only gem access is sufficient for a use case, use `SUPABASE_ANON_KEY` with appropriate RLS policies.
+- The anon key is not used anywhere. Row level security has no policies for the `anon` or `authenticated` roles, so a leaked anon key reads nothing. Do not add a permissive policy to make the anon key work; see ADR-006.
 - Separate keys by environment (dev and prod). Do not reuse production keys in development.
 - Rotate API keys immediately if a `.env` file is accidentally committed or a key is logged, screenshotted, or shared in any communication.
 - Never log, print, or include API keys in error messages, prompts, screenshots, or tickets.
@@ -46,7 +46,7 @@ The rest of this file is the operating policy for running gemsAPI. The short ver
 - **Internal**: gem system prompts. They may contain business logic or proprietary instructions. Treat as internal.
 - **Sensitive**: Supabase credentials and LLM API keys. Server-side only, never sent to the frontend or to MCP clients.
 - Grant database access by minimum required scope. The backend uses the service role key; replace it with a scoped role for production multi-user deployments.
-- Supabase RLS is enabled on the `gems` table with an open `allow_all` policy by default. **Tighten this policy before any public or multi-user deployment.**
+- Supabase RLS is enabled on the `gems` table with no policies: only the service role, used by the backend and the MCP server, can read or write. Installations created before October 2026 should run `supabase/lock_down_rls.sql` to drop the old `allow_all` policy. A multi-user deployment needs an `owner_id` column and per-user policies first (roadmap item 21).
 
 ## AI restrictions and safety boundaries
 

@@ -120,9 +120,9 @@ flowchart TB
 | Resolver and CRUD | `backend/app/services/gem_service.py` | Supabase queries; `{variable}` and `{{gem:name}}` extraction; recursive, cycle-safe resolution | `database.py` | `supabase-py` table API |
 | LLM adapter | `backend/app/services/llm_service.py` | One `complete()` and one `complete_stream()` for both providers; the `MODELS` list | Anthropic, OpenAI | Official async SDKs |
 | Data shapes | `backend/app/models.py` | Pydantic models for gems, resolve and chat requests and responses | Routes, services | Import |
-| Database client | `backend/app/database.py` | Lazily built singleton from `SUPABASE_URL` and the service role key (anon key as fallback) | Supabase | HTTPS |
+| Database client | `backend/app/database.py` | Lazily built singleton from `SUPABASE_URL` and the service role key, the only credential accepted | Supabase | HTTPS |
 | MCP server | `backend/mcp_server.py` | Expose the library to MCP clients as tools and resources; reads `backend/.env` itself | `gem_service`, `llm_service` | stdio transport, same process as the services |
-| Database | `supabase/schema.sql` | The `gems` table, indexes, `updated_at` trigger, RLS policy, seed gems | | SQL, run once in the Supabase editor |
+| Database | `supabase/schema.sql` | The `gems` table, indexes, `updated_at` trigger, RLS with no policies, seed gems | | SQL, run once in the Supabase editor |
 | Prompt mirror and evals | `prompts/`, `evals/` | Reviewable copies of shipped gems; live-API quality checks with recorded baselines | Supabase, Anthropic | Manual runs |
 
 Two things the diagram makes visible that the code does not say out loud: the MCP server is a **second entry point into the same service layer**, so anything added to `gem_service` is available to both REST and MCP for free; and the API key check lives on the **REST edge only**, so the MCP server is gated by whoever can start the process, not by the key.
@@ -254,7 +254,7 @@ erDiagram
 
 - One table. References between gems are text inside `system_prompt`, resolved by name at read time; there is no foreign key, so a referenced gem can be renamed or soft-deleted and the reference only fails at resolution.
 - `variables` is recomputed by `gem_service` whenever `system_prompt` is written, so the UI can render inputs without parsing the prompt.
-- Row level security is enabled with an `allow_all` policy, and the backend connects with the service role key, which bypasses RLS anyway. The API key on the REST edge is the only access control today (`docs/ROADMAP.md` item 9).
+- Row level security is enabled with no policies, so only the service role key, used by the backend and the MCP server, can read or write rows; the anon key gets nothing. The API key on the REST edge is the access control for callers (ADR-006).
 - Deletes are soft (`is_active = false`); listing and name lookups filter on `is_active`, lookups by id do not.
 - `prompts/<name>.md` mirrors each shipped gem for review; CI checks that every file has a seed row of the same name in `supabase/schema.sql`.
 
@@ -281,7 +281,7 @@ flowchart LR
     subgraph z4["MCP process"]
         MCP2["mcp_server.py<br/>no API key check<br/>holds Supabase key, LLM keys"]
     end
-    SUP2[("Supabase<br/>RLS open, service role")]
+    SUP2[("Supabase<br/>RLS denies all but<br/>the service role")]
     PROV["Providers"]
 
     UI2 --> MW2 --> API2 --> SUP2

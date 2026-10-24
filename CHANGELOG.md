@@ -4,6 +4,9 @@ All notable changes to gemsAPI are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Security
+- ADR-006: single-tenant access model. The `allow_all` row level security policy is dropped from `supabase/schema.sql` and RLS has no policies for the `anon` or `authenticated` roles, so only the service role key used by the backend and the MCP server can read or write gems. `backend/app/database.py` accepts the service role key only; the anon key option is removed from `.env.example`. Existing installs run `supabase/lock_down_rls.sql` once (roadmap item 9).
+
 ### Changed
 - Frontend on Tailwind CSS 4 (`@tailwindcss/postcss`), migrated with the official upgrade tool: the `gem-*` colours and the mono font stack live in an `@theme` block in `app/globals.css`, `tailwind.config.ts` and `autoprefixer` are gone, and the renamed utilities (`outline-none` to `outline-hidden`, `rounded` to `rounded-sm`) are updated in six files. Clears the `postcss-selector-parser` advisory that Dependabot PR 28 could only fix this way.
 
