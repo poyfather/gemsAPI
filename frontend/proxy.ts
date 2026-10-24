@@ -1,8 +1,8 @@
 /**
- * Next.js middleware — runs server-side before every request.
+ * Next.js proxy (the file convention that replaced middleware in Next 16). Runs server-side before every request.
  *
  * Injects the X-API-Key header on all /api/* requests so the key
- * is never exposed in the browser bundle. The rewrite in next.config.ts
+ * is never exposed in the browser bundle. The rewrite in next.config.mjs
  * then forwards the modified request (including the header) to FastAPI.
  *
  * Set GEMS_API_KEY in frontend/.env.local (no NEXT_PUBLIC_ prefix — server only).
@@ -10,7 +10,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const apiKey = process.env.GEMS_API_KEY;
 
   if (!apiKey) {

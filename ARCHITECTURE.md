@@ -46,7 +46,7 @@ A **gem** is a named system prompt stored in Postgres. It can embed other gems w
 - **Provider abstraction.** All LLM calls go through `backend/app/services/llm_service.py`, which exposes `complete()` and `complete_stream()`. Routes, the MCP server and the resolver never import a provider SDK.
 - **Single source of truth.** Gem content lives only in Supabase. Nothing is cached in memory or read from config files at runtime. The files in `prompts/` are a reviewable mirror of the shipped gems, not a runtime input.
 - **Fail-safe recursion.** Resolution is depth-limited (10 levels) and cycle-detected before any further database call is made on a branch.
-- **No client-side secrets.** The browser never holds an API key. The Next.js server injects `X-API-Key` on the proxy hop, and all LLM keys stay in the backend process.
+- **No client-side secrets.** The browser never holds an API key. The Next.js server (`proxy.ts`) injects `X-API-Key` on the proxy hop, and all LLM keys stay in the backend process.
 
 ## Component model
 
@@ -61,7 +61,7 @@ flowchart TB
     end
 
     subgraph nextsrv["Next.js server (frontend/, port 3000)"]
-        MW["middleware.ts<br/>adds X-API-Key from GEMS_API_KEY"]
+        MW["proxy.ts<br/>adds X-API-Key from GEMS_API_KEY"]
         RW["next.config.mjs<br/>rewrites /api/* to BACKEND_URL"]
         MW --> RW
     end
@@ -112,7 +112,7 @@ flowchart TB
 |---|---|---|---|---|
 | Web UI | `frontend/app`, `frontend/components` | Browse, search and tag gems; create and edit with a live resolved preview; chat against a gem | `lib/api.ts` | React state, client components |
 | API client | `frontend/lib/api.ts` | The only place the UI calls the network; typed wrappers for every route | Next.js server | `fetch("/api/...")`, same origin |
-| Proxy and key injection | `frontend/middleware.ts`, `frontend/next.config.mjs` | Add `X-API-Key` from a server-only env var, then rewrite `/api/*` to the backend | FastAPI | HTTP to `BACKEND_URL` |
+| Proxy and key injection | `frontend/proxy.ts`, `frontend/next.config.mjs` | Add `X-API-Key` from a server-only env var, then rewrite `/api/*` to the backend | FastAPI | HTTP to `BACKEND_URL` |
 | FastAPI app | `backend/app/main.py` | App factory, CORS from `CORS_ORIGINS`, startup check that `GEMS_API_KEY` is set, `/` and `/health` | Routers | In-process |
 | Auth | `backend/app/auth.py` | Router-level dependency: 401 unless `X-API-Key` matches `GEMS_API_KEY` | `/gems`, `/chat` | FastAPI `Security` |
 | Gems routes | `backend/app/routes/gems.py` | List, create, get by name or id, update, soft delete, resolve | `gem_service` | Async calls |
@@ -143,7 +143,7 @@ sequenceDiagram
     participant P as Provider
 
     B->>N: POST /api/chat {gem_name, messages, variables, stream}
-    N->>N: middleware adds X-API-Key
+    N->>N: proxy.ts adds X-API-Key
     N->>A: POST /chat (rewritten)
     A->>A: require_api_key
     A->>G: resolve_gem(name, variables)
@@ -273,7 +273,7 @@ flowchart LR
         UI2["Web UI<br/>holds no secrets"]
     end
     subgraph z2["Next.js server"]
-        MW2["middleware + rewrite<br/>holds GEMS_API_KEY only"]
+        MW2["proxy + rewrite<br/>holds GEMS_API_KEY only"]
     end
     subgraph z3["FastAPI service"]
         API2["/gems and /chat<br/>behind require_api_key<br/>holds GEMS_API_KEY,<br/>Supabase key, LLM keys"]
