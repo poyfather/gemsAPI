@@ -1,13 +1,30 @@
-# CHANGELOG
+# Changelog
 
-All notable changes to gemsAPI are documented here.
-Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+All notable changes to gemsAPI are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- Prompt version history (gem_versions Supabase table).
+
+### Added
+- `LICENSE` (MIT), `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1), `SUPPORT.md`.
+- `.github/`: issue forms (bug report, feature request, gem proposal) with `config.yml`, a pull request template, `CODEOWNERS`, Dependabot for pip, npm, Docker and Actions.
+- GitHub Actions: `ci.yml` (ruff, pytest, import check, `next lint`, `tsc`, `next build`, prompts and schema sync, dash check), `codeql.yml`, and `release.yml` which turns a `v*` tag into a GitHub release from this file.
+- `ruff.toml` with an explicit rule set, `frontend/.eslintrc.json`, `frontend/package-lock.json` so `npm ci` works.
+- `.gitattributes` with line-ending rules and `export-ignore` for repo housekeeping files.
+- `docs/ROADMAP.md`: prioritised roadmap of correctness, security, API, DX and release improvements.
+
+### Changed
+- README rewritten: one-line pitch, badges, three-step quick start, MCP client config with the real Claude Desktop config path, env var table, project layout.
+- `SECURITY.md` now opens with supported versions, how to report privately and the response window; the deployment policy follows.
+- `frontend/next.config.ts` is now `frontend/next.config.mjs`. Next.js 14 does not load a TypeScript config, so `next dev`, `next lint` and `next build` all failed before.
+
+### Fixed
+- `backend/requirements.txt` could not be installed: `supabase==2.9.1` requires `httpx<0.28` while `fastmcp==2.2.0` requires `httpx>=0.28.1`. Now `supabase==2.16.0` and `httpx==0.28.1`.
+- `frontend/app/chat/page.tsx` wraps `useSearchParams()` in a Suspense boundary, which `next build` requires to prerender the page.
+- Lint: an unused import in `evals/eval_prompt_enhancer.py`, a shadowed `create_gem` import in `backend/mcp_server.py`, and a combined import line in `tests/test_gem_service.py`.
+
+### Planned (carried over)
+- Prompt version history (`gem_versions` Supabase table).
 - SSE streaming in the Next.js chat UI.
-- GitHub Actions CI pipeline (ruff + pytest on PRs).
-- Eval harness for prompt_enhancer gem.
 
 ## [0.0.2] - 2026-04-16
 ### Added
@@ -44,3 +61,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Supabase schema with `gems` table, RLS, indexes, and 5 seed gems: `base_assistant`, `code_reviewer`, `creative_writer`, `summarizer`, `engineering_lead`, `prompt_enhancer`.
 - Docker Compose for local all-in-one deployment.
 - `.env.example` with all required environment variables documented.
+
+[Unreleased]: https://github.com/poyfather/gemsAPI/compare/v0.0.2...HEAD
+[0.0.2]: https://github.com/poyfather/gemsAPI/releases/tag/v0.0.2
+[0.2.0]: https://github.com/poyfather/gemsAPI/commit/8f4d13a
+[0.1.0]: https://github.com/poyfather/gemsAPI/commit/9869354

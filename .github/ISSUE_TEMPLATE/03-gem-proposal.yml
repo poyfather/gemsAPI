@@ -1,0 +1,43 @@
+name: Gem proposal
+description: Propose a new shipped gem or a change to one in prompts/
+title: "[Gem]: "
+labels: ["gem", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: Shipped gems live in prompts/<name>.md and are seeded by supabase/schema.sql. A prompt change needs an eval note before it is merged (see STANDARDS.md).
+  - type: input
+    id: name
+    attributes:
+      label: Gem name
+      description: snake_case, for example code_reviewer
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind of change
+      options:
+        - New gem
+        - Change to an existing gem's prompt
+        - Change to an existing gem's variables, tags or default model
+    validations:
+      required: true
+  - type: textarea
+    id: purpose
+    attributes:
+      label: Purpose
+      description: What the gem is for and who would use it.
+    validations:
+      required: true
+  - type: textarea
+    id: prompt
+    attributes:
+      label: Proposed system prompt
+      description: Use {variable} for placeholders and {{gem:name}} to embed another gem.
+      render: markdown
+  - type: textarea
+    id: eval
+    attributes:
+      label: How to tell it works
+      description: Example inputs and what a good output looks like, so an eval can be written in evals/.

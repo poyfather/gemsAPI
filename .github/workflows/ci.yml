@@ -1,0 +1,100 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend lint and tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            backend/requirements.txt
+            requirements.txt
+
+      - name: Install backend runtime and dev dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt -r requirements.txt
+
+      - name: Lint (ruff)
+        run: ruff check .
+
+      - name: Unit tests (pytest)
+        # No Supabase or LLM calls in tests/; the key only satisfies the startup check.
+        env:
+          GEMS_API_KEY: ci-placeholder
+        run: pytest -q
+
+      - name: API and MCP server import cleanly
+        env:
+          GEMS_API_KEY: ci-placeholder
+        run: |
+          cd backend
+          python -c "import app.main, mcp_server; print('imports ok')"
+
+  frontend:
+    name: Frontend lint, types and build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci
+
+      - name: Lint (eslint via next lint)
+        run: npm run lint
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+        run: npm run build
+
+  gems:
+    name: Shipped gems and docs stay in sync
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Every prompts/<name>.md has a seed row in supabase/schema.sql
+        run: |
+          status=0
+          for f in prompts/*.md; do
+            name=$(basename "$f" .md)
+            if ! grep -qE "^\s*'$name'," supabase/schema.sql; then
+              echo "::error file=$f::no seed row named '$name' in supabase/schema.sql"; status=1
+            fi
+          done
+          exit $status
+
+      - name: No em or en dashes in the community docs
+        run: |
+          if grep -rnP '[\x{2014}\x{2013}]' README.md CONTRIBUTING.md SECURITY.md SUPPORT.md docs/ROADMAP.md; then
+            echo "::error::Use commas, periods or 'to' instead of dashes"; exit 1
+          fi

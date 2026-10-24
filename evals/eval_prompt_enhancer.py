@@ -14,7 +14,6 @@ BASELINE (2026-04-15): 5/5 test cases passed (100%)
 """
 import os
 import sys
-import re
 
 # Add backend to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'backend'))
@@ -69,7 +68,7 @@ def run_eval() -> None:
         print("ERROR: install backend deps first: pip install -r backend/requirements.txt")
         sys.exit(1)
 
-    from app.services.gem_service import get_gem_by_name, resolve_gem
+    from app.services.gem_service import resolve_gem
     import asyncio
 
     async def get_system_prompt() -> str:

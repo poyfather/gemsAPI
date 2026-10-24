@@ -2,6 +2,7 @@
 
 ## Purpose
 Track gemsAPI development priorities, sequencing, and delivery status.
+This file tracks delivery status of agreed items. The prioritised list of improvements, with reasons, sizes and dependencies, is in [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ---
 
@@ -17,7 +18,7 @@ Track gemsAPI development priorities, sequencing, and delivery status.
 
 ### Smoke Test and Lint Baseline
 - Goal: `pytest -q` and `ruff check .` pass from repo root with zero warnings/failures.
-- Status: In Progress
+- Status: Complete (CI runs `ruff check .` and `pytest -q` on every PR)
 - Owner: poyfather
 - Dependencies: Project-Template alignment
 - Success Criteria: CI-ready test and lint baseline established.
@@ -65,7 +66,7 @@ Track gemsAPI development priorities, sequencing, and delivery status.
 
 ### CI Pipeline
 - Goal: GitHub Actions workflow that runs `ruff check .` and `pytest -q` on every PR.
-- Status: Planned
+- Status: Complete (`.github/workflows/ci.yml`)
 - Owner: poyfather
 - Dependencies: smoke test baseline
 - Success Criteria: PRs blocked on lint/test failure.

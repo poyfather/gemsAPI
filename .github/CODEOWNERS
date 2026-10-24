@@ -1,0 +1,17 @@
+# Default owner for everything in the repo.
+*                     @poyfather
+
+# Backend API, MCP server and the recursive resolver.
+/backend/             @poyfather
+/tests/               @poyfather
+
+# Next.js UI.
+/frontend/            @poyfather
+
+# Shipped gems and their evals. Prompt changes need an eval note in the PR.
+/prompts/             @poyfather
+/evals/               @poyfather
+/supabase/            @poyfather
+
+# Repo plumbing.
+/.github/             @poyfather
