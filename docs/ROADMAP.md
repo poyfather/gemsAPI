@@ -111,7 +111,7 @@ Things that are broken or that a first contributor would trip over this week.
 
 ### 7. Patched Next.js now, Next 15 next
 
-**Status: done.** The 14.2.35 patch shipped in PR 19; the major migration went straight to Next 16 with React 19, ESLint 9 flat config and `proxy.ts` (15 would have been a stepping stone with no benefit).
+**Status: done.** The 14.2.35 patch shipped in PR 19; the major migration went straight to Next 16 with React 19, ESLint 9 flat config and `proxy.ts` (15 would have been a stepping stone with no benefit). Tailwind 3 to 4 followed, driven by a build-time advisory in `postcss-selector-parser` that only Tailwind 4 could clear: theme colours moved from `tailwind.config.ts` into `@theme` in `globals.css`, `@tailwindcss/postcss` replaced the `tailwindcss` and `autoprefixer` PostCSS plugins, and the official upgrade tool renamed the handful of utilities that changed (`outline-none` to `outline-hidden`, `rounded` to `rounded-sm`).
 
 
 - **Why**: `npm install` warns that `next@14.2.18` has a published security vulnerability (the December 2025 advisory). The fix is the latest 14.2.x patch, which Dependabot will now propose. Next 15 is the larger move: it restores `next.config.ts`, changes `useSearchParams` and caching defaults, and needs React 19.

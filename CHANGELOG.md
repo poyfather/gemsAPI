@@ -5,6 +5,9 @@ All notable changes to gemsAPI are documented here. The format follows [Keep a C
 ## [Unreleased]
 
 ### Changed
+- Frontend on Tailwind CSS 4 (`@tailwindcss/postcss`), migrated with the official upgrade tool: the `gem-*` colours and the mono font stack live in an `@theme` block in `app/globals.css`, `tailwind.config.ts` and `autoprefixer` are gone, and the renamed utilities (`outline-none` to `outline-hidden`, `rounded` to `rounded-sm`) are updated in six files. Clears the `postcss-selector-parser` advisory that Dependabot PR 28 could only fix this way.
+
+### Changed
 - Frontend on Next.js 16.4.3 with React 19.3, `eslint` 9 and a flat `eslint.config.mjs` (`next lint` is gone in Next 16, so `npm run lint` runs `eslint .`), `tsconfig.json` as Next 16 requires it (`jsx: react-jsx`, `target: ES2017`), and `frontend/middleware.ts` renamed to `frontend/proxy.ts` by the official codemod. The gems list page loads without a synchronous state update inside its effect, which the React 19 lint rules flag (roadmap item 7).
 
 ### Changed
