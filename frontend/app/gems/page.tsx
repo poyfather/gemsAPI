@@ -123,7 +123,7 @@ export default function GemsPage() {
             placeholder="Search gems by name, description, or tag..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2.5 rounded-lg bg-gem-card border border-gem-border text-slate-100 text-sm placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500 transition"
+            className="w-full pl-9 pr-4 py-2.5 rounded-lg bg-gem-card border border-gem-border text-slate-100 text-sm placeholder:text-slate-600 focus:outline-hidden focus:ring-2 focus:ring-violet-500 transition"
           />
         </div>
         {allTags.length > 0 && (

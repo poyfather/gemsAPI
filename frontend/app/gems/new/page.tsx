@@ -16,9 +16,9 @@ export default function NewGemPage() {
           <h1 className="text-xl font-bold text-white">New Gem</h1>
           <p className="text-slate-400 text-sm mt-0.5">
             Create a reusable prompt. Use{" "}
-            <code className="text-violet-400 bg-violet-500/10 px-1 rounded">{"{{gem:name}}"}</code>{" "}
+            <code className="text-violet-400 bg-violet-500/10 px-1 rounded-sm">{"{{gem:name}}"}</code>{" "}
             to embed other gems and{" "}
-            <code className="text-blue-400 bg-blue-500/10 px-1 rounded">{"{variable}"}</code>{" "}
+            <code className="text-blue-400 bg-blue-500/10 px-1 rounded-sm">{"{variable}"}</code>{" "}
             for placeholders.
           </p>
         </div>
