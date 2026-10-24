@@ -12,8 +12,8 @@ updates:
         patterns: ["*"]
 
   # Next.js frontend. Minor and patch updates arrive as one grouped PR a month.
-  # Major versions of the framework and its toolchain (Tailwind 4, ESLint 10,
-  # TypeScript 7, lucide 1.x, the next Next.js major) are migrations, not
+  # Major versions of the framework and its toolchain (ESLint 10, TypeScript 7,
+  # lucide 1.x, the next Next.js or Tailwind major) are migrations, not
   # updates; they are done on purpose and ignored here.
   - package-ecosystem: "npm"
     directory: "/frontend"

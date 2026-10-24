@@ -127,7 +127,7 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
             disabled={mode === "edit"}
             className={clsx(
               "w-full px-3 py-2 rounded-lg bg-gem-card border text-slate-100 font-mono text-sm",
-              "placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500 transition",
+              "placeholder:text-slate-600 focus:outline-hidden focus:ring-2 focus:ring-violet-500 transition",
               mode === "edit"
                 ? "border-gem-border text-slate-500 cursor-not-allowed"
                 : "border-gem-border hover:border-slate-600"
@@ -144,7 +144,7 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
             placeholder="What does this gem do?"
             value={form.description}
             onChange={(e) => handleChange("description", e.target.value)}
-            className="w-full px-3 py-2 rounded-lg bg-gem-card border border-gem-border text-slate-100 text-sm placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500 transition"
+            className="w-full px-3 py-2 rounded-lg bg-gem-card border border-gem-border text-slate-100 text-sm placeholder:text-slate-600 focus:outline-hidden focus:ring-2 focus:ring-violet-500 transition"
           />
         </div>
 
@@ -158,7 +158,7 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
                 handleChange("provider", e.target.value);
                 handleChange("model", e.target.value === "anthropic" ? ANTHROPIC_MODELS[0] : OPENAI_MODELS[0]);
               }}
-              className="w-full px-3 py-2 rounded-lg bg-gem-card border border-gem-border text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 transition"
+              className="w-full px-3 py-2 rounded-lg bg-gem-card border border-gem-border text-slate-100 text-sm focus:outline-hidden focus:ring-2 focus:ring-violet-500 transition"
             >
               <option value="anthropic">Anthropic</option>
               <option value="openai">OpenAI</option>
@@ -169,7 +169,7 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
             <select
               value={form.model}
               onChange={(e) => handleChange("model", e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-gem-card border border-gem-border text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 transition"
+              className="w-full px-3 py-2 rounded-lg bg-gem-card border border-gem-border text-slate-100 text-sm focus:outline-hidden focus:ring-2 focus:ring-violet-500 transition"
             >
               {modelOptions.map((m) => (
                 <option key={m} value={m}>{m}</option>
@@ -188,7 +188,7 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
               value={tagInput}
               onChange={(e) => setTagInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTag(); } }}
-              className="flex-1 px-3 py-2 rounded-lg bg-gem-card border border-gem-border text-slate-100 text-sm placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500 transition"
+              className="flex-1 px-3 py-2 rounded-lg bg-gem-card border border-gem-border text-slate-100 text-sm placeholder:text-slate-600 focus:outline-hidden focus:ring-2 focus:ring-violet-500 transition"
             />
             <button
               type="button"
@@ -229,7 +229,7 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
             placeholder={"You are a helpful assistant.\n\n{{gem:base_personality}}\n\nAnswer questions about {topic}."}
             value={form.system_prompt}
             onChange={(e) => handleChange("system_prompt", e.target.value)}
-            className="prompt-textarea w-full px-3 py-2.5 rounded-lg bg-gem-card border border-gem-border text-slate-100 text-sm placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500 transition"
+            className="prompt-textarea w-full px-3 py-2.5 rounded-lg bg-gem-card border border-gem-border text-slate-100 text-sm placeholder:text-slate-600 focus:outline-hidden focus:ring-2 focus:ring-violet-500 transition"
           />
 
           {/* Detected variables / gem refs */}
@@ -316,7 +316,7 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
                     placeholder={`Value for ${v}`}
                     value={varValues[v] ?? ""}
                     onChange={(e) => setVarValues((prev) => ({ ...prev, [v]: e.target.value }))}
-                    className="flex-1 px-2 py-1 rounded-md bg-gem-surface border border-gem-border text-slate-300 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500"
+                    className="flex-1 px-2 py-1 rounded-md bg-gem-surface border border-gem-border text-slate-300 text-xs focus:outline-hidden focus:ring-1 focus:ring-violet-500"
                   />
                 </div>
               ))}

@@ -152,7 +152,7 @@ function ChatPageInner() {
               <select
                 value={selectedGem}
                 onChange={(e) => setSelectedGem(e.target.value)}
-                className="w-full pl-3 pr-8 py-2 rounded-lg bg-gem-surface border border-gem-border text-slate-200 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-violet-500"
+                className="w-full pl-3 pr-8 py-2 rounded-lg bg-gem-surface border border-gem-border text-slate-200 text-sm appearance-none focus:outline-hidden focus:ring-2 focus:ring-violet-500"
               >
                 <option value="" disabled>Select a gem…</option>
                 {allGems.map((g) => (
@@ -181,7 +181,7 @@ function ChatPageInner() {
                     placeholder={`Value for ${v}`}
                     value={varValues[v] ?? ""}
                     onChange={(e) => setVarValues((p) => ({ ...p, [v]: e.target.value }))}
-                    className="w-full px-2.5 py-1.5 rounded-md bg-gem-surface border border-gem-border text-slate-300 text-xs placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-2.5 py-1.5 rounded-md bg-gem-surface border border-gem-border text-slate-300 text-xs placeholder:text-slate-600 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
               ))}
@@ -207,7 +207,7 @@ function ChatPageInner() {
                   <select
                     value={providerOverride}
                     onChange={(e) => { setProviderOverride(e.target.value); setModelOverride(""); }}
-                    className="w-full px-2.5 py-1.5 rounded-md bg-gem-surface border border-gem-border text-slate-300 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500"
+                    className="w-full px-2.5 py-1.5 rounded-md bg-gem-surface border border-gem-border text-slate-300 text-xs focus:outline-hidden focus:ring-1 focus:ring-violet-500"
                   >
                     <option value="">Use gem default</option>
                     <option value="anthropic">Anthropic</option>
@@ -220,7 +220,7 @@ function ChatPageInner() {
                     <select
                       value={modelOverride}
                       onChange={(e) => setModelOverride(e.target.value)}
-                      className="w-full px-2.5 py-1.5 rounded-md bg-gem-surface border border-gem-border text-slate-300 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500"
+                      className="w-full px-2.5 py-1.5 rounded-md bg-gem-surface border border-gem-border text-slate-300 text-xs focus:outline-hidden focus:ring-1 focus:ring-violet-500"
                     >
                       <option value="">Use gem default</option>
                       {availableModels.map((m) => (
@@ -328,7 +328,7 @@ function ChatPageInner() {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 disabled={!selectedGem || sending}
-                className="flex-1 px-3 py-2.5 rounded-xl bg-gem-surface border border-gem-border text-slate-100 text-sm placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none disabled:opacity-50 transition max-h-40 overflow-y-auto"
+                className="flex-1 px-3 py-2.5 rounded-xl bg-gem-surface border border-gem-border text-slate-100 text-sm placeholder:text-slate-600 focus:outline-hidden focus:ring-2 focus:ring-violet-500 resize-none disabled:opacity-50 transition max-h-40 overflow-y-auto"
                 style={{ height: "auto" }}
                 onInput={(e) => {
                   const el = e.currentTarget;

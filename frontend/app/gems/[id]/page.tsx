@@ -246,7 +246,7 @@ export default function GemDetailPage() {
                       placeholder={`Value for ${v}`}
                       value={varValues[v] ?? ""}
                       onChange={(e) => setVarValues((p) => ({ ...p, [v]: e.target.value }))}
-                      className="flex-1 px-2 py-1 rounded-md bg-gem-surface border border-gem-border text-slate-300 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500"
+                      className="flex-1 px-2 py-1 rounded-md bg-gem-surface border border-gem-border text-slate-300 text-xs focus:outline-hidden focus:ring-1 focus:ring-violet-500"
                     />
                   </div>
                 ))}
@@ -269,7 +269,7 @@ export default function GemDetailPage() {
                     <div className="mb-3 flex flex-wrap gap-1.5 items-center">
                       <span className="text-xs text-slate-500">Expanded:</span>
                       {resolve.referenced_gems.map((r) => (
-                        <span key={r} className="text-xs px-1.5 py-0.5 rounded bg-violet-500/10 text-violet-400 font-mono">{r}</span>
+                        <span key={r} className="text-xs px-1.5 py-0.5 rounded-sm bg-violet-500/10 text-violet-400 font-mono">{r}</span>
                       ))}
                     </div>
                   )}
