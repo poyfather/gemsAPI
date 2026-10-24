@@ -11,7 +11,16 @@ A self-hosted prompt library. Store reusable LLM system prompts ("gems") in Supa
 
 ## Why
 
-System prompts tend to live scattered across code, notes and chat histories, with no way to reuse the good parts. gemsAPI gives each prompt a name, a description, tags and a home in Postgres, then lets one gem embed another the way a function calls another. A `code_reviewer` gem can start with `{{gem:base_assistant}}` and add its own rules; an `engineering_lead` gem can embed `code_reviewer`. Resolution is depth-limited and cycle-safe, and every surface (REST, UI, MCP) uses the same resolver.
+If you use AI tools a lot, you end up writing instructions for them: "you are a careful code reviewer, check for bugs first, then style." Good ones are worth keeping. The trouble is where they end up: one in a chat window, one in a text file, one pasted into Slack, three slightly different copies of the same thing. When you improve one, the others stay stale.
+
+gemsAPI is a labelled drawer for those instructions. Each one gets a name, a description and tags, and lives in one database. You can fetch it from a web page, from your own code, or straight from Claude Desktop and Cursor, which can open the drawer themselves and pull out the right prompt instead of you pasting it in.
+
+Two tricks make the drawer more than a list:
+
+- **Prompts can contain other prompts.** Write a short `base_assistant` once ("be direct, be honest about uncertainty"), then start `code_reviewer` with `{{gem:base_assistant}}` and add only the review rules. Improve the base, and everything built on it improves too.
+- **Prompts can have blanks.** Leave `{language}` or `{tone}` in the text and fill it in at the moment you use it, so one prompt serves many situations.
+
+Who it is for: anyone who writes prompts as part of their work and uses them from more than one place. Who it is not for yet: a casual user with three prompts in a notes app, since setting up a database and two services is more than that problem needs. [docs/ROADMAP.md](docs/ROADMAP.md) lists what would change that, starting with version history and per-prompt evals.
 
 ## How it fits together
 
