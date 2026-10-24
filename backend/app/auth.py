@@ -8,6 +8,8 @@ Set GEMS_API_KEY in your .env file. If the variable is not set,
 the server will refuse to start rather than silently run unprotected.
 """
 import os
+import secrets
+
 from fastapi import Security, HTTPException, status
 from fastapi.security import APIKeyHeader
 
@@ -33,7 +35,7 @@ def require_api_key(x_api_key: str | None = Security(_API_KEY_HEADER)) -> str:
     Returns the validated key on success.
     """
     expected = _get_configured_key()
-    if not x_api_key or x_api_key != expected:
+    if not x_api_key or not secrets.compare_digest(x_api_key, expected):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or missing API key. Pass your key in the X-API-Key header.",

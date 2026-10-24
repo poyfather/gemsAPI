@@ -46,7 +46,7 @@ from app.services.gem_service import (
     get_all_gems,
     get_gem_by_name,
     resolve_gem,
-    extract_variables,
+    resolve_gem_detailed,
     extract_gem_refs,
 )
 from app.services.llm_service import complete, MODELS
@@ -167,14 +167,13 @@ async def resolve_gem_prompt(
     if variables is None:
         variables = {}
     try:
-        resolved, refs = await resolve_gem(name, variables)
-        remaining = extract_variables(resolved)
-        missing = [v for v in remaining if v not in variables]
+        result = await resolve_gem_detailed(name, variables)
         return {
-            "gem_name":       name,
-            "resolved_prompt": resolved,
-            "referenced_gems": refs,
-            "variables_missing": missing,
+            "gem_name":          result.gem_name,
+            "resolved_prompt":   result.resolved_prompt,
+            "referenced_gems":   result.referenced_gems,
+            "variables_used":    result.variables_used,
+            "variables_missing": result.variables_missing,
         }
     except ValueError as exc:
         return {"error": str(exc)}

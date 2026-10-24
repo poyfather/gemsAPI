@@ -4,6 +4,16 @@ All notable changes to gemsAPI are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Fixed
+- `GET`, `PUT` and `DELETE /gems/{id}` accept a name or a UUID; an unknown value that is not a UUID is a 404 instead of a Postgres error surfacing as a 500 (roadmap item 2).
+- `POST /gems/resolve` reports `variables_used` as the placeholders that were actually present and filled, not the keys that were sent; the MCP `resolve_gem_prompt` tool returns the same field (roadmap item 3).
+- Variables are filled in a single pass after expansion, so a value containing `{other}` is never substituted again and the result no longer depends on dict order (roadmap item 3).
+- Only identifier-shaped `{name}` placeholders are variables; JSON and code braces in a prompt no longer produce bogus variables or form fields (roadmap item 4).
+- The API key check uses `secrets.compare_digest` (roadmap item 6).
+
+### Added
+- `tests/conftest.py` with an in-memory stand-in for the gems table, `tests/test_resolver.py` (nesting, variable propagation, cycles, depth limit, braces in prompts) and `tests/test_routes.py` (auth, lookups, 404s, resolve) through FastAPI's TestClient; `pytest.ini` sets `pythonpath` so the tests no longer patch `sys.path` (roadmap item 5). 29 tests.
+
 ### Changed
 - Frontend lint runs the strict `next/typescript` rule set: `catch (e: any)` is gone in favour of an `errorMessage()` helper in `lib/api.ts`, unused imports in `GemForm.tsx` removed, quotes in JSX escaped, and the chat page effect lists its dependency (roadmap item 8).
 
