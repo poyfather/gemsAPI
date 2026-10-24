@@ -4,6 +4,9 @@ All notable changes to gemsAPI are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Changed
+- `ARCHITECTURE.md` rewritten around nine Mermaid diagrams (big picture, component model, two request sequences, gem composition, resolution walkthrough, data model, trust boundaries, deployment topologies) with a component table; the ASCII box drawing is gone. The big-picture diagram also sits in the README under "How it fits together".
+
 ### Security
 - `backend/app/services/gem_service.py`: the `{{gem:name}}` pattern only matches identifier characters, so an unclosed tag can no longer make the resolver backtrack polynomially (CodeQL py/polynomial-redos). Regression tests added.
 - `backend/app/routes/chat.py`: provider exceptions are logged server side and the client gets a generic 502 message, on both the JSON and the SSE path (CodeQL py/stack-trace-exposure).
