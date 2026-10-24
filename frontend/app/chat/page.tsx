@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { gems as gemsApi, chat as chatApi, Gem, ChatMessage, AvailableModels } from "@/lib/api";
+import { gems as gemsApi, chat as chatApi, Gem, ChatMessage, AvailableModels, errorMessage } from "@/lib/api";
 import {
   Send, Loader2, Gem as GemIcon, Variable, ChevronDown,
   RotateCcw, MessageSquare, Settings
@@ -52,7 +52,7 @@ function ChatPageInner() {
       }
     };
     load();
-  }, []);
+  }, [initialGem]);
 
   // Reset vars when gem changes
   useEffect(() => {
@@ -101,11 +101,11 @@ function ChatPageInner() {
           m.id === loadingMsg.id ? { ...m, content: res.content, loading: false } : m
         )
       );
-    } catch (err: any) {
+    } catch (err) {
       setMessages((prev) =>
         prev.map((m) =>
           m.id === loadingMsg.id
-            ? { ...m, content: `Error: ${err.message}`, loading: false }
+            ? { ...m, content: `Error: ${errorMessage(err)}`, loading: false }
             : m
         )
       );
