@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { gems as gemsApi, Gem } from "@/lib/api";
+import { gems as gemsApi, Gem, errorMessage } from "@/lib/api";
 import GemForm from "@/components/GemForm";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
@@ -18,8 +18,8 @@ export default function EditGemPage() {
       try {
         const data = await gemsApi.get(id);
         setGem(data);
-      } catch (e: any) {
-        setError(e.message || "Gem not found.");
+      } catch (e) {
+        setError(errorMessage(e, "Gem not found."));
       } finally {
         setLoading(false);
       }

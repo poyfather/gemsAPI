@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { gems as gemsApi, GemCreate, Gem, AvailableModels, chat as chatApi } from "@/lib/api";
+import { gems as gemsApi, GemCreate, Gem, errorMessage } from "@/lib/api";
 import { Info, Plus, X, Loader2, Eye } from "lucide-react";
 import clsx from "clsx";
 
@@ -98,8 +98,8 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
       }
       router.push("/gems");
       router.refresh();
-    } catch (err: any) {
-      setError(err.message || "Failed to save gem.");
+    } catch (err) {
+      setError(errorMessage(err, "Failed to save gem."));
     } finally {
       setSaving(false);
     }
@@ -326,7 +326,7 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
           <div className="p-4 min-h-[300px]">
             {preview === null ? (
               <p className="text-slate-600 text-sm italic">
-                Click "Resolve" to see the fully expanded prompt including any referenced gems.
+                Click &quot;Resolve&quot; to see the fully expanded prompt including any referenced gems.
               </p>
             ) : (
               <pre className="whitespace-pre-wrap font-mono text-xs text-slate-300 leading-relaxed">

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { gems as gemsApi, Gem, ResolveResponse } from "@/lib/api";
+import { gems as gemsApi, Gem, ResolveResponse, errorMessage } from "@/lib/api";
 import {
   ArrowLeft, Edit, Trash2, MessageSquare, Loader2,
   AlertTriangle, Variable, LinkIcon, Cpu, ChevronDown, ChevronUp
@@ -27,8 +27,8 @@ export default function GemDetailPage() {
       try {
         const data = await gemsApi.get(id);
         setGem(data);
-      } catch (e: any) {
-        setError(e.message);
+      } catch (e) {
+        setError(errorMessage(e, "Failed to load the gem."));
       } finally {
         setLoading(false);
       }
@@ -42,8 +42,8 @@ export default function GemDetailPage() {
     try {
       await gemsApi.delete(id);
       router.push("/gems");
-    } catch (e: any) {
-      alert(e.message);
+    } catch (e) {
+      alert(errorMessage(e, "Failed to delete the gem."));
       setDeleting(false);
     }
   };
@@ -54,8 +54,8 @@ export default function GemDetailPage() {
     try {
       const res = await gemsApi.resolve(gem.name, varValues);
       setResolve(res);
-    } catch (e: any) {
-      alert(e.message);
+    } catch (e) {
+      alert(errorMessage(e, "Failed to resolve the gem."));
     } finally {
       setLoadingResolve(false);
     }
@@ -256,7 +256,7 @@ export default function GemDetailPage() {
             <div className="p-4 min-h-[200px]">
               {!resolve ? (
                 <p className="text-slate-600 text-sm italic">
-                  Click "Resolve" to expand recursive gem references and preview the final prompt.
+                  Click &quot;Resolve&quot; to expand recursive gem references and preview the final prompt.
                 </p>
               ) : (
                 <>
