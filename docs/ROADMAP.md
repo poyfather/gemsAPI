@@ -25,7 +25,7 @@ These were found during the audit and fixed because CI could not pass without th
 | 4 | Stop treating every `{...}` as a variable | Correctness | M | Now, done |
 | 5 | Resolver and route tests with a fake database | Tests | M | Now, done |
 | 6 | Constant-time key check, no provider errors in responses | Security | S | Now, done |
-| 7 | Patched Next.js, then Next 15 | Security, DX | S then M | Now, patch done |
+| 7 | Patched Next.js, then Next 15 | Security, DX | S then M | Now, done |
 | 8 | Turn the strict TypeScript lint rules back on | DX | S | Now, done |
 | 9 | Decide the Supabase RLS and key model | Security | M to L | Next |
 | 10 | Per-client API keys, and auth for a hosted MCP server | Security | M | Next |
@@ -111,7 +111,7 @@ Things that are broken or that a first contributor would trip over this week.
 
 ### 7. Patched Next.js now, Next 15 next
 
-**Status: patch done** in PR 19 (14.2.35). The Next 15 migration is still open.
+**Status: done.** The 14.2.35 patch shipped in PR 19; the major migration went straight to Next 16 with React 19, ESLint 9 flat config and `proxy.ts` (15 would have been a stepping stone with no benefit).
 
 
 - **Why**: `npm install` warns that `next@14.2.18` has a published security vulnerability (the December 2025 advisory). The fix is the latest 14.2.x patch, which Dependabot will now propose. Next 15 is the larger move: it restores `next.config.ts`, changes `useSearchParams` and caching defaults, and needs React 19.

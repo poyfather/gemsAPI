@@ -30,7 +30,17 @@ export default function GemsPage() {
     }
   };
 
-  useEffect(() => { fetchGems(); }, []);
+  // Initial load. `loading` already starts true, so nothing is set synchronously here;
+  // state updates happen once the request settles. fetchGems() stays for the Retry button.
+  useEffect(() => {
+    let cancelled = false;
+    gemsApi
+      .list()
+      .then((data) => { if (!cancelled) setAllGems(data); })
+      .catch((e) => { if (!cancelled) setError(errorMessage(e, "Failed to load gems. Is the backend running?")); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this gem? This cannot be undone.")) return;

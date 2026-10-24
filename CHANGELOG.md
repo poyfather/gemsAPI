@@ -5,6 +5,9 @@ All notable changes to gemsAPI are documented here. The format follows [Keep a C
 ## [Unreleased]
 
 ### Changed
+- Frontend on Next.js 16.4.3 with React 19.3, `eslint` 9 and a flat `eslint.config.mjs` (`next lint` is gone in Next 16, so `npm run lint` runs `eslint .`), `tsconfig.json` as Next 16 requires it (`jsx: react-jsx`, `target: ES2017`), and `frontend/middleware.ts` renamed to `frontend/proxy.ts` by the official codemod. The gems list page loads without a synchronous state update inside its effect, which the React 19 lint rules flag (roadmap item 7).
+
+### Changed
 - README "Why" rewritten in plain language: the problem (instructions scattered across tools), the drawer analogy, the two tricks (prompts inside prompts, blanks), and who it is and is not for yet.
 
 ### Changed

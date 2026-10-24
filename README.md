@@ -7,7 +7,7 @@ A self-hosted prompt library. Store reusable LLM system prompts ("gems") in Supa
 [![License: MIT](https://img.shields.io/badge/license-MIT-1B2A4A.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-0.0.2-7c3aed.svg)](CHANGELOG.md)
 [![Python 3.12+](https://img.shields.io/badge/Python-3.12%2B-3776AB.svg)](backend/requirements.txt)
-[![Next.js 14](https://img.shields.io/badge/Next.js-14-000000.svg)](frontend/package.json)
+[![Next.js 16](https://img.shields.io/badge/Next.js-16-000000.svg)](frontend/package.json)
 
 ## Why
 
@@ -64,7 +64,7 @@ Every surface hands the gem to the same resolver, which expands `{{gem:name}}` r
 
 | Surface | What it does |
 |---|---|
-| **Web UI** (Next.js, port 3000) | Browse, search and tag gems, edit them with a live resolved preview, and test any gem in a chat view against Anthropic or OpenAI models |
+| **Web UI** (Next.js 16, port 3000) | Browse, search and tag gems, edit them with a live resolved preview, and test any gem in a chat view against Anthropic or OpenAI models |
 | **REST API** (FastAPI, port 8000) | CRUD on `/gems`, `POST /gems/resolve` to expand a gem, `POST /chat` with optional SSE streaming, Swagger at `/docs` |
 | **MCP server** (FastMCP, stdio) | Tools `list_gems`, `search_gems`, `get_gem`, `resolve_gem_prompt`, `chat_with_gem`, `create_gem`, `list_available_models`, plus `gems://list` and `gems://{name}` resources |
 | **Seed gems** | `base_assistant`, `code_reviewer`, `creative_writer`, `summarizer`, `engineering_lead`, `prompt_enhancer`, each also kept as a reviewable file in [`prompts/`](prompts/) |
@@ -92,7 +92,7 @@ You need Python 3.12 or newer, Node 20 or newer, a free [Supabase](https://supab
    cd frontend && npm install && npm run dev           # http://localhost:3000
    ```
 
-The server refuses to start until `GEMS_API_KEY` is set, and every `/gems` and `/chat` request needs it in an `X-API-Key` header. The frontend adds that header server-side in [`frontend/middleware.ts`](frontend/middleware.ts), so the key never reaches the browser.
+The server refuses to start until `GEMS_API_KEY` is set, and every `/gems` and `/chat` request needs it in an `X-API-Key` header. The frontend adds that header server-side in [`frontend/proxy.ts`](frontend/proxy.ts), so the key never reaches the browser.
 
 <details>
 <summary>Connect an MCP client (Claude Desktop, Cursor)</summary>
@@ -159,7 +159,7 @@ Backend variables live in `backend/.env` (template: [`.env.example`](.env.exampl
 ```
 backend/app/        FastAPI app: routes/ (gems, chat), services/ (gem_service resolver, llm_service), auth.py, models.py
 backend/mcp_server.py   FastMCP server over the same services
-frontend/           Next.js 14 app router UI (app/, components/, lib/api.ts, middleware.ts)
+frontend/           Next.js 16 app router UI (app/, components/, lib/api.ts, proxy.ts)
 supabase/           schema.sql (table, RLS, seed gems) and one-off migrations
 prompts/            the shipped gems as markdown, one file per gem
 evals/              live-API quality checks for gems (eval_prompt_enhancer.py)

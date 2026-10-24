@@ -18,7 +18,7 @@ The unit tests do not touch Supabase or any LLM, so you can run them without cre
 ## Code style
 
 - **Python** (`backend/`, `tests/`, `evals/`): formatted and linted by [ruff](https://docs.astral.sh/ruff/) with the rules in `ruff.toml`. Type hints on public functions, Pydantic models for request and response shapes, `async` end to end, and every provider-specific call stays inside `backend/app/services/llm_service.py`.
-- **TypeScript** (`frontend/`): strict mode, ESLint via `next lint`, Tailwind utilities rather than custom CSS, and every backend call goes through `frontend/lib/api.ts`.
+- **TypeScript** (`frontend/`): strict mode, ESLint 9 with the flat config in `eslint.config.mjs` (`npm run lint`), Tailwind utilities rather than custom CSS, and every backend call goes through `frontend/lib/api.ts`.
 - **Gems**: `snake_case` names. Each shipped gem exists twice on purpose: as a seed row in `supabase/schema.sql` and as `prompts/<name>.md` for review. Keep them identical.
 - **Copy** in docs and UI: sentence case, no exclamation points, no em or en dashes (use commas, periods, or "to" for ranges).
 

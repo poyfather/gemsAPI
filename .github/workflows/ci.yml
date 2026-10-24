@@ -65,7 +65,7 @@ jobs:
 
       - run: npm ci
 
-      - name: Lint (eslint via next lint)
+      - name: Lint (eslint)
         run: npm run lint
 
       - name: Type check
