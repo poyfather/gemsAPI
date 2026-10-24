@@ -37,3 +37,18 @@ def test_extract_variables_empty() -> None:
 
 def test_extract_gem_refs_empty() -> None:
     assert extract_gem_refs("No gem refs here.") == []
+
+
+def test_extract_gem_refs_only_identifier_names() -> None:
+    prompt = "{{gem:code reviewer}} {{gem:code_reviewer}} {{gem:}} {{gem:a-b.c}}"
+    assert extract_gem_refs(prompt) == ["a-b.c", "code_reviewer"]
+
+
+def test_extract_gem_refs_is_linear_on_unclosed_tags() -> None:
+    import time
+
+    hostile = "{{gem:" * 20000
+    start = time.perf_counter()
+    assert extract_gem_refs(hostile) == []
+    assert extract_variables(hostile) == []
+    assert time.perf_counter() - start < 1.0

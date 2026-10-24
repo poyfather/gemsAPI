@@ -1,4 +1,6 @@
 import json
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 
@@ -6,6 +8,10 @@ from app.models import ChatRequest, ChatResponse
 from app.services import gem_service
 from app.services.llm_service import complete, complete_stream, MODELS
 from app.auth import require_api_key
+
+logger = logging.getLogger(__name__)
+
+_PROVIDER_ERROR = "The LLM provider returned an error. Check the server log for details."
 
 router = APIRouter(prefix="/chat", tags=["chat"], dependencies=[Depends(require_api_key)])
 
@@ -42,8 +48,9 @@ async def chat(request: ChatRequest):
             try:
                 async for chunk in complete_stream(resolved_prompt, messages, model, provider):
                     yield f"data: {json.dumps({'content': chunk})}\n\n"
-            except Exception as exc:
-                yield f"data: {json.dumps({'error': str(exc)})}\n\n"
+            except Exception:
+                logger.exception("Streaming chat failed for gem %s", request.gem_name)
+                yield f"data: {json.dumps({'error': _PROVIDER_ERROR})}\n\n"
             finally:
                 yield "data: [DONE]\n\n"
 
@@ -56,7 +63,8 @@ async def chat(request: ChatRequest):
     # Non-streaming response
     try:
         content = await complete(resolved_prompt, messages, model, provider)
-    except Exception as exc:
-        raise HTTPException(status_code=502, detail=str(exc))
+    except Exception:
+        logger.exception("Chat failed for gem %s", request.gem_name)
+        raise HTTPException(status_code=502, detail=_PROVIDER_ERROR)
 
     return ChatResponse(content=content, model=model, provider=provider, gem_name=request.gem_name)
