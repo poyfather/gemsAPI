@@ -4,6 +4,9 @@ All notable changes to gemsAPI are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Changed
+- `docs/ROADMAP.md`: four product items for prompt practitioners (28 evals per gem from the UI, 29 typed variables, 30 side-by-side runs, 31 few-shot examples as data), a closing "For the prompt practitioner" order of payoff, and stronger reasoning on 14, 21 and 22.
+
 ### Fixed
 - Docker Compose builds and runs: `next.config.mjs` sets `output: "standalone"` and `frontend/public/` exists, so `frontend/Dockerfile` can copy what it expects; the frontend container receives `GEMS_API_KEY` and `BACKEND_URL` (and nothing else) and starts only after the backend's `/health` passes; the backend service no longer bind-mounts source or runs `--reload`; `.dockerignore` files keep `node_modules`, `.next` and `.venv` out of the build contexts; the obsolete `version` key is gone. CI builds both images (roadmap item 1).
 
