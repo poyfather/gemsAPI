@@ -4,6 +4,8 @@ A prioritised list of improvements to the project itself, written on 2026-10-23 
 
 Sizes: **S** is under half a day, **M** is one to three days, **L** is a week or more. Items are numbered so they can be referenced from issues and from the root roadmap.
 
+Two lenses run through the list. Items 1 to 27 come from reading the code: correctness, security, developer experience. Items 14, 21, 22 and 28 to 31 come from asking what a person who writes prompts for a living needs from a prompt library, and are summarised in [For the prompt practitioner](#for-the-prompt-practitioner) at the end. If only one thread gets attention, that one is the product.
+
 ## Already done in the hygiene pull request
 
 These were found during the audit and fixed because CI could not pass without them. They are listed so the reasoning is on record.
@@ -44,6 +46,10 @@ These were found during the audit and fixed because CI could not pass without th
 | 25 | One version source and a tidy release process | Release | S | Later |
 | 26 | Screenshots, API reference, resolution guide | Docs | S to M | Later |
 | 27 | Split-deploy guide | Docs | S | Later |
+| 28 | Evals per gem, runnable from the UI | Product, quality | M | Next |
+| 29 | Typed variables with descriptions and defaults | Product, MCP | M | Next |
+| 30 | Side-by-side runs | Product | M | Later |
+| 31 | Few-shot examples as first-class data | Product | M | Later |
 
 ## Now
 
@@ -157,7 +163,7 @@ Design and security decisions that shape everything after them.
 
 ### 14. Prompt version history
 
-- **Why**: the whole point of a prompt library is being able to see what changed and go back. Today the only trace is `updated_at`. A `gem_versions` table filled by a trigger on `gems`, a `GET /gems/{id}/versions` route, a revert route, and a diff view in `app/gems/[id]/page.tsx`. Already on the root roadmap.
+- **Why**: the whole point of a prompt library is being able to see what changed and go back. Today the only trace is `updated_at`. For someone who edits prompts daily this is the single most valuable missing feature: the question is always "what changed between the version that worked and the one that stopped working", and nothing here can answer it. A `gem_versions` table filled by a trigger on `gems`, a `GET /gems/{id}/versions` route, a revert route, and a diff view in `app/gems/[id]/page.tsx`. Already on the root roadmap.
 - **Size**: L.
 - **Depends on**: 9 (ownership columns), 15 (so the schema change ships as a migration), 4 (so stored prompt text never needs rewriting).
 
@@ -185,6 +191,18 @@ Design and security decisions that shape everything after them.
 - **Size**: S.
 - **Depends on**: nothing.
 
+### 28. Evals per gem, runnable from the UI
+
+- **Why**: `evals/eval_prompt_enhancer.py` is one script for one gem, run by hand with an API key in the environment. A prompt library earns its keep when every gem can carry a handful of input and expected-output pairs and a change can be scored before it is saved. That turns "I think this version is better" into a number, and it is the check that makes 14 (history) and 30 (side-by-side) useful rather than decorative. Store cases in a `gem_evals` table (input, expected, check type: contains, regex, JSON schema, LLM judge), add `POST /gems/{id}/evals/run`, show the score on the detail page, and record the baseline so a regression is visible. Keep live-API runs explicit and costed, as `STANDARDS.md` already requires.
+- **Size**: M.
+- **Depends on**: 15 (schema change as a migration), 11 (spend guard, since every run costs money).
+
+### 29. Typed variables with descriptions and defaults
+
+- **Why**: a variable today is only a name scraped from the prompt by `extract_variables`. Nothing says what `{tone}` expects, whether it is required, or what a sensible default is. That makes a gem usable only by the person who wrote it, and it makes the MCP tools blind: an agent calling `resolve_gem_prompt` cannot know which values to supply. Add a `variable_specs` JSON column (name, description, type, enum values, default, required), validate on resolve, render proper inputs in `GemForm.tsx` and the chat page, and expose the specs in `list_gems` and `get_gem` so MCP clients can fill them correctly.
+- **Size**: M.
+- **Depends on**: 4 (variables are identifiers), 15 (migration). Unlocks a much better 12 (API shapes) and 31.
+
 ## Later
 
 Worth doing once the foundations above are in.
@@ -203,13 +221,13 @@ Worth doing once the foundations above are in.
 
 ### 21. Multi-user accounts
 
-- **Why**: the natural next step if more than one person shares an instance: Supabase Auth in the Next.js app, `owner_id` on gems, per-user keys, and RLS that finally does something. Everything about it depends on the model chosen in 9.
+- **Why**: the natural next step if more than one person shares an instance: Supabase Auth in the Next.js app, `owner_id` on gems, per-user keys, and RLS that finally does something. Everything about it depends on the model chosen in 9. Sequence it after 14, 28 and 29: a second person wants in once there is history to review, scores to compare and variables they can understand without reading the prompt.
 - **Size**: L.
 - **Depends on**: 9, 10, 15.
 
 ### 22. Gem import and export
 
-- **Why**: moving a library between instances, or backing it up, has no supported path. A JSON or YAML bundle with gems and their references, exported by a route and a script, imported with conflict handling. Already on the root roadmap.
+- **Why**: moving a library between instances, or backing it up, has no supported path. A JSON or YAML bundle with gems and their references, exported by a route and a script, imported with conflict handling. Already on the root roadmap. For a practitioner this is also how a library is shared with a colleague or published alongside a blog post, so the format should be readable by hand.
 - **Size**: M.
 - **Depends on**: 15 for a stable schema, 14 if versions should travel too.
 
@@ -242,3 +260,29 @@ Worth doing once the foundations above are in.
 - **Why**: `CONTEXT.md` and `ARCHITECTURE.md` mention Fly.io, Railway, Render and Vercel, and `next.config.mjs` and `CORS_ORIGINS` are built for it, but there is no walkthrough. One page with the env vars on each side, TLS in front of uvicorn, and the MCP server's place in that picture.
 - **Size**: S.
 - **Depends on**: 1 (working images), 27 can reuse the compose file.
+
+### 30. Side-by-side runs
+
+- **Why**: the chat page runs one gem against one model. The everyday prompting question is comparative: this version or the last one, this model or that one, same input. A compare view that takes one input and two configurations (gem version from 14, or model and provider override) and shows the outputs next to each other, with the eval score from 28 if cases exist, is where the library becomes a workbench. The backend already has everything it needs; this is mostly `app/chat/page.tsx` and a small compare route that runs two completions.
+- **Size**: M.
+- **Depends on**: 14 for version-to-version compare, 13 so both panes stream; model-to-model compare needs neither.
+
+### 31. Few-shot examples as first-class data
+
+- **Why**: most strong prompts carry examples, and in this library they live inline in `system_prompt`, so adding or swapping one means editing the whole body and `prompts/<name>.md` by hand. Store examples as a list on the gem (input, output, optional note), render them into the resolved prompt at a marker such as `{{examples}}` inside `<examples>` tags, and let the UI add, reorder and remove them. Examples then version with 14, can be reused by 28 as eval cases, and stop colliding with the variable syntax.
+- **Size**: M.
+- **Depends on**: 4 (syntax decisions), 15 (migration), 29 (the same spec mechanism).
+
+## For the prompt practitioner
+
+The engineering items make the project safe to run. These are the ones that would make it worth recommending to someone who writes prompts for a living and has never heard of it, in the order they pay off:
+
+1. Version history with diffs and rollback (14).
+2. Evals per gem, run from the UI, with a recorded baseline (28).
+3. Side-by-side runs across versions and models (30).
+4. Typed variables with descriptions and defaults, exposed over MCP (29).
+5. Few-shot examples as data rather than prose (31).
+6. Import and export in a hand-readable format (22).
+7. Accounts and sharing, once there is something worth sharing (9, 10, 21).
+
+What the project already does well for that person: one named home per prompt, composition of small prompts into larger ones, and the MCP server, which lets Claude Desktop and Cursor fetch the right prompt themselves instead of the user pasting it.
