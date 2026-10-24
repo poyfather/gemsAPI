@@ -119,7 +119,7 @@ Compose builds both images, waits for the backend's `/health` before starting th
 
 | Syntax | Purpose |
 |---|---|
-| `{variable}` | Placeholder filled from the `variables` map at call time |
+| `{variable}` | Placeholder filled from the `variables` map at call time. Names are identifiers (`[A-Za-z_][A-Za-z0-9_]*`), so JSON or code braces such as `{"key": 1}` or `{}` are left alone |
 | `{{gem:name}}` | Embed another gem. Expanded first, recursively, up to 10 levels, with cycle detection |
 
 Variables are substituted after all references are expanded, so a value passed to the outer gem also fills placeholders in embedded gems. For example, the seed gem `engineering_lead` embeds `code_reviewer`, which embeds `base_assistant` and uses `{language}`:
@@ -130,7 +130,7 @@ curl -s http://localhost:8000/gems/resolve \
   -d '{"gem_name": "engineering_lead", "variables": {"language": "Python", "team_size": "4"}}'
 ```
 
-The response carries `resolved_prompt`, `referenced_gems` (`["code_reviewer", "base_assistant"]`) and `variables_missing` for anything left unfilled.
+The response carries `resolved_prompt`, `referenced_gems` (`["code_reviewer", "base_assistant"]`), `variables_used` and `variables_missing` for anything left unfilled. Gems can be fetched, updated and deleted by name or by id.
 
 ## Configuration
 
