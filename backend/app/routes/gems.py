@@ -1,9 +1,27 @@
+import uuid
+
 from fastapi import APIRouter, Depends, HTTPException
 from app.models import Gem, GemCreate, GemUpdate, ResolveRequest, ResolveResponse
 from app.services import gem_service
 from app.auth import require_api_key
 
 router = APIRouter(prefix="/gems", tags=["gems"], dependencies=[Depends(require_api_key)])
+
+
+def _is_uuid(value: str) -> bool:
+    try:
+        uuid.UUID(value)
+    except ValueError:
+        return False
+    return True
+
+
+async def _find_gem(identifier: str):
+    """Look a gem up by name, then by UUID. A value that is neither is simply not found."""
+    gem = await gem_service.get_gem_by_name(identifier)
+    if gem is None and _is_uuid(identifier):
+        gem = await gem_service.get_gem_by_id(identifier)
+    return gem
 
 
 @router.get("/", response_model=list[Gem], summary="List all gems")
@@ -28,28 +46,23 @@ async def resolve_gem(request: ResolveRequest):
     recursively and fill in {variable} placeholders.
     """
     try:
-        resolved, refs = await gem_service.resolve_gem(request.gem_name, request.variables)
+        result = await gem_service.resolve_gem_detailed(request.gem_name, request.variables)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 
-    # Detect any variables still unfilled in the resolved output
-    remaining_vars = gem_service.extract_variables(resolved)
-    provided = set(request.variables.keys())
-    missing = [v for v in remaining_vars if v not in provided]
-
     return ResolveResponse(
-        gem_name=request.gem_name,
-        resolved_prompt=resolved,
-        referenced_gems=refs,
-        variables_used=sorted(provided & set(remaining_vars + list(provided))),
-        variables_missing=missing,
+        gem_name=result.gem_name,
+        resolved_prompt=result.resolved_prompt,
+        referenced_gems=result.referenced_gems,
+        variables_used=result.variables_used,
+        variables_missing=result.variables_missing,
     )
 
 
 @router.get("/{gem_id}", response_model=Gem, summary="Get a gem")
 async def get_gem(gem_id: str):
     """Fetch a gem by name or UUID."""
-    gem = await gem_service.get_gem_by_name(gem_id) or await gem_service.get_gem_by_id(gem_id)
+    gem = await _find_gem(gem_id)
     if not gem:
         raise HTTPException(status_code=404, detail=f"Gem '{gem_id}' not found.")
     return gem
@@ -57,18 +70,18 @@ async def get_gem(gem_id: str):
 
 @router.put("/{gem_id}", response_model=Gem, summary="Update a gem")
 async def update_gem(gem_id: str, data: GemUpdate):
-    """Update a gem by UUID. Only provided fields are changed."""
-    gem = await gem_service.get_gem_by_id(gem_id)
+    """Update a gem by name or UUID. Only provided fields are changed."""
+    gem = await _find_gem(gem_id)
     if not gem:
         raise HTTPException(status_code=404, detail=f"Gem '{gem_id}' not found.")
-    return await gem_service.update_gem(gem_id, data)
+    return await gem_service.update_gem(gem.id, data)
 
 
 @router.delete("/{gem_id}", summary="Delete a gem")
 async def delete_gem(gem_id: str):
-    """Soft-delete a gem (sets is_active=false)."""
-    gem = await gem_service.get_gem_by_id(gem_id)
+    """Soft-delete a gem by name or UUID (sets is_active=false)."""
+    gem = await _find_gem(gem_id)
     if not gem:
         raise HTTPException(status_code=404, detail=f"Gem '{gem_id}' not found.")
-    await gem_service.soft_delete_gem(gem_id)
+    await gem_service.soft_delete_gem(gem.id)
     return {"message": f"Gem '{gem.name}' deleted."}

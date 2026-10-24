@@ -1,8 +1,4 @@
 """Unit tests for gem_service helpers (no DB or LLM calls)."""
-import sys
-import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'backend'))
-
 from app.services.gem_service import extract_variables, extract_gem_refs
 
 
