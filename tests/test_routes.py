@@ -3,9 +3,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
-from conftest import make_gem
+from conftest import TEST_API_KEY, make_gem
 
-KEY = {"X-API-Key": "test-key"}
+KEY = {"X-API-Key": TEST_API_KEY}
 
 
 @pytest.fixture

@@ -7,7 +7,9 @@ from datetime import datetime, timezone
 
 import pytest
 
-os.environ.setdefault("GEMS_API_KEY", "test-key")
+# Set, not setdefault: CI exports its own placeholder key, and the route tests must send the one the app checks.
+TEST_API_KEY = "test-key"
+os.environ["GEMS_API_KEY"] = TEST_API_KEY
 
 from app.models import Gem  # noqa: E402
 from app.services import gem_service  # noqa: E402
