@@ -18,6 +18,9 @@ All notable changes to gemsAPI are documented here. The format follows [Keep a C
 - `tests/conftest.py` with an in-memory stand-in for the gems table, `tests/test_resolver.py` (nesting, variable propagation, cycles, depth limit, braces in prompts) and `tests/test_routes.py` (auth, lookups, 404s, resolve) through FastAPI's TestClient; `pytest.ini` sets `pythonpath` so the tests no longer patch `sys.path` (roadmap item 5). 29 tests.
 
 ### Changed
+- Frontend lint runs the strict `next/typescript` rule set: `catch (e: any)` is gone in favour of an `errorMessage()` helper in `lib/api.ts`, unused imports in `GemForm.tsx` removed, quotes in JSX escaped, and the chat page effect lists its dependency (roadmap item 8).
+
+### Changed
 - `ARCHITECTURE.md` rewritten around nine Mermaid diagrams (big picture, component model, two request sequences, gem composition, resolution walkthrough, data model, trust boundaries, deployment topologies) with a component table; the ASCII box drawing is gone. The big-picture diagram also sits in the README under "How it fits together".
 
 ### Security

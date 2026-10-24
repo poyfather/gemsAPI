@@ -120,4 +120,9 @@ export const chat = {
     request<AvailableModels>("/chat/models"),
 };
 
+/** Message for an unknown thrown value, for catch blocks. */
+export function errorMessage(e: unknown, fallback = "Something went wrong."): string {
+  return e instanceof Error && e.message ? e.message : fallback;
+}
+
 export { ApiError };

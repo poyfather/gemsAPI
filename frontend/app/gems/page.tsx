@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { gems as gemsApi, Gem } from "@/lib/api";
+import { gems as gemsApi, Gem, errorMessage } from "@/lib/api";
 import GemCard from "@/components/GemCard";
 import {
   Search, Plus, Loader2, AlertTriangle, Gem as GemIcon,
@@ -23,8 +23,8 @@ export default function GemsPage() {
     try {
       const data = await gemsApi.list();
       setAllGems(data);
-    } catch (e: any) {
-      setError(e.message || "Failed to load gems. Is the backend running?");
+    } catch (e) {
+      setError(errorMessage(e, "Failed to load gems. Is the backend running?"));
     } finally {
       setLoading(false);
     }
@@ -37,8 +37,8 @@ export default function GemsPage() {
     try {
       await gemsApi.delete(id);
       setAllGems((prev) => prev.filter((g) => g.id !== id));
-    } catch (e: any) {
-      alert(e.message || "Failed to delete gem.");
+    } catch (e) {
+      alert(errorMessage(e, "Failed to delete gem."));
     }
   };
 
@@ -191,7 +191,7 @@ export default function GemsPage() {
       {/* No results after filter */}
       {!loading && !error && allGems.length > 0 && filtered.length === 0 && (
         <div className="text-center py-16 text-slate-500 text-sm">
-          No gems match "{search}"{activeTag ? ` in tag "${activeTag}"` : ""}.
+          No gems match &quot;{search}&quot;{activeTag ? ` in tag "${activeTag}"` : ""}.
         </div>
       )}
 
