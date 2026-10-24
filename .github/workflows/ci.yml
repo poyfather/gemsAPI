@@ -95,6 +95,6 @@ jobs:
 
       - name: No em or en dashes in the community docs
         run: |
-          if grep -rnP '[\x{2014}\x{2013}]' README.md CONTRIBUTING.md SECURITY.md SUPPORT.md docs/ROADMAP.md; then
+          if grep -rnP '[\x{2014}\x{2013}]' README.md CONTRIBUTING.md SECURITY.md SUPPORT.md ARCHITECTURE.md docs/ROADMAP.md; then
             echo "::error::Use commas, periods or 'to' instead of dashes"; exit 1
           fi

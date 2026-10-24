@@ -13,6 +13,44 @@ A self-hosted prompt library. Store reusable LLM system prompts ("gems") in Supa
 
 System prompts tend to live scattered across code, notes and chat histories, with no way to reuse the good parts. gemsAPI gives each prompt a name, a description, tags and a home in Postgres, then lets one gem embed another the way a function calls another. A `code_reviewer` gem can start with `{{gem:base_assistant}}` and add its own rules; an `engineering_lead` gem can embed `code_reviewer`. Resolution is depth-limited and cycle-safe, and every surface (REST, UI, MCP) uses the same resolver.
 
+## How it fits together
+
+```mermaid
+flowchart LR
+    subgraph callers["Who calls it"]
+        UI["Web UI<br/>Next.js, port 3000"]
+        REST["Scripts and apps<br/>REST with X-API-Key"]
+        MCPC["MCP clients<br/>Claude Desktop, Cursor"]
+    end
+
+    subgraph core["gemsAPI"]
+        API["FastAPI service<br/>/gems and /chat, port 8000"]
+        MCPS["FastMCP server<br/>7 tools, 2 resources, stdio"]
+        RES["Resolver<br/>expand gem references,<br/>fill variables"]
+        LLM["LLM adapter<br/>complete and stream"]
+    end
+
+    DB[("Supabase Postgres<br/>gems table")]
+
+    subgraph providers["LLM providers"]
+        ANT["Anthropic Messages API"]
+        OAI["OpenAI Chat Completions"]
+    end
+
+    UI -- "/api/* proxy,<br/>key added server-side" --> API
+    REST --> API
+    MCPC -- "stdio" --> MCPS
+    API --> RES
+    MCPS --> RES
+    RES --> DB
+    API --> LLM
+    MCPS --> LLM
+    LLM --> ANT
+    LLM --> OAI
+```
+
+Every surface hands the gem to the same resolver, which expands `{{gem:name}}` references recursively, fills `{variable}` placeholders, and either returns the finished prompt or sends it to a provider with the caller's messages. [ARCHITECTURE.md](ARCHITECTURE.md) has the component model, request sequences, the data model and the trust boundaries as further diagrams.
+
 ## What you get
 
 | Surface | What it does |
@@ -136,7 +174,7 @@ In `frontend/`: `npm run lint`, `npx tsc --noEmit`, `npm run build`. CI runs all
 ## Documentation map
 
 - [CONTEXT.md](CONTEXT.md): purpose, users, vocabulary and guardrails
-- [ARCHITECTURE.md](ARCHITECTURE.md): component model, request flow, provider integration
+- [ARCHITECTURE.md](ARCHITECTURE.md): diagrams of the components, request flows, gem composition, data model and trust boundaries
 - [DECISIONS.md](DECISIONS.md): architecture decision records
 - [STANDARDS.md](STANDARDS.md): coding, testing, prompt and eval conventions
 - [AGENTS.md](AGENTS.md): how AI coding agents should work in this repo
