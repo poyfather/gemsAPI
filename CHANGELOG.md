@@ -5,6 +5,9 @@ All notable changes to gemsAPI are documented here. The format follows [Keep a C
 ## [Unreleased]
 
 ### Changed
+- README "Why" rewritten in plain language: the problem (instructions scattered across tools), the drawer analogy, the two tricks (prompts inside prompts, blanks), and who it is and is not for yet.
+
+### Changed
 - `docs/ROADMAP.md`: four product items for prompt practitioners (28 evals per gem from the UI, 29 typed variables, 30 side-by-side runs, 31 few-shot examples as data), a closing "For the prompt practitioner" order of payoff, and stronger reasoning on 14, 21 and 22.
 
 ### Fixed
