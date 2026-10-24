@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // The Dockerfile copies .next/standalone, so build the self-contained server.
+  output: "standalone",
   async rewrites() {
     // Proxy /api/* to the FastAPI backend so the frontend
     // never needs to hard-code the backend URL in production.

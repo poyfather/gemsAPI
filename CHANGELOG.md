@@ -4,6 +4,9 @@ All notable changes to gemsAPI are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Fixed
+- Docker Compose builds and runs: `next.config.mjs` sets `output: "standalone"` and `frontend/public/` exists, so `frontend/Dockerfile` can copy what it expects; the frontend container receives `GEMS_API_KEY` and `BACKEND_URL` (and nothing else) and starts only after the backend's `/health` passes; the backend service no longer bind-mounts source or runs `--reload`; `.dockerignore` files keep `node_modules`, `.next` and `.venv` out of the build contexts; the obsolete `version` key is gone. CI builds both images (roadmap item 1).
+
 ### Changed
 - `ARCHITECTURE.md` rewritten around nine Mermaid diagrams (big picture, component model, two request sequences, gem composition, resolution walkthrough, data model, trust boundaries, deployment topologies) with a component table; the ASCII box drawing is gone. The big-picture diagram also sits in the README under "How it fits together".
 

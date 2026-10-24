@@ -112,7 +112,7 @@ cp .env.example .env
 docker compose up --build
 ```
 
-The compose file builds both images and wires `BACKEND_URL` for the frontend. Two things to know: the frontend container does not yet receive `GEMS_API_KEY`, and the frontend Dockerfile expects a standalone Next.js build that `next.config.mjs` does not enable yet. Both are tracked in [docs/ROADMAP.md](docs/ROADMAP.md).
+Compose builds both images, waits for the backend's `/health` before starting the frontend, and passes the frontend only `BACKEND_URL` and `GEMS_API_KEY` (the LLM and Supabase keys stay in the backend container). Then open http://localhost:3000. CI builds both images on every pull request.
 </details>
 
 ## Gem syntax
