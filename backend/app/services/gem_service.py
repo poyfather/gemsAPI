@@ -14,7 +14,7 @@ from app.models import Gem, GemCreate, GemUpdate
 
 # Patterns
 _VAR_RE = re.compile(r'\{([^{}]+)\}')           # matches {variable}
-_GEM_RE = re.compile(r'\{\{gem:([^}]+)\}\}')    # matches {{gem:name}}
+_GEM_RE = re.compile(r'\{\{gem:([A-Za-z0-9_.-]+)\}\}')   # matches {{gem:name}}; names are identifiers only
 
 MAX_DEPTH = 10  # prevent runaway recursion
 

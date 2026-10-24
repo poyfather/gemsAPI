@@ -1,51 +1,50 @@
 version: 2
 updates:
-  # FastAPI backend and the MCP server.
-  - package-ecosystem: "pip"
-    directory: "/backend"
-    schedule:
-      interval: "monthly"
-    labels: ["dependencies", "backend"]
-    groups:
-      llm-sdks:
-        patterns: ["anthropic", "openai", "fastmcp", "mcp"]
-      web:
-        patterns: ["fastapi", "uvicorn*", "pydantic*", "httpx", "supabase"]
-
-  # Root dev tooling (pytest, ruff).
+  # Python: one entry at the repo root covers backend/requirements.txt and the
+  # root requirements.txt (Dependabot scans both from "/"). One grouped PR a month.
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
       interval: "monthly"
-    labels: ["dependencies", "tooling"]
+    labels: ["dependencies", "backend"]
+    groups:
+      python:
+        patterns: ["*"]
 
-  # Next.js frontend.
+  # Next.js frontend. Minor and patch updates arrive as one grouped PR a month.
+  # Major versions of the framework and its toolchain (Next 15 and 16, React 19,
+  # Tailwind 4, ESLint 9 and 10, TypeScript 7, lucide 1.x) are migrations, not
+  # updates; they are tracked in docs/ROADMAP.md item 7 and ignored here.
   - package-ecosystem: "npm"
     directory: "/frontend"
     schedule:
       interval: "monthly"
     labels: ["dependencies", "frontend"]
     groups:
-      next:
-        patterns: ["next", "eslint-config-next", "react", "react-dom", "@types/react*"]
-      tooling:
-        patterns: ["eslint*", "typescript", "tailwindcss", "postcss", "autoprefixer", "@types/node"]
+      frontend:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
-  # Base images in the two Dockerfiles.
+  # Base images. The frontend image tracks the current Node LTS line, so skip
+  # odd-numbered (non-LTS) majors; Python minors are fine.
   - package-ecosystem: "docker"
-    directory: "/backend"
+    directories: ["/backend", "/frontend"]
     schedule:
       interval: "monthly"
     labels: ["dependencies", "docker"]
-  - package-ecosystem: "docker"
-    directory: "/frontend"
-    schedule:
-      interval: "monthly"
-    labels: ["dependencies", "docker"]
+    ignore:
+      - dependency-name: "node"
+        update-types: ["version-update:semver-major"]
 
-  # Actions used by the CI workflows.
+  # Actions used by the workflows, grouped into one PR.
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "monthly"
     labels: ["dependencies", "ci"]
+    groups:
+      actions:
+        patterns: ["*"]
