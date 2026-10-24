@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { gems as gemsApi, chat as chatApi, Gem, ChatMessage, AvailableModels } from "@/lib/api";
 import {
@@ -14,7 +14,7 @@ interface Message extends ChatMessage {
   loading?: boolean;
 }
 
-export default function ChatPage() {
+function ChatPageInner() {
   const searchParams = useSearchParams();
   const initialGem   = searchParams.get("gem") || "";
 
@@ -352,5 +352,14 @@ export default function ChatPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// useSearchParams() needs a Suspense boundary so the page can be prerendered.
+export default function ChatPage() {
+  return (
+    <Suspense fallback={null}>
+      <ChatPageInner />
+    </Suspense>
   );
 }

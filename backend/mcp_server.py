@@ -46,7 +46,6 @@ from app.services.gem_service import (
     get_all_gems,
     get_gem_by_name,
     resolve_gem,
-    create_gem,
     extract_variables,
     extract_gem_refs,
 )

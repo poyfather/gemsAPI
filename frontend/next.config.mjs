@@ -1,6 +1,5 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   async rewrites() {
     // Proxy /api/* to the FastAPI backend so the frontend
     // never needs to hard-code the backend URL in production.

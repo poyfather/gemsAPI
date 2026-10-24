@@ -1,0 +1,74 @@
+name: Bug report
+description: Something in the API, MCP server, UI or schema does not work as documented
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for the report. Please do not paste API keys, Supabase keys or full .env files anywhere in this issue.
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - FastAPI backend (/gems, /chat)
+        - MCP server (backend/mcp_server.py)
+        - Next.js frontend
+        - Gem resolution ({{gem:name}} or {variable} handling)
+        - Supabase schema or seed data
+        - Docker Compose
+        - Documentation
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Create a gem with system_prompt '...'
+        2. POST /gems/resolve with variables {...}
+        3. See error
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or error output
+      description: uvicorn output, the JSON error body, browser console, or the MCP client's log. Redact keys.
+      render: text
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - Low (cosmetic, minor inconvenience)
+        - Medium (feature partially broken)
+        - High (feature completely broken)
+        - Critical (data loss or security issue, consider reporting privately instead)
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: gemsAPI version or commit
+      placeholder: v0.0.2 or a commit SHA
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, Python version, Node version, how you run it (local, Docker Compose, split deploy), and the MCP client if relevant (Claude Desktop, Cursor, other).
+      placeholder: |
+        OS: macOS 15
+        Python: 3.12.4
+        Node: 20.18
+        Runs via: docker compose up
+        MCP client: Claude Desktop 1.x

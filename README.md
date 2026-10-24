@@ -1,93 +1,152 @@
 # gemsAPI
 
-## Overview
-gemsAPI is a self-hosted prompt library that stores, versions, and serves reusable LLM system prompts ("gems") from a Supabase database. It provides a web UI for managing prompts, a chat interface for testing them, a FastAPI REST layer for programmatic access, and a FastMCP server so any MCP-capable client (Claude Desktop, Cursor, etc.) can read and use gems directly.
+A self-hosted prompt library. Store reusable LLM system prompts ("gems") in Supabase, compose them with `{{gem:name}}`, fill `{variable}` placeholders at call time, and serve the result over a REST API, a web UI and an MCP server that Claude Desktop, Cursor and other MCP clients can call directly.
 
-## Audience
-Engineers and AI builders who want a central, version-controlled store for their LLM system prompts — accessible from code, the browser, and AI agent tooling.
+[![CI](https://github.com/poyfather/gemsAPI/actions/workflows/ci.yml/badge.svg)](https://github.com/poyfather/gemsAPI/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/poyfather/gemsAPI/actions/workflows/codeql.yml/badge.svg)](https://github.com/poyfather/gemsAPI/actions/workflows/codeql.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-1B2A4A.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-0.0.2-7c3aed.svg)](CHANGELOG.md)
+[![Python 3.12+](https://img.shields.io/badge/Python-3.12%2B-3776AB.svg)](backend/requirements.txt)
+[![Next.js 14](https://img.shields.io/badge/Next.js-14-000000.svg)](frontend/package.json)
 
-## Core Capabilities
-- **Gem management**: create, edit, tag, and search named system prompts via a Next.js web UI.
-- **Recursive composition**: embed one gem inside another with `{{gem:name}}` syntax; variables filled at call time with `{variable}` placeholders. Depth-limited (10 levels), cycle-safe.
-- **Multi-provider chat testing**: test any gem in-browser against Anthropic (Claude) or OpenAI (GPT) models.
-- **REST API**: full CRUD + resolve endpoint via FastAPI. Swagger at `/docs`.
-- **MCP server**: FastMCP exposes `list_gems`, `get_gem`, `resolve_gem_prompt`, `chat_with_gem`, and `create_gem` as tools plus `gems://` resources — compatible with Claude Desktop and any MCP client.
+## Why
 
-## Quickstart
+System prompts tend to live scattered across code, notes and chat histories, with no way to reuse the good parts. gemsAPI gives each prompt a name, a description, tags and a home in Postgres, then lets one gem embed another the way a function calls another. A `code_reviewer` gem can start with `{{gem:base_assistant}}` and add its own rules; an `engineering_lead` gem can embed `code_reviewer`. Resolution is depth-limited and cycle-safe, and every surface (REST, UI, MCP) uses the same resolver.
 
-### Prerequisites
-- Python 3.12+, Node 20+
-- A free [Supabase](https://supabase.com) project
-- `ANTHROPIC_API_KEY` and/or `OPENAI_API_KEY`
+## What you get
 
-### Setup
-```bash
-# 1. Clone
-git clone https://github.com/poyfather/gemsAPI.git && cd gemsAPI
+| Surface | What it does |
+|---|---|
+| **Web UI** (Next.js, port 3000) | Browse, search and tag gems, edit them with a live resolved preview, and test any gem in a chat view against Anthropic or OpenAI models |
+| **REST API** (FastAPI, port 8000) | CRUD on `/gems`, `POST /gems/resolve` to expand a gem, `POST /chat` with optional SSE streaming, Swagger at `/docs` |
+| **MCP server** (FastMCP, stdio) | Tools `list_gems`, `search_gems`, `get_gem`, `resolve_gem_prompt`, `chat_with_gem`, `create_gem`, `list_available_models`, plus `gems://list` and `gems://{name}` resources |
+| **Seed gems** | `base_assistant`, `code_reviewer`, `creative_writer`, `summarizer`, `engineering_lead`, `prompt_enhancer`, each also kept as a reviewable file in [`prompts/`](prompts/) |
 
-# 2. Environment
-cp .env.example .env
-# Fill in: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY
+## Quick start
 
-# 3. Supabase — run supabase/schema.sql in your project SQL editor
+You need Python 3.12 or newer, Node 20 or newer, a free [Supabase](https://supabase.com) project, and an `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` (the chat features need at least one; the library itself works without).
 
-# 4. Backend
-cd backend
-python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-uvicorn app.main:app --reload
-# API: http://localhost:8000  |  Docs: http://localhost:8000/docs
+1. **Create the database and your env files.** In the Supabase SQL editor, run [`supabase/schema.sql`](supabase/schema.sql); it creates the `gems` table and the seed gems and is safe to run twice. Then:
+   ```sh
+   git clone https://github.com/poyfather/gemsAPI.git && cd gemsAPI
+   cp .env.example backend/.env                    # Supabase URL and key, LLM keys, GEMS_API_KEY
+   cp frontend/.env.local.example frontend/.env.local   # the same GEMS_API_KEY
+   python -c "import secrets; print(secrets.token_urlsafe(32))"   # a value for GEMS_API_KEY
+   ```
+2. **Run the backend.**
+   ```sh
+   cd backend
+   python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\Activate.ps1
+   pip install -r requirements.txt
+   uvicorn app.main:app --reload                       # http://localhost:8000, Swagger at /docs
+   ```
+3. **Run the frontend** in a second terminal.
+   ```sh
+   cd frontend && npm install && npm run dev           # http://localhost:3000
+   ```
 
-# 5. Frontend (new terminal)
-cd frontend && npm install && npm run dev
-# UI: http://localhost:3000
+The server refuses to start until `GEMS_API_KEY` is set, and every `/gems` and `/chat` request needs it in an `X-API-Key` header. The frontend adds that header server-side in [`frontend/middleware.ts`](frontend/middleware.ts), so the key never reaches the browser.
 
-# 6. Dev tools (from repo root)
-pip install -r requirements.txt   # installs pytest + ruff
-.\scripts\setup.ps1               # Windows convenience
-.\scripts\test.ps1                # lint + test
-```
+<details>
+<summary>Connect an MCP client (Claude Desktop, Cursor)</summary>
 
-### Docker (all-in-one)
-```bash
-cp .env.example .env
-docker compose up --build
-```
+The MCP server runs over stdio and reads `backend/.env`, so point the client at the backend's virtualenv Python and the absolute path of [`backend/mcp_server.py`](backend/mcp_server.py). For Claude Desktop the config file is `~/Library/Application Support/Claude/claude_desktop_config.json` on macOS and `%APPDATA%\Claude\claude_desktop_config.json` on Windows:
 
-### MCP (Claude Desktop)
-Add to `~/.claude_desktop_config.json`:
 ```json
 {
   "mcpServers": {
     "gemsAPI": {
-      "command": "python",
+      "command": "/absolute/path/to/gemsAPI/backend/.venv/bin/python",
       "args": ["/absolute/path/to/gemsAPI/backend/mcp_server.py"]
     }
   }
 }
 ```
 
-## Gem Syntax
+Restart the client. You can also run it by hand with `fastmcp run mcp_server.py` from `backend/`.
+</details>
+
+<details>
+<summary>Docker Compose</summary>
+
+```sh
+cp .env.example .env
+docker compose up --build
+```
+
+The compose file builds both images and wires `BACKEND_URL` for the frontend. Two things to know: the frontend container does not yet receive `GEMS_API_KEY`, and the frontend Dockerfile expects a standalone Next.js build that `next.config.mjs` does not enable yet. Both are tracked in [docs/ROADMAP.md](docs/ROADMAP.md).
+</details>
+
+## Gem syntax
+
 | Syntax | Purpose |
-|--------|---------|
-| `{variable}` | Placeholder filled at call time |
-| `{{gem:name}}` | Embed another gem recursively |
+|---|---|
+| `{variable}` | Placeholder filled from the `variables` map at call time |
+| `{{gem:name}}` | Embed another gem. Expanded first, recursively, up to 10 levels, with cycle detection |
 
-## Documentation Map
-- System context and goals: `CONTEXT.md`
-- Architecture and data flow: `ARCHITECTURE.md`
-- Security policy: `SECURITY.md`
-- Coding and testing standards: `STANDARDS.md`
-- Decision history (ADRs): `DECISIONS.md`
-- Development roadmap: `ROADMAP.md`
-- Release notes: `CHANGELOG.md`
-- Agent workflow guide: `AGENTS.md`
+Variables are substituted after all references are expanded, so a value passed to the outer gem also fills placeholders in embedded gems. For example, the seed gem `engineering_lead` embeds `code_reviewer`, which embeds `base_assistant` and uses `{language}`:
 
-## Template Bootstrap Checklist
-- [x] Required docs exist at root.
-- [x] Scaffold directories exist (`src/`, `tests/`, `prompts/`, `evals/`, `configs/`, `scripts/`).
-- [x] Backend dependencies install from `backend/requirements.txt`.
-- [x] Root dev dependencies install from `requirements.txt` (`pytest`, `ruff`).
-- [ ] `ruff check .` passes.
-- [ ] `pytest -q` passes.
-- [ ] Supabase schema applied and seed gems visible in UI.
+```sh
+curl -s http://localhost:8000/gems/resolve \
+  -H "X-API-Key: $GEMS_API_KEY" -H "Content-Type: application/json" \
+  -d '{"gem_name": "engineering_lead", "variables": {"language": "Python", "team_size": "4"}}'
+```
+
+The response carries `resolved_prompt`, `referenced_gems` (`["code_reviewer", "base_assistant"]`) and `variables_missing` for anything left unfilled.
+
+## Configuration
+
+Backend variables live in `backend/.env` (template: [`.env.example`](.env.example)); frontend variables in `frontend/.env.local` (template: [`frontend/.env.local.example`](frontend/.env.local.example)).
+
+| Variable | Where | What it does |
+|---|---|---|
+| `SUPABASE_URL` | backend | Your project URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | backend | Server-side key; bypasses row level security. `SUPABASE_ANON_KEY` is accepted instead if you want RLS enforced |
+| `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` | backend | Providers for `/chat` and `chat_with_gem`. Set the ones you use |
+| `GEMS_API_KEY` | backend and frontend | Shared secret for the `X-API-Key` header. Required |
+| `CORS_ORIGINS` | backend | Comma-separated allowed origins, default `http://localhost:3000` |
+| `BACKEND_URL` | frontend | Where `/api/*` is proxied, default `http://localhost:8000` |
+
+## Project layout
+
+```
+backend/app/        FastAPI app: routes/ (gems, chat), services/ (gem_service resolver, llm_service), auth.py, models.py
+backend/mcp_server.py   FastMCP server over the same services
+frontend/           Next.js 14 app router UI (app/, components/, lib/api.ts, middleware.ts)
+supabase/           schema.sql (table, RLS, seed gems) and one-off migrations
+prompts/            the shipped gems as markdown, one file per gem
+evals/              live-API quality checks for gems (eval_prompt_enhancer.py)
+tests/              pytest unit tests, no network
+scripts/            setup.ps1 and test.ps1 for Windows
+docs/               ROADMAP.md
+```
+
+## Development
+
+From the repo root, with the backend virtualenv active:
+
+```sh
+pip install -r requirements.txt   # pytest and ruff
+ruff check .
+pytest -q
+```
+
+In `frontend/`: `npm run lint`, `npx tsc --noEmit`, `npm run build`. CI runs all of these on every pull request, plus CodeQL and a check that every file in `prompts/` has a seed row in `supabase/schema.sql`. See [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow and [STANDARDS.md](STANDARDS.md) for conventions.
+
+## Documentation map
+
+- [CONTEXT.md](CONTEXT.md): purpose, users, vocabulary and guardrails
+- [ARCHITECTURE.md](ARCHITECTURE.md): component model, request flow, provider integration
+- [DECISIONS.md](DECISIONS.md): architecture decision records
+- [STANDARDS.md](STANDARDS.md): coding, testing, prompt and eval conventions
+- [AGENTS.md](AGENTS.md): how AI coding agents should work in this repo
+- [docs/ROADMAP.md](docs/ROADMAP.md): prioritised improvements, and [ROADMAP.md](ROADMAP.md) for delivery status
+- [CHANGELOG.md](CHANGELOG.md): release notes
+
+## Contributing
+
+Bug reports, gem proposals and pull requests are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md) and [SUPPORT.md](SUPPORT.md). Security concerns go through [SECURITY.md](SECURITY.md), not the issue tracker.
+
+## License
+
+[MIT](LICENSE).

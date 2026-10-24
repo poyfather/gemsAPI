@@ -1,0 +1,51 @@
+version: 2
+updates:
+  # FastAPI backend and the MCP server.
+  - package-ecosystem: "pip"
+    directory: "/backend"
+    schedule:
+      interval: "monthly"
+    labels: ["dependencies", "backend"]
+    groups:
+      llm-sdks:
+        patterns: ["anthropic", "openai", "fastmcp", "mcp"]
+      web:
+        patterns: ["fastapi", "uvicorn*", "pydantic*", "httpx", "supabase"]
+
+  # Root dev tooling (pytest, ruff).
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    labels: ["dependencies", "tooling"]
+
+  # Next.js frontend.
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "monthly"
+    labels: ["dependencies", "frontend"]
+    groups:
+      next:
+        patterns: ["next", "eslint-config-next", "react", "react-dom", "@types/react*"]
+      tooling:
+        patterns: ["eslint*", "typescript", "tailwindcss", "postcss", "autoprefixer", "@types/node"]
+
+  # Base images in the two Dockerfiles.
+  - package-ecosystem: "docker"
+    directory: "/backend"
+    schedule:
+      interval: "monthly"
+    labels: ["dependencies", "docker"]
+  - package-ecosystem: "docker"
+    directory: "/frontend"
+    schedule:
+      interval: "monthly"
+    labels: ["dependencies", "docker"]
+
+  # Actions used by the CI workflows.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    labels: ["dependencies", "ci"]
