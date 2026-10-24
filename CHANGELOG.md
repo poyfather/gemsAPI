@@ -5,6 +5,9 @@ All notable changes to gemsAPI are documented here. The format follows [Keep a C
 ## [Unreleased]
 
 ### Fixed
+- Docker Compose builds and runs: `next.config.mjs` sets `output: "standalone"` and `frontend/public/` exists, so `frontend/Dockerfile` can copy what it expects; the frontend container receives `GEMS_API_KEY` and `BACKEND_URL` (and nothing else) and starts only after the backend's `/health` passes; the backend service no longer bind-mounts source or runs `--reload`; `.dockerignore` files keep `node_modules`, `.next` and `.venv` out of the build contexts; the obsolete `version` key is gone. CI builds both images (roadmap item 1).
+
+### Fixed
 - `GET`, `PUT` and `DELETE /gems/{id}` accept a name or a UUID; an unknown value that is not a UUID is a 404 instead of a Postgres error surfacing as a 500 (roadmap item 2).
 - `POST /gems/resolve` reports `variables_used` as the placeholders that were actually present and filled, not the keys that were sent; the MCP `resolve_gem_prompt` tool returns the same field (roadmap item 3).
 - Variables are filled in a single pass after expansion, so a value containing `{other}` is never substituted again and the result no longer depends on dict order (roadmap item 3).

@@ -76,6 +76,22 @@ jobs:
           NEXT_TELEMETRY_DISABLED: "1"
         run: npm run build
 
+  docker:
+    name: Docker images build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Compose file is valid
+        env:
+          GEMS_API_KEY: ci-placeholder
+        run: docker compose config --quiet
+
+      - name: Build both images
+        env:
+          GEMS_API_KEY: ci-placeholder
+        run: docker compose build
+
   gems:
     name: Shipped gems and docs stay in sync
     runs-on: ubuntu-latest

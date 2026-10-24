@@ -1,32 +1,36 @@
-version: "3.9"
-
 services:
 
   # ── FastAPI backend ────────────────────────────────────────
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile
     ports:
       - "8000:8000"
     env_file:
-      - .env
+      # Supabase, LLM keys, GEMS_API_KEY. Copy .env.example to .env first.
+      - path: .env
+        required: false
     environment:
       - CORS_ORIGINS=http://localhost:3000
-    volumes:
-      - ./backend:/app
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
     restart: unless-stopped
 
   # ── Next.js frontend ───────────────────────────────────────
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
     ports:
       - "3000:3000"
     environment:
+      # Only the two values the Next.js server needs; the LLM keys stay in the backend container.
       - BACKEND_URL=http://backend:8000
+      - GEMS_API_KEY=${GEMS_API_KEY}
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     restart: unless-stopped

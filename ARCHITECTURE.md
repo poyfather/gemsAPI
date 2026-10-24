@@ -317,7 +317,7 @@ flowchart TB
     split --> SB
 ```
 
-The Compose path is wired but does not build cleanly yet (`docs/ROADMAP.md` item 1). The MCP server is always a local process started by the client over stdio; hosting it over HTTP would need authentication first.
+Compose builds a standalone Next.js server and a uvicorn image, gates the frontend on the backend's `/health`, and hands the frontend only `BACKEND_URL` and `GEMS_API_KEY`. The MCP server is always a local process started by the client over stdio; hosting it over HTTP would need authentication first.
 
 ## Evaluation and quality gates
 

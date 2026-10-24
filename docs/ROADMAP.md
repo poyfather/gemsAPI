@@ -17,14 +17,14 @@ These were found during the audit and fixed because CI could not pass without th
 
 | # | Item | Area | Size | Group |
 |---|---|---|---|---|
-| 1 | Make Docker Compose work end to end | DX, deployment | S | Now |
-| 2 | 404, not 500, for unknown non-UUID gem ids | Correctness | S | Now |
-| 3 | Fix `variables_used` and order-dependent substitution | Correctness | S | Now |
-| 4 | Stop treating every `{...}` as a variable | Correctness | M | Now |
-| 5 | Resolver and route tests with a fake database | Tests | M | Now |
-| 6 | Constant-time key check, no provider errors in responses | Security | S | Now |
-| 7 | Patched Next.js, then Next 15 | Security, DX | S then M | Now |
-| 8 | Turn the strict TypeScript lint rules back on | DX | S | Now |
+| 1 | Make Docker Compose work end to end | DX, deployment | S | Now, done |
+| 2 | 404, not 500, for unknown non-UUID gem ids | Correctness | S | Now, done |
+| 3 | Fix `variables_used` and order-dependent substitution | Correctness | S | Now, done |
+| 4 | Stop treating every `{...}` as a variable | Correctness | M | Now, done |
+| 5 | Resolver and route tests with a fake database | Tests | M | Now, done |
+| 6 | Constant-time key check, no provider errors in responses | Security | S | Now, done |
+| 7 | Patched Next.js, then Next 15 | Security, DX | S then M | Now, patch done |
+| 8 | Turn the strict TypeScript lint rules back on | DX | S | Now, done |
 | 9 | Decide the Supabase RLS and key model | Security | M to L | Next |
 | 10 | Per-client API keys, and auth for a hosted MCP server | Security | M | Next |
 | 11 | Rate limits and spend guards on chat | Security, cost | M | Next |
@@ -51,11 +51,17 @@ Things that are broken or that a first contributor would trip over this week.
 
 ### 1. Make Docker Compose work end to end
 
+**Status: done** (`output: "standalone"`, `public/`, `GEMS_API_KEY` to the frontend, health-gated start, `.dockerignore` files, a CI job that builds both images).
+
+
 - **Why**: `docker compose up --build` cannot succeed today. `frontend/Dockerfile` copies `.next/standalone` and `public/`, but `frontend/next.config.mjs` does not set `output: "standalone"` and there is no `public/` directory, so the image build fails at the copy step. `docker-compose.yml` passes `BACKEND_URL` to the frontend service but not `GEMS_API_KEY`, so `frontend/middleware.ts` forwards requests without the header and every UI call returns 401. The `version: "3.9"` key is obsolete and Compose warns about it, and the backend service mounts `./backend:/app` with `--reload`, which is a development setting in what the README presents as the all-in-one deployment.
 - **Size**: S.
 - **Depends on**: nothing. A CI job that runs `docker compose build` would keep it working.
 
 ### 2. Return 404, not 500, for unknown gem ids that are not UUIDs
+
+**Status: done** in PR 22 (`_find_gem()` in `routes/gems.py`; `PUT` and `DELETE` accept names too).
+
 
 - **Why**: `GET /gems/{gem_id}` in `backend/app/routes/gems.py` looks the value up by name and then by id. When the name misses and the value is not a UUID, `get_gem_by_id` in `backend/app/services/gem_service.py` runs `.eq("id", gem_id)` against a `UUID` column, Postgres rejects the text and supabase-py raises, so the client gets a 500 for what is a plain not-found. `PUT` and `DELETE` accept ids only, so `frontend/lib/api.ts` and the MCP server cannot update or delete by name, while `GET` can.
 - **Size**: S. Validate with `uuid.UUID(value)` before the id lookup, let `PUT` and `DELETE` resolve names too, add a test for each path.
@@ -63,11 +69,17 @@ Things that are broken or that a first contributor would trip over this week.
 
 ### 3. Fix `variables_used` and order-dependent substitution
 
+**Status: done** in PR 22 (`resolve_gem_detailed()` and single-pass `fill_variables()`).
+
+
 - **Why**: in `resolve_gem` in `backend/app/routes/gems.py`, `variables_used` is computed as `sorted(provided & set(remaining_vars + list(provided)))`, which is always just the provided keys, so the field never says which variables the gem actually consumed. In `backend/app/services/gem_service.py`, `resolve_gem` fills variables with `str.replace` in dictionary order after expansion, so a value that itself contains `{other}` is substituted again on a later iteration, and the result depends on key order.
 - **Size**: S. Compute `variables_used` as the intersection of provided keys with `extract_variables` of the pre-substitution prompt, and substitute with a single `re.sub` pass.
 - **Depends on**: nothing.
 
 ### 4. Stop treating every `{...}` as a variable
+
+**Status: done** in PR 22 for the identifier rule. No escape syntax was added; a literal `{name}` cannot be written in a prompt yet.
+
 
 - **Why**: `_VAR_RE` in `backend/app/services/gem_service.py` is `\{([^{}]+)\}`, so any brace pair that is not a gem reference becomes a variable. A gem whose prompt shows a JSON example such as `{"name": "x"}` or a code snippet gets a variable named `"name": "x"`, which is stored in the `variables` column on save, rendered as an input field by `frontend/components/GemForm.tsx`, and reported as missing by `/gems/resolve`. The shipped gems avoid braces by accident (`prompt_enhancer` uses XML), so nothing in `tests/` catches it.
 - **Size**: M. Restrict names to identifiers (`[A-Za-z_][A-Za-z0-9_]*`), define an escape for a literal brace, document it in the README gem syntax table and in `prompts/`, and add tests with JSON and code in prompts.
@@ -75,11 +87,17 @@ Things that are broken or that a first contributor would trip over this week.
 
 ### 5. Resolver and route tests with a fake database
 
+**Status: done** in PR 22 (`tests/conftest.py`, `test_resolver.py`, `test_routes.py`, `pytest.ini`; 29 tests). CRUD writes are still untested.
+
+
 - **Why**: `tests/test_gem_service.py` covers only `extract_variables` and `extract_gem_refs`; `tests/test_smoke.py` is `assert True` from the project template. The actual product, `resolve_gem` (depth limit, cycle detection, variable propagation into embedded gems, missing gem errors) and the auth dependency in `backend/app/auth.py` have no tests, so items 2 to 4 cannot be fixed with confidence. The `sys.path.insert` at the top of each test file is a sign that the test layout was never settled.
 - **Size**: M. Monkeypatch `get_gem_by_name` with an in-memory dict for resolver tests; use FastAPI's `TestClient` with `GEMS_API_KEY` set for route tests (401 without the header, 200 with it, 404 and 400 paths); add a `conftest.py` or a `pytest` `pythonpath` setting and drop the path hacks.
 - **Depends on**: nothing. Unlocks 2, 3, 4, 12.
 
 ### 6. Constant-time key check, no provider errors in responses
+
+**Status: done** (provider errors in PR 19, `secrets.compare_digest` in PR 22).
+
 
 - **Why**: `require_api_key` in `backend/app/auth.py` compares with `x_api_key != expected`, which is not constant time; use `secrets.compare_digest`. `backend/app/routes/chat.py` returns `str(exc)` from any provider exception as the 502 `detail` and as an SSE `error` event, and `chat_with_gem` and `create_gem` in `backend/mcp_server.py` do the same, so provider error bodies (which can include request ids, model names and quota details) reach clients. Log them server side and return a short generic message.
 - **Size**: S.
@@ -87,11 +105,17 @@ Things that are broken or that a first contributor would trip over this week.
 
 ### 7. Patched Next.js now, Next 15 next
 
+**Status: patch done** in PR 19 (14.2.35). The Next 15 migration is still open.
+
+
 - **Why**: `npm install` warns that `next@14.2.18` has a published security vulnerability (the December 2025 advisory). The fix is the latest 14.2.x patch, which Dependabot will now propose. Next 15 is the larger move: it restores `next.config.ts`, changes `useSearchParams` and caching defaults, and needs React 19.
 - **Size**: S for the patch, M for Next 15.
 - **Depends on**: CI build job (done). Do the patch before anything else in `frontend/`.
 
 ### 8. Turn the strict TypeScript lint rules back on
+
+**Status: done** in PR 23.
+
 
 - **Why**: `frontend/.eslintrc.json` extends only `next/core-web-vitals` and switches off `react/no-unescaped-entities`, because enabling `next/typescript` produced 19 errors: `catch (e: any)` in `app/gems/page.tsx`, `app/gems/[id]/page.tsx`, `app/gems/[id]/edit/page.tsx`, `app/chat/page.tsx` and `components/GemForm.tsx`; unused `useEffect`, `AvailableModels` and `chatApi` imports in `components/GemForm.tsx`; and unescaped quotes in three files. There is also a `react-hooks/exhaustive-deps` warning in `app/chat/page.tsx`. All are quick to fix, and the strict set is what catches real mistakes.
 - **Size**: S.
