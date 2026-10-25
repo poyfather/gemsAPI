@@ -42,3 +42,9 @@ MODEL_LIST_TTL_SECONDS: float = float(_env("GEMS_MODEL_LIST_TTL_SECONDS", "600")
 LLM_TIMEOUT_SECONDS: float = float(_env("LLM_TIMEOUT_SECONDS", "60"))
 LLM_MAX_RETRIES: int = int(_env("LLM_MAX_RETRIES", "2"))
 LLM_MAX_TOKENS: int = int(_env("LLM_MAX_TOKENS", "4096"))
+
+# Agent runs (ADR-007): the loop stops after this many model turns, and a
+# tool result longer than this many characters is truncated before it is
+# sent back to the model.
+AGENT_MAX_STEPS: int = int(_env("AGENT_MAX_STEPS", "8"))
+AGENT_TOOL_RESULT_MAX_CHARS: int = int(_env("AGENT_TOOL_RESULT_MAX_CHARS", "8000"))

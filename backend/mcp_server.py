@@ -30,6 +30,7 @@ TOOLS
   chat_with_gem        — send a message to an LLM using a gem as system prompt
   create_gem           — add a new gem to the library
   search_gems          — filter gems by tag or keyword
+  run_agent            — run an agent gem: a tool-using loop, with the run record
 """
 from __future__ import annotations
 import os
@@ -51,6 +52,10 @@ from app.services.gem_service import (
 )
 from app import settings
 from app.services.llm_service import available_models, complete
+import app.agents.builtin  # noqa: F401
+from app.agents import run_service
+from app.agents.runner import run_agent as _run_agent
+from app.agents.tools import all_tools
 from app.models import GemCreate
 
 mcp = FastMCP(
@@ -270,6 +275,47 @@ async def create_gem(
 
 
 @mcp.tool()
+async def run_agent(
+    gem_name: str,
+    message: str,
+    variables: dict[str, str] | None = None,
+    allow_risky: bool = False,
+) -> dict:
+    """
+    Run a gem as an agent: the model may call the gem's tools in a loop
+    until it answers. Returns the final answer, the run id, the steps taken
+    and every tool call with its result. Costs provider credit per turn.
+
+    Args:
+        gem_name:    Name of an agent gem (kind = 'agent'; prompt gems run as a single turn).
+        message:     The user message that starts the run.
+        variables:   Values for {variable} placeholders in the gem.
+        allow_risky: Let the run call tools marked risky. Off by default.
+    """
+    try:
+        result = await _run_agent(gem_name, message, variables or {}, allow_risky=allow_risky)
+    except ValueError as exc:
+        return {"error": str(exc)}
+    run = result.run
+    return {
+        "run_id": run.id,
+        "status": run.status,
+        "output": run.output,
+        "steps": run.steps,
+        "model": run.model,
+        "provider": run.provider,
+        "tool_calls": [e.data for e in result.events if e.type == "tool_result"],
+        "error": run.error,
+    }
+
+
+@mcp.tool()
+async def list_agent_tools() -> list[dict]:
+    """List the tools an agent gem may be given, with their argument schemas."""
+    return [t.info() for t in all_tools()]
+
+
+@mcp.tool()
 async def list_available_models() -> dict:
     """
     Return the models each provider currently offers (live list, cached ten minutes).
@@ -297,6 +343,20 @@ async def gems_resource() -> str:
             lines.append(f"Variables: {', '.join('{' + v + '}' for v in g.variables)}")
         lines.append(f"Provider: {g.provider} / {g.model}")
         lines.append("")
+    return "\n".join(lines)
+
+
+@mcp.resource("runs://{run_id}")
+async def run_resource(run_id: str) -> str:
+    """A run and its events, as text."""
+    found = await run_service.get_run(run_id)
+    if not found:
+        return f"Run '{run_id}' not found."
+    run, events = found
+    lines = [f"# Run {run.id}", f"gem: {run.gem_name}  status: {run.status}  steps: {run.steps}  model: {run.provider}/{run.model}", ""]
+    for e in events:
+        lines.append(f"[{e.seq}] {e.type}: {e.data}")
+    lines += ["", "## Output", run.output or ""]
     return "\n".join(lines)
 
 

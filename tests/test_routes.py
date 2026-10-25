@@ -101,3 +101,53 @@ def test_chat_models_returns_the_available_models(client, monkeypatch) -> None:
 
     monkeypatch.setattr(chat_routes, "available_models", fake_models)
     assert client.get("/chat/models", headers=KEY).json() == {"anthropic": ["claude-x"], "openai": []}
+
+
+def test_agent_tools_endpoint_lists_the_registry(client) -> None:
+    names = [t["name"] for t in client.get("/agents/tools", headers=KEY).json()]
+    assert names == ["get_gem", "resolve_gem", "search_gems"]
+
+
+def test_run_endpoint_returns_the_run_and_events(client, fake_library, fake_runs, monkeypatch) -> None:
+    from app.agents import runner
+    from app.services.llm_service import ToolTurn
+
+    fake_library["lib"] = make_gem("lib", "L", kind="agent", tools=["search_gems"])
+
+    async def one_turn(system_prompt, messages, model, provider, tools, max_tokens=None):
+        return ToolTurn(text="answer", tool_calls=[], assistant_message={"role": "assistant", "content": "answer"}, stop_reason="end_turn")
+
+    monkeypatch.setattr(runner, "complete_turn", one_turn)
+    r = client.post("/agents/lib/runs", headers=KEY, json={"message": "hi"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["run"]["status"] == "finished" and body["run"]["output"] == "answer"
+    assert [e["type"] for e in body["events"]] == ["run_started", "model_turn", "run_finished"]
+    run_id = body["run"]["id"]
+    again = client.get(f"/runs/{run_id}", headers=KEY).json()
+    assert again["run"]["id"] == run_id and len(again["events"]) == 3
+    assert client.get("/runs/nope", headers=KEY).status_code == 404
+    assert client.post("/agents/ghost/runs", headers=KEY, json={"message": "hi"}).status_code == 404
+
+
+def test_run_endpoint_streams_events(client, fake_library, fake_runs, monkeypatch) -> None:
+    from app.agents import runner
+    from app.services.llm_service import ToolCall, ToolTurn
+
+    fake_library["lib"] = make_gem("lib", "L", kind="agent", tools=["get_gem"])
+    fake_library["x"] = make_gem("x", "X")
+    script = iter([
+        ToolTurn(text="", tool_calls=[ToolCall(id="1", name="get_gem", input={"name": "x"})], assistant_message={"role": "assistant", "content": None}, stop_reason="tool_use"),
+        ToolTurn(text="done", tool_calls=[], assistant_message={"role": "assistant", "content": "done"}, stop_reason="end_turn"),
+    ])
+
+    async def turns(*a, **k):
+        return next(script)
+
+    monkeypatch.setattr(runner, "complete_turn", turns)
+    with client.stream("POST", "/agents/lib/runs", headers=KEY, json={"message": "hi", "stream": True}) as r:
+        assert r.status_code == 200
+        text = "".join(r.iter_text())
+    events = [line.split("event: ", 1)[1] for line in text.splitlines() if line.startswith("event: ")]
+    assert events == ["run_started", "model_turn", "tool_call", "tool_result", "model_turn", "run_finished"]
+    assert text.rstrip().endswith("data: [DONE]")

@@ -11,6 +11,8 @@ export interface Gem {
   provider: "anthropic" | "openai";
   tags: string[];
   variables: string[];
+  kind?: "prompt" | "agent";
+  tools?: string[];
   is_active: boolean;
   created_at: string;
   updated_at: string;

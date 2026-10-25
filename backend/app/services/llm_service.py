@@ -204,3 +204,125 @@ async def available_models(force_refresh: bool = False) -> dict[str, list[str]]:
 
 def clear_model_cache() -> None:
     _cache.clear()
+
+
+# ─── Tool-use turns (agent harness, ADR-007) ───────────────────────────────────
+
+from dataclasses import dataclass, field  # noqa: E402
+import json  # noqa: E402
+
+
+@dataclass
+class ToolCall:
+    id: str
+    name: str
+    input: dict
+
+
+@dataclass
+class ToolTurn:
+    """One model turn in a tool-use loop, in provider-neutral form."""
+    text: str
+    tool_calls: list[ToolCall]
+    assistant_message: dict          # what to append to the conversation, in the provider's own shape
+    stop_reason: str
+    input_tokens: int = 0
+    output_tokens: int = 0
+    raw: object = field(default=None, repr=False)
+
+
+async def complete_turn(
+    system_prompt: str,
+    messages: list[dict],
+    model: str,
+    provider: str,
+    tools: list[dict],
+    max_tokens: int | None = None,
+) -> ToolTurn:
+    """
+    One model call that may return tool calls.
+
+    `tools` is a list of neutral {"name", "description", "parameters"} dicts
+    (see app.agents.tools.Tool). `messages` must be in the provider's own
+    shape; use tool_result_messages() to append results between turns.
+    """
+    _check_provider(provider)
+    max_tokens = max_tokens or settings.LLM_MAX_TOKENS
+    try:
+        if provider == "anthropic":
+            client = _get_anthropic()
+            kwargs: dict = dict(model=model, max_tokens=max_tokens, system=system_prompt, messages=messages)
+            if tools:
+                kwargs["tools"] = [
+                    {"name": t["name"], "description": t["description"], "input_schema": t["parameters"]} for t in tools
+                ]
+            response = await client.messages.create(**kwargs)
+            text = "".join(b.text for b in response.content if getattr(b, "type", "") == "text")
+            calls = [
+                ToolCall(id=b.id, name=b.name, input=dict(b.input or {}))
+                for b in response.content if getattr(b, "type", "") == "tool_use"
+            ]
+            assistant = {"role": "assistant", "content": [b.model_dump(exclude_none=True) for b in response.content]}
+            usage = getattr(response, "usage", None)
+            return ToolTurn(
+                text=text, tool_calls=calls, assistant_message=assistant,
+                stop_reason=str(response.stop_reason or ""),
+                input_tokens=getattr(usage, "input_tokens", 0) or 0,
+                output_tokens=getattr(usage, "output_tokens", 0) or 0,
+                raw=response,
+            )
+
+        client = _get_openai()
+        full_messages = [{"role": "system", "content": system_prompt}] + messages
+        kwargs = dict(model=model, messages=full_messages, max_tokens=max_tokens)
+        if tools:
+            kwargs["tools"] = [
+                {"type": "function", "function": {"name": t["name"], "description": t["description"], "parameters": t["parameters"]}}
+                for t in tools
+            ]
+        response = await client.chat.completions.create(**kwargs)
+        choice = response.choices[0]
+        msg = choice.message
+        calls = []
+        tool_calls_out = []
+        for tc in (msg.tool_calls or []):
+            try:
+                args = json.loads(tc.function.arguments or "{}")
+            except json.JSONDecodeError:
+                args = {"_raw": tc.function.arguments}
+            calls.append(ToolCall(id=tc.id, name=tc.function.name, input=args))
+            tool_calls_out.append({"id": tc.id, "type": "function", "function": {"name": tc.function.name, "arguments": tc.function.arguments or "{}"}})
+        assistant = {"role": "assistant", "content": msg.content}
+        if tool_calls_out:
+            assistant["tool_calls"] = tool_calls_out
+        usage = getattr(response, "usage", None)
+        return ToolTurn(
+            text=msg.content or "", tool_calls=calls, assistant_message=assistant,
+            stop_reason=str(choice.finish_reason or ""),
+            input_tokens=getattr(usage, "prompt_tokens", 0) or 0,
+            output_tokens=getattr(usage, "completion_tokens", 0) or 0,
+            raw=response,
+        )
+    except EnvironmentError:
+        raise
+    except Exception as exc:
+        raise ProviderError(f"{provider} tool turn with {model} failed: {exc}") from exc
+
+
+def tool_result_messages(provider: str, results: list[tuple[ToolCall, str, bool]]) -> list[dict]:
+    """
+    Messages to append after executing a turn's tool calls.
+    `results` is (call, output_text, is_error) per call. All of a turn's
+    results go back together: one user message for Anthropic, one tool
+    message per call for OpenAI.
+    """
+    _check_provider(provider)
+    if provider == "anthropic":
+        content = []
+        for call, output, is_error in results:
+            block = {"type": "tool_result", "tool_use_id": call.id, "content": output}
+            if is_error:
+                block["is_error"] = True
+            content.append(block)
+        return [{"role": "user", "content": content}]
+    return [{"role": "tool", "tool_call_id": call.id, "content": output} for call, output, _ in results]

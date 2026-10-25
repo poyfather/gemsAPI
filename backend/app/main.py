@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
-from app.routes import gems, chat
+from app.routes import agents, chat, gems
 from app.version import __version__
 
 load_dotenv()
@@ -42,6 +42,8 @@ app.add_middleware(
 
 app.include_router(gems.router)
 app.include_router(chat.router)
+app.include_router(agents.router)
+app.include_router(agents.runs_router)
 
 
 @app.get("/", tags=["meta"])
@@ -60,6 +62,9 @@ def root():
             "resolve_gem":  "POST /gems/resolve",
             "chat":         "POST /chat",
             "models":       "GET  /chat/models",
+            "run_agent":    "POST /agents/{name}/runs",
+            "get_run":      "GET  /runs/{id}",
+            "tools":        "GET  /agents/tools",
             "mcp_server":   "Run: fastmcp run mcp_server.py",
         },
     }

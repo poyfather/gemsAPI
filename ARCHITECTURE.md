@@ -17,9 +17,10 @@ flowchart LR
         MCPS["FastMCP server<br/>7 tools, 2 resources, stdio"]
         RES["Resolver<br/>expand gem references,<br/>fill variables"]
         LLM["LLM adapter<br/>complete and stream"]
+        LOOP["Agent run loop<br/>tools, step cap, run record"]
     end
 
-    DB[("Supabase Postgres<br/>gems table")]
+    DB[("Supabase Postgres<br/>gems, runs, run_events")]
 
     subgraph providers["LLM providers"]
         ANT["Anthropic Messages API"]
@@ -34,6 +35,11 @@ flowchart LR
     RES --> DB
     API --> LLM
     MCPS --> LLM
+    API --> LOOP
+    MCPS --> LOOP
+    LOOP --> RES
+    LOOP --> LLM
+    LOOP --> DB
     LLM --> ANT
     LLM --> OAI
 ```
@@ -117,6 +123,10 @@ flowchart TB
 | Auth | `backend/app/auth.py` | Router-level dependency: 401 unless `X-API-Key` matches `GEMS_API_KEY` | `/gems`, `/chat` | FastAPI `Security` |
 | Gems routes | `backend/app/routes/gems.py` | List, create, get by name or id, update, soft delete, resolve | `gem_service` | Async calls |
 | Chat routes | `backend/app/routes/chat.py` | Resolve the gem, pick model and provider, call the LLM, return JSON or an SSE stream | `gem_service`, `llm_service` | Async calls, `StreamingResponse` |
+| Agent routes | `backend/app/routes/agents.py` | `POST /agents/{name}/runs` (JSON or SSE), `GET /runs/{id}`, `GET /agents/tools` | `agents.runner`, `agents.run_service` | Async calls, a queue for SSE |
+| Tool registry | `backend/app/agents/tools.py`, `builtin.py` | `@tool` functions with a JSON schema from the signature; the three built-ins read the library | `gem_service` | In-process |
+| Run loop | `backend/app/agents/runner.py` | Resolve the gem, call the model with its tools, execute calls, feed results back, stop on an answer or the step cap; record every event | `llm_service.complete_turn`, registry, run store | Async calls |
+| Run store | `backend/app/agents/run_service.py` | `runs` and `run_events` rows | `database.py` | `supabase-py` |
 | Resolver and CRUD | `backend/app/services/gem_service.py` | Supabase queries; `{variable}` and `{{gem:name}}` extraction; recursive, cycle-safe resolution | `database.py` | `supabase-py` table API |
 | LLM adapter | `backend/app/services/llm_service.py` | One `complete()` and one `complete_stream()` for both providers, with timeouts and retries; `available_models()` with its cache | Anthropic, OpenAI | Official async SDKs |
 | Data shapes | `backend/app/models.py` | Pydantic models for gems, resolve and chat requests and responses | Routes, services | Import |
@@ -193,6 +203,44 @@ sequenceDiagram
 
 The MCP server does not go through HTTP or `auth.py`. It calls the same functions the routes call, in its own process, with the credentials from `backend/.env`.
 
+## Agent runs
+
+ADR-007 added the loop. A gem of kind `agent` lists tool names; the loop gives the model those tools and keeps going until it answers without one.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant C as Caller (REST, MCP)
+    participant R as runner.run_agent
+    participant G as gem_service
+    participant T as Tool registry
+    participant L as llm_service.complete_turn
+    participant P as Provider
+    participant S as runs, run_events
+
+    C->>R: run_agent(gem, message, variables)
+    R->>G: resolve_gem_detailed, get_gem_by_name
+    R->>S: insert run (status running)
+    R->>S: event run_started
+    loop until the model answers without tools, or AGENT_MAX_STEPS
+        R->>L: complete_turn(system, messages, tools)
+        L->>P: messages.create with tools (Anthropic) or chat.completions with functions (OpenAI)
+        P-->>L: text and zero or more tool calls
+        L-->>R: ToolTurn (neutral shape)
+        R->>S: event model_turn
+        alt tool calls present
+            R->>T: execute each call (unknown or risky: an error string)
+            T-->>R: result text, truncated at AGENT_TOOL_RESULT_MAX_CHARS
+            R->>S: events tool_call, tool_result
+            R->>R: append results in the provider's shape (one user message for Anthropic, one tool message per call for OpenAI)
+        end
+    end
+    R->>S: event run_finished, update run (status, output, steps, tokens)
+    R-->>C: RunResult (run + events), or the events as SSE while it happens
+```
+
+What the loop promises: a tool error never escapes the run (unknown tool, refused risky tool, bad arguments and tool exceptions all go back to the model as text); a provider failure ends the run as `failed` with a record; every run has at most `AGENT_MAX_STEPS` model turns; nothing is held in memory between runs. What it does not do yet: approval gates with resume, remote MCP or HTTP tool sources, a token budget per run, or a run viewer in the UI (roadmap items 32 to 35).
+
 ## Gem composition and resolution
 
 Gems compose by reference. The seed library ships a three-level example:
@@ -257,6 +305,7 @@ erDiagram
 - Row level security is enabled with no policies, so only the service role key, used by the backend and the MCP server, can read or write rows; the anon key gets nothing. The API key on the REST edge is the access control for callers (ADR-006).
 - Deletes are soft (`is_active = false`); listing and name lookups filter on `is_active`, lookups by id do not.
 - `prompts/<name>.md` mirrors each shipped gem for review; CI checks that every file has a seed row of the same name in `supabase/schema.sql`.
+- `kind` (`prompt` or `agent`) and `tools` (registered tool names) make a gem runnable by the agent loop. `runs` holds one row per run (status, model, tokens, output) and `run_events` one row per model turn, tool call, tool result or failure, in order. Both tables have RLS enabled with no policies, like `gems`.
 
 ## Model and provider integration
 
