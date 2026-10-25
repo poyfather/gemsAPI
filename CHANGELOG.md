@@ -4,57 +4,21 @@ All notable changes to gemsAPI are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
-### Changed
-- `backend/app/settings.py` is the one home for runtime defaults: `GEMS_DEFAULT_PROVIDER` and `GEMS_DEFAULT_MODEL` (now `claude-opus-5-5`) for new gems over REST, UI and MCP; `LLM_TIMEOUT_SECONDS`, `LLM_MAX_RETRIES` and `LLM_MAX_TOKENS` for provider calls (roadmap items 17 and 18).
-- `GET /chat/models` and the MCP `list_available_models` tool return each provider's live model list (OpenAI's filtered to chat models), cached for `GEMS_MODEL_LIST_TTL_SECONDS`, with `GEMS_MODELS_ANTHROPIC` and `GEMS_MODELS_OPENAI` as pins and a static fallback. The static list with retired `claude-3-5-*` and `gpt-3.5-turbo` entries is gone, and so are the hard-coded lists in `GemForm.tsx`.
-- Both SDK clients are built with an explicit timeout and retry count; any SDK failure becomes one `ProviderError`, logged server side.
-- Seed gems and the eval use the new default model; `supabase/update_default_models.sql` moves existing gems off retired models.
+### Planned
+- Prompt version history (`gem_versions` Supabase table).
+- SSE streaming in the Next.js chat UI.
+
+## [0.3.0] - 2026-10-25
+
+The first tagged release since v0.0.2 and the first one cut with the release workflow. It also restarts the version sequence: the 0.1.0 and 0.2.0 sections below predate the v0.0.2 tag, and nothing after that was tagged, so this release takes the next minor above the highest number in this file.
 
 ### Security
 - ADR-006: single-tenant access model. The `allow_all` row level security policy is dropped from `supabase/schema.sql` and RLS has no policies for the `anon` or `authenticated` roles, so only the service role key used by the backend and the MCP server can read or write gems. `backend/app/database.py` accepts the service role key only; the anon key option is removed from `.env.example`. Existing installs run `supabase/lock_down_rls.sql` once (roadmap item 9).
-
-### Changed
-- Frontend on Tailwind CSS 4 (`@tailwindcss/postcss`), migrated with the official upgrade tool: the `gem-*` colours and the mono font stack live in an `@theme` block in `app/globals.css`, `tailwind.config.ts` and `autoprefixer` are gone, and the renamed utilities (`outline-none` to `outline-hidden`, `rounded` to `rounded-sm`) are updated in six files. Clears the `postcss-selector-parser` advisory that Dependabot PR 28 could only fix this way.
-
-### Changed
-- Frontend on Next.js 16.4.3 with React 19.3, `eslint` 9 and a flat `eslint.config.mjs` (`next lint` is gone in Next 16, so `npm run lint` runs `eslint .`), `tsconfig.json` as Next 16 requires it (`jsx: react-jsx`, `target: ES2017`), and `frontend/middleware.ts` renamed to `frontend/proxy.ts` by the official codemod. The gems list page loads without a synchronous state update inside its effect, which the React 19 lint rules flag (roadmap item 7).
-
-### Changed
-- README "Why" rewritten in plain language: the problem (instructions scattered across tools), the drawer analogy, the two tricks (prompts inside prompts, blanks), and who it is and is not for yet.
-
-### Changed
-- `docs/ROADMAP.md`: four product items for prompt practitioners (28 evals per gem from the UI, 29 typed variables, 30 side-by-side runs, 31 few-shot examples as data), a closing "For the prompt practitioner" order of payoff, and stronger reasoning on 14, 21 and 22.
-
-### Fixed
-- Docker Compose builds and runs: `next.config.mjs` sets `output: "standalone"` and `frontend/public/` exists, so `frontend/Dockerfile` can copy what it expects; the frontend container receives `GEMS_API_KEY` and `BACKEND_URL` (and nothing else) and starts only after the backend's `/health` passes; the backend service no longer bind-mounts source or runs `--reload`; `.dockerignore` files keep `node_modules`, `.next` and `.venv` out of the build contexts; the obsolete `version` key is gone. CI builds both images (roadmap item 1).
-
-### Fixed
-- `GET`, `PUT` and `DELETE /gems/{id}` accept a name or a UUID; an unknown value that is not a UUID is a 404 instead of a Postgres error surfacing as a 500 (roadmap item 2).
-- `POST /gems/resolve` reports `variables_used` as the placeholders that were actually present and filled, not the keys that were sent; the MCP `resolve_gem_prompt` tool returns the same field (roadmap item 3).
-- Variables are filled in a single pass after expansion, so a value containing `{other}` is never substituted again and the result no longer depends on dict order (roadmap item 3).
-- Only identifier-shaped `{name}` placeholders are variables; JSON and code braces in a prompt no longer produce bogus variables or form fields (roadmap item 4).
-- The API key check uses `secrets.compare_digest` (roadmap item 6).
-
-### Added
-- `tests/conftest.py` with an in-memory stand-in for the gems table, `tests/test_resolver.py` (nesting, variable propagation, cycles, depth limit, braces in prompts) and `tests/test_routes.py` (auth, lookups, 404s, resolve) through FastAPI's TestClient; `pytest.ini` sets `pythonpath` so the tests no longer patch `sys.path` (roadmap item 5). 29 tests.
-
-### Changed
-- Frontend lint runs the strict `next/typescript` rule set: `catch (e: any)` is gone in favour of an `errorMessage()` helper in `lib/api.ts`, unused imports in `GemForm.tsx` removed, quotes in JSX escaped, and the chat page effect lists its dependency (roadmap item 8).
-
-### Changed
-- `ARCHITECTURE.md` rewritten around nine Mermaid diagrams (big picture, component model, two request sequences, gem composition, resolution walkthrough, data model, trust boundaries, deployment topologies) with a component table; the ASCII box drawing is gone. The big-picture diagram also sits in the README under "How it fits together".
-
-### Security
 - `backend/app/services/gem_service.py`: the `{{gem:name}}` pattern only matches identifier characters, so an unclosed tag can no longer make the resolver backtrack polynomially (CodeQL py/polynomial-redos). Regression tests added.
 - `backend/app/routes/chat.py`: provider exceptions are logged server side and the client gets a generic 502 message, on both the JSON and the SSE path (CodeQL py/stack-trace-exposure).
 
-### Dependencies
-- Backend: fastapi 0.156.4, uvicorn 0.54.0, supabase 2.33.0, anthropic 1.17.0, openai 3.35.1, fastmcp 4.1.3, pydantic 2.14.1, python-dotenv 1.2.4, python-multipart 0.0.32. Verified with the unit tests, the import check and the MCP tool registry on fastmcp 4.
-- Frontend: next and eslint-config-next 14.2.35 (security patch), lucide-react 0.577.0. Next 15 and 16, React 19, Tailwind 4, ESLint 9 and 10 and TypeScript 7 are migrations tracked in `docs/ROADMAP.md` item 7 and are ignored by Dependabot until then.
-- Node 24 in CI and in `frontend/Dockerfile` (Node 20 reached end of life in April 2026). Actions: checkout v7, setup-python v7, setup-node v7, codeql-action v4.
-- `.github/dependabot.yml`: one pip entry at the root (it already scanned `backend/`), grouped monthly PRs per ecosystem, and major versions ignored for the frontend toolchain and the Node image.
-
 ### Added
+- `tests/conftest.py` with an in-memory stand-in for the gems table, `tests/test_resolver.py` (nesting, variable propagation, cycles, depth limit, braces in prompts) and `tests/test_routes.py` (auth, lookups, 404s, resolve) through FastAPI's TestClient; `pytest.ini` sets `pythonpath` so the tests no longer patch `sys.path` (roadmap item 5). 29 tests.
 - `LICENSE` (MIT), `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1), `SUPPORT.md`.
 - `.github/`: issue forms (bug report, feature request, gem proposal) with `config.yml`, a pull request template, `CODEOWNERS`, Dependabot for pip, npm, Docker and Actions.
 - GitHub Actions: `ci.yml` (ruff, pytest, import check, `next lint`, `tsc`, `next build`, prompts and schema sync, dash check), `codeql.yml`, and `release.yml` which turns a `v*` tag into a GitHub release from this file.
@@ -63,18 +27,34 @@ All notable changes to gemsAPI are documented here. The format follows [Keep a C
 - `docs/ROADMAP.md`: prioritised roadmap of correctness, security, API, DX and release improvements.
 
 ### Changed
+- `backend/app/settings.py` is the one home for runtime defaults: `GEMS_DEFAULT_PROVIDER` and `GEMS_DEFAULT_MODEL` (now `claude-opus-5-5`) for new gems over REST, UI and MCP; `LLM_TIMEOUT_SECONDS`, `LLM_MAX_RETRIES` and `LLM_MAX_TOKENS` for provider calls (roadmap items 17 and 18).
+- `GET /chat/models` and the MCP `list_available_models` tool return each provider's live model list (OpenAI's filtered to chat models), cached for `GEMS_MODEL_LIST_TTL_SECONDS`, with `GEMS_MODELS_ANTHROPIC` and `GEMS_MODELS_OPENAI` as pins and a static fallback. The static list with retired `claude-3-5-*` and `gpt-3.5-turbo` entries is gone, and so are the hard-coded lists in `GemForm.tsx`.
+- Both SDK clients are built with an explicit timeout and retry count; any SDK failure becomes one `ProviderError`, logged server side.
+- Seed gems and the eval use the new default model; `supabase/update_default_models.sql` moves existing gems off retired models.
+- Frontend on Tailwind CSS 4 (`@tailwindcss/postcss`), migrated with the official upgrade tool: the `gem-*` colours and the mono font stack live in an `@theme` block in `app/globals.css`, `tailwind.config.ts` and `autoprefixer` are gone, and the renamed utilities (`outline-none` to `outline-hidden`, `rounded` to `rounded-sm`) are updated in six files. Clears the `postcss-selector-parser` advisory that Dependabot PR 28 could only fix this way.
+- Frontend on Next.js 16.4.3 with React 19.3, `eslint` 9 and a flat `eslint.config.mjs` (`next lint` is gone in Next 16, so `npm run lint` runs `eslint .`), `tsconfig.json` as Next 16 requires it (`jsx: react-jsx`, `target: ES2017`), and `frontend/middleware.ts` renamed to `frontend/proxy.ts` by the official codemod. The gems list page loads without a synchronous state update inside its effect, which the React 19 lint rules flag (roadmap item 7).
+- README "Why" rewritten in plain language: the problem (instructions scattered across tools), the drawer analogy, the two tricks (prompts inside prompts, blanks), and who it is and is not for yet.
+- `docs/ROADMAP.md`: four product items for prompt practitioners (28 evals per gem from the UI, 29 typed variables, 30 side-by-side runs, 31 few-shot examples as data), a closing "For the prompt practitioner" order of payoff, and stronger reasoning on 14, 21 and 22.
+- Frontend lint runs the strict `next/typescript` rule set: `catch (e: any)` is gone in favour of an `errorMessage()` helper in `lib/api.ts`, unused imports in `GemForm.tsx` removed, quotes in JSX escaped, and the chat page effect lists its dependency (roadmap item 8).
+- `ARCHITECTURE.md` rewritten around nine Mermaid diagrams (big picture, component model, two request sequences, gem composition, resolution walkthrough, data model, trust boundaries, deployment topologies) with a component table; the ASCII box drawing is gone. The big-picture diagram also sits in the README under "How it fits together".
 - README rewritten: one-line pitch, badges, three-step quick start, MCP client config with the real Claude Desktop config path, env var table, project layout.
 - `SECURITY.md` now opens with supported versions, how to report privately and the response window; the deployment policy follows.
 - `frontend/next.config.ts` is now `frontend/next.config.mjs`. Next.js 14 does not load a TypeScript config, so `next dev`, `next lint` and `next build` all failed before.
+- Backend: fastapi 0.156.4, uvicorn 0.54.0, supabase 2.33.0, anthropic 1.17.0, openai 3.35.1, fastmcp 4.1.3, pydantic 2.14.1, python-dotenv 1.2.4, python-multipart 0.0.32. Verified with the unit tests, the import check and the MCP tool registry on fastmcp 4.
+- Frontend: next and eslint-config-next 14.2.35 (security patch), lucide-react 0.577.0. Next 15 and 16, React 19, Tailwind 4, ESLint 9 and 10 and TypeScript 7 are migrations tracked in `docs/ROADMAP.md` item 7 and are ignored by Dependabot until then.
+- Node 24 in CI and in `frontend/Dockerfile` (Node 20 reached end of life in April 2026). Actions: checkout v7, setup-python v7, setup-node v7, codeql-action v4.
+- `.github/dependabot.yml`: one pip entry at the root (it already scanned `backend/`), grouped monthly PRs per ecosystem, and major versions ignored for the frontend toolchain and the Node image.
 
 ### Fixed
+- Docker Compose builds and runs: `next.config.mjs` sets `output: "standalone"` and `frontend/public/` exists, so `frontend/Dockerfile` can copy what it expects; the frontend container receives `GEMS_API_KEY` and `BACKEND_URL` (and nothing else) and starts only after the backend's `/health` passes; the backend service no longer bind-mounts source or runs `--reload`; `.dockerignore` files keep `node_modules`, `.next` and `.venv` out of the build contexts; the obsolete `version` key is gone. CI builds both images (roadmap item 1).
+- `GET`, `PUT` and `DELETE /gems/{id}` accept a name or a UUID; an unknown value that is not a UUID is a 404 instead of a Postgres error surfacing as a 500 (roadmap item 2).
+- `POST /gems/resolve` reports `variables_used` as the placeholders that were actually present and filled, not the keys that were sent; the MCP `resolve_gem_prompt` tool returns the same field (roadmap item 3).
+- Variables are filled in a single pass after expansion, so a value containing `{other}` is never substituted again and the result no longer depends on dict order (roadmap item 3).
+- Only identifier-shaped `{name}` placeholders are variables; JSON and code braces in a prompt no longer produce bogus variables or form fields (roadmap item 4).
+- The API key check uses `secrets.compare_digest` (roadmap item 6).
 - `backend/requirements.txt` could not be installed: `supabase==2.9.1` requires `httpx<0.28` while `fastmcp==2.2.0` requires `httpx>=0.28.1`. Now `supabase==2.16.0` and `httpx==0.28.1`.
 - `frontend/app/chat/page.tsx` wraps `useSearchParams()` in a Suspense boundary, which `next build` requires to prerender the page.
 - Lint: an unused import in `evals/eval_prompt_enhancer.py`, a shadowed `create_gem` import in `backend/mcp_server.py`, and a combined import line in `tests/test_gem_service.py`.
-
-### Planned (carried over)
-- Prompt version history (`gem_versions` Supabase table).
-- SSE streaming in the Next.js chat UI.
 
 ## [0.0.2] - 2026-04-16
 ### Added
@@ -112,7 +92,8 @@ All notable changes to gemsAPI are documented here. The format follows [Keep a C
 - Docker Compose for local all-in-one deployment.
 - `.env.example` with all required environment variables documented.
 
-[Unreleased]: https://github.com/poyfather/gemsAPI/compare/v0.0.2...HEAD
+[Unreleased]: https://github.com/poyfather/gemsAPI/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/poyfather/gemsAPI/compare/v0.0.2...v0.3.0
 [0.0.2]: https://github.com/poyfather/gemsAPI/releases/tag/v0.0.2
 [0.2.0]: https://github.com/poyfather/gemsAPI/commit/8f4d13a
 [0.1.0]: https://github.com/poyfather/gemsAPI/commit/9869354

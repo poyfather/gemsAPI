@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
 from app.routes import gems, chat
+from app.version import __version__
 
 load_dotenv()
 
@@ -24,7 +25,7 @@ app = FastAPI(
         "Manage and serve reusable LLM prompts (gems) with variable substitution "
         "and recursive {{gem:name}} composition. Accessible via REST and MCP."
     ),
-    version="1.0.0",
+    version=__version__,
     docs_url="/docs",
     redoc_url="/redoc",
 )
@@ -47,7 +48,7 @@ app.include_router(chat.router)
 def root():
     return {
         "name": "gemsAPI",
-        "version": "1.0.0",
+        "version": __version__,
         "description": "Prompt library with recursive composition, REST + MCP access",
         "docs": "/docs",
         "endpoints": {
