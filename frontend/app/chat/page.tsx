@@ -354,6 +354,9 @@ function ChatPageInner() {
                       ? `Send a message to try "${selectedGem}".`
                       : "Pick a prompt or assistant on the left to get started."}
                   </p>
+                  <p className="text-xs mt-3 max-w-md mx-auto text-slate-600">
+                    This is where you try a prompt or give an assistant a job. What you type goes to the AI named at the top right; an assistant shows each step it takes and asks before anything that changes things.
+                  </p>
                 </div>
               </div>
             ) : (

@@ -29,3 +29,11 @@ test("detection reports installed for commands on PATH and unknown otherwise", a
   assert.equal(s.nmap.installed, false);
   assert.equal(s.powertoys.installed, null);
 });
+
+test("every toolbox entry says what it is and what it needs, in plain words", () => {
+  for (const t of TOOLBOX) {
+    assert.ok(t.blurb && t.blurb.length > 20, `${t.id} has no blurb`);
+    assert.ok(t.needs && /free|needs|account/.test(t.needs), `${t.id} does not say what it costs or needs`);
+    assert.ok(!/\bMCP\b|\bCLI\b|\bSDK\b/.test(t.blurb), `${t.id} blurb has an acronym`);
+  }
+});

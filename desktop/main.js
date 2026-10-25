@@ -100,8 +100,8 @@ function runCommand(program, args) {
 }
 
 // ---- IPC surface
-ipcMain.handle("console:components", async () => ({ components: COMPONENTS.map(({ id, name, kind, blurb }) => ({ id, name, kind, blurb })), status: await detectAll(io) }));
-ipcMain.handle("console:toolbox", async () => ({ tools: TOOLBOX.map((t) => ({ id: t.id, name: t.name, publisher: t.publisher, category: t.category, source: toolboxSourceLabel(t), homepage: t.homepage })), status: await detectToolbox(io) }));
+ipcMain.handle("console:components", async () => ({ components: COMPONENTS.map(({ id, name, kind, blurb, costs }) => ({ id, name, kind, blurb, costs })), status: await detectAll(io) }));
+ipcMain.handle("console:toolbox", async () => ({ tools: TOOLBOX.map((t) => ({ id: t.id, name: t.name, publisher: t.publisher, category: t.category, source: toolboxSourceLabel(t), homepage: t.homepage, blurb: t.blurb, needs: t.needs })), status: await detectToolbox(io) }));
 ipcMain.handle("console:install", async (_e, id) => {
   const cmd = installCommand(id) || toolboxInstallCommand(id, { pwshPath: (await io.which("pwsh")) || "powershell.exe" });
   if (!cmd) return { ok: false, message: "this one has nothing to install; it is built in or detected only" };

@@ -84,7 +84,7 @@ export default function GemsPage() {
             Prompts and assistants
           </h1>
           <p className="text-slate-400 mt-1 text-sm">
-            Write a prompt once, leave blanks to fill in, build one from another, and give it tools to make it an assistant
+            Your library. Write a prompt once, leave blanks to fill in, build one from another, and give it tools to make it an assistant. Everything here is also available to Claude, ChatGPT and Open WebUI once they are connected.
           </p>
         </div>
         <Link
