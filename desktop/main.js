@@ -102,16 +102,16 @@ ipcMain.handle("console:components", async () => ({ components: COMPONENTS.map((
 ipcMain.handle("console:toolbox", async () => ({ tools: TOOLBOX.map((t) => ({ id: t.id, name: t.name, publisher: t.publisher, category: t.category, source: toolboxSourceLabel(t), homepage: t.homepage })), status: await detectToolbox(io) }));
 ipcMain.handle("console:install", async (_e, id) => {
   const cmd = installCommand(id) || toolboxInstallCommand(id, { pwshPath: (await io.which("pwsh")) || "powershell.exe" });
-  if (!cmd) return { ok: false, message: "nothing to install for this component" };
+  if (!cmd) return { ok: false, message: "this one has nothing to install; it is built in or detected only" };
   const code = await runCommand(cmd.program, cmd.args);
-  return { ok: code === 0, message: code === 0 ? "installed" : `exit code ${code}` };
+  return { ok: code === 0, message: code === 0 ? "installed" : `the installer stopped with code ${code}; open Logs to see why, then try again` };
 });
 ipcMain.handle("console:settings:get", async () => { const s = loadSettings(); return { modelPolicy: "auto", localModel: DEFAULT_LOCAL_MODEL, ...s, anthropicKey: s.anthropicKey ? "set" : "", openaiKey: s.openaiKey ? "set" : "", supabaseKey: s.supabaseKey ? "set" : "" }; });
 ipcMain.handle("console:settings:set", async (_e, patch) => {
   const s = loadSettings();
   for (const [k, v] of Object.entries(patch)) if (typeof v === "string" && v !== "set") s[k] = v;
   saveSettings(s);
-  return { ok: true, note: "restart Lapidary from the dashboard for the backend to pick up new keys" };
+  return { ok: true, note: "saved; press Restart Lapidary on the Dashboard so the new settings are used" };
 });
 ipcMain.handle("console:connect:claude", async () => writeMcp(P.claudeConfig));
 ipcMain.handle("console:connect:chatgpt", async () => writeMcp(P.chatgptConfig));
@@ -226,7 +226,7 @@ async function startOpenWebUI() {
   mkdirSync(dataDir, { recursive: true });
   writeFileSync(file, openWebUICompose({ lapidaryKey: s.gemsApiKey || "", openaiKey: s.openaiKey || "" }));
   const code = await runCommand("docker", ["compose", "-f", file, "up", "-d"]);
-  if (code !== 0) return { ok: false, message: `docker compose exited with ${code}; is Docker Desktop running? The file is at ${file}` };
+  if (code !== 0) return { ok: false, message: `Docker did not start the chat (code ${code}). Open Docker Desktop, wait for it to say running, and try again. The file is at ${file}` };
   const up = await waitForHealth("http://127.0.0.1:3080/health", { timeoutMs: 90000 });
   return { ok: true, message: up ? "Open WebUI is running on http://localhost:3080" : "Open WebUI is starting on http://localhost:3080 (first start takes a minute)" };
 }
@@ -239,8 +239,8 @@ function writeMcp(file) {
   const existing = existsSync(file) ? readFileSync(file, "utf8") : "";
   try {
     writeFileSync(file, mergeMcpServers(existing, entries));
-    return { ok: true, message: `wrote ${file}; restart the client to pick it up` };
-  } catch (e) { return { ok: false, message: e.message }; }
+    return { ok: true, message: `connected; restart the app to see Lapidary in it (${file})` };
+  } catch (e) { return { ok: false, message: `could not write the app's config file (${e.message}); check it is valid JSON or that the folder is writable` }; }
 }
 
 // ---- window

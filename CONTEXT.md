@@ -18,8 +18,9 @@ Lapidary (gemsAPI until October 2026) is a self-hosted prompt library and agent 
 - **Variable**: a `{placeholder}` in a gem's prompt filled at call time with a key-value dict.
 - **Gem reference**: a `{{gem:name}}` tag in a prompt that embeds another gem's resolved content recursively.
 - **Resolution**: the process of expanding all `{{gem:name}}` references and filling all `{variable}` placeholders to produce a final, ready-to-use system prompt.
-- **Provider**: the LLM API used to run a gem — either `anthropic` or `openai`.
-- **MCP**: Model Context Protocol — a standard interface for exposing tools and resources to AI agents.
+- **Provider**: the LLM API used to run a gem: `anthropic`, `openai`, `local` (any OpenAI-compatible server on this PC) or `auto` (the model policy decides).
+- **MCP**: Model Context Protocol, a standard interface for exposing tools and resources to AI agents.
+- **On screen (ADR-012, roadmap 48)**: the web UI and the console use plain words for the same things. A gem is a prompt, an agent gem is an assistant, variables are blanks to fill, a gem reference is "built from", resolution gives "the prompt as sent", a run is "what the assistant did", a provider is "which AI", MCP is "connect", and a risky tool "asks first". The API, the URLs, the environment variables and these docs keep the words above; `frontend/lib/words.ts` does the translation.
 
 ## Current State
 - **What exists**: full working scaffold — FastAPI backend, Next.js frontend, FastMCP server, Supabase schema with seed gems including `prompt_enhancer`, Docker Compose, and this documentation set.

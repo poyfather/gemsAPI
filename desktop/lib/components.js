@@ -17,8 +17,8 @@ export const COMPONENTS = [
   { id: "chatgpt",  name: "ChatGPT",                          kind: "client",   install: { winget: "OpenAI.ChatGPT" }, blurb: "OpenAI's assistant app. Connect it the same way." },
   { id: "ollama",   name: "Ollama (local models)",            kind: "service",  install: { winget: "Ollama.Ollama" }, health: "http://127.0.0.1:11434/api/tags", blurb: "AI models that run on this PC. Free, private, no account, works offline. Slower than the cloud, good enough for a lot." },
   { id: "openwebui", name: "Open WebUI",                      kind: "service",  install: { docker: "ghcr.io/open-webui/open-webui:main", pip: "open-webui" }, health: "http://127.0.0.1:3080/health", blurb: "A chat website that runs on this PC, like ChatGPT but yours. Talks to local models, the cloud, and your prompts here." },
-  { id: "rea",      name: "REA (Reverse Engineer Anything) MCP server", kind: "mcp", install: { npm: "rea-agents" }, blurb: "Lets an assistant look inside an app or file you own to understand how it works. Comes with the console." },
-  { id: "lapidary", name: "Lapidary (backend and UI)",        kind: "hub",      install: null, health: "http://127.0.0.1:8000/health", blurb: "The heart of this: your prompts, your assistants, and the place every other app connects to." },
+  { id: "rea",      name: "REA (Reverse Engineer Anything)", kind: "mcp", install: { npm: "rea-agents" }, blurb: "Lets an assistant look inside an app or file you own to understand how it works. Comes with the console." },
+  { id: "lapidary", name: "Lapidary (your prompts and assistants)", kind: "hub",      install: null, health: "http://127.0.0.1:8000/health", blurb: "The heart of this: your prompts, your assistants, and the place every other app connects to." },
 ];
 
 /** Default file locations per platform. `env` is process.env-like; `platform` is process.platform-like. */

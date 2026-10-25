@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { RunEvent } from "@/lib/api";
+import { providerLabel, statusLabel } from "@/lib/words";
 import { Wrench, ChevronDown, ChevronRight, AlertTriangle, CheckCircle2, Flag, ShieldAlert, ShieldCheck, ShieldX } from "lucide-react";
 import clsx from "clsx";
 
@@ -39,7 +40,7 @@ function ToolResult({ event }: { event: RunEvent }) {
         {open ? <ChevronDown className="w-3.5 h-3.5 text-slate-500" /> : <ChevronRight className="w-3.5 h-3.5 text-slate-500" />}
         {isError ? <AlertTriangle className="w-3.5 h-3.5 text-red-400" /> : <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
         <span className="font-mono text-slate-300">{String(event.data.name)}</span>
-        <span className="text-slate-500">{isError ? "error" : `${output.length} chars`}</span>
+        <span className="text-slate-500">{isError ? "the tool reported an error" : `${output.length} characters`}</span>
       </button>
       {open && (
         <pre className="px-3 pb-3 whitespace-pre-wrap font-mono text-slate-400 max-h-64 overflow-y-auto">{output}</pre>
@@ -61,12 +62,12 @@ export default function RunEvents({ events, hideFinalText = false, onDecide, dec
             return (
               <div key={e.seq} className="text-xs text-slate-500 flex items-center gap-2">
                 <Flag className="w-3.5 h-3.5" />
-                Run started on {String(e.data.provider)} / {String(e.data.model)}
+                Started on {providerLabel(String(e.data.provider))} ({String(e.data.model)})
                 {Array.isArray(e.data.tools) && e.data.tools.length > 0 && (
                   <span>with {e.data.tools.length} tool{e.data.tools.length !== 1 ? "s" : ""}</span>
                 )}
                 {Array.isArray(e.data.unknown_tools) && e.data.unknown_tools.length > 0 && (
-                  <span className="text-amber-400">unknown tools: {e.data.unknown_tools.join(", ")}</span>
+                  <span className="text-amber-400">tools it cannot find: {e.data.unknown_tools.join(", ")}</span>
                 )}
               </div>
             );
@@ -100,7 +101,7 @@ export default function RunEvents({ events, hideFinalText = false, onDecide, dec
               <div key={e.seq} className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs space-y-2">
                 <div className="flex items-center gap-2 text-amber-300">
                   <ShieldAlert className="w-3.5 h-3.5" />
-                  Wants to call risky tool <span className="font-mono">{String(e.data.name)}</span>
+                  Wants to use <span className="font-mono">{String(e.data.name)}</span>, which can change things
                 </div>
                 <pre className="whitespace-pre-wrap font-mono text-slate-500">{asString(e.data.input)}</pre>
                 {open && onDecide && (
@@ -115,7 +116,7 @@ export default function RunEvents({ events, hideFinalText = false, onDecide, dec
                     </button>
                   </div>
                 )}
-                {open && !onDecide && <p className="text-slate-500">Waiting for a decision.</p>}
+                {open && !onDecide && <p className="text-slate-500">Waiting for Approve or Deny.</p>}
               </div>
             );
           }
@@ -130,7 +131,7 @@ export default function RunEvents({ events, hideFinalText = false, onDecide, dec
             return (
               <div key={e.seq} className="text-xs text-slate-500 flex items-center gap-2">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                {String(e.data.status)} after {String(e.data.steps)} step{Number(e.data.steps) !== 1 ? "s" : ""},
+                {statusLabel(String(e.data.status))} after {String(e.data.steps)} step{Number(e.data.steps) !== 1 ? "s" : ""},
                 {" "}{Number(e.data.input_tokens) + Number(e.data.output_tokens)} tokens
               </div>
             );
@@ -138,7 +139,7 @@ export default function RunEvents({ events, hideFinalText = false, onDecide, dec
             return (
               <div key={e.seq} className="text-xs text-red-400 flex items-center gap-2">
                 <AlertTriangle className="w-3.5 h-3.5" />
-                Run failed at step {String(e.data.step)}: {String(e.data.error)}
+                Stopped at step {String(e.data.step)}: {String(e.data.error)}
               </div>
             );
           default:

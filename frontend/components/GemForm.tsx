@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { gems as gemsApi, chat as chatApi, agents as agentsApi, GemCreate, Gem, AvailableModels, ToolInfo, errorMessage } from "@/lib/api";
+import { gems as gemsApi, chat as chatApi, agents as agentsApi, GemCreate, Gem, AvailableModels, ToolInfo } from "@/lib/api";
+import { explain } from "@/lib/words";
 import { Info, Plus, X, Loader2, Eye, Bot } from "lucide-react";
 import clsx from "clsx";
 
@@ -71,7 +72,7 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
   });
   const gemRefMatches = promptText.match(/\{\{gem:([^}]+)\}\}/g) || [];
   gemRefMatches.forEach((m) => {
-    const name = m.slice(7, -2).trim();
+    const name = m.slice(6, -2).trim();
     if (!gemRefs.includes(name)) gemRefs.push(name);
   });
 
@@ -122,7 +123,7 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
       router.push("/gems");
       router.refresh();
     } catch (err) {
-      setError(errorMessage(err, "Failed to save gem."));
+      setError(explain(err, "Could not save."));
     } finally {
       setSaving(false);
     }
@@ -146,7 +147,7 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
           <input
             type="text"
             required
-            placeholder="e.g. code_reviewer"
+            placeholder="for example study_buddy"
             value={form.name}
             onChange={(e) => handleChange("name", e.target.value)}
             disabled={mode === "edit"}
@@ -158,7 +159,7 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
                 : "border-gem-border hover:border-slate-600"
             )}
           />
-          <p className="mt-1 text-xs text-slate-500">snake_case, unique across library</p>
+          <p className="mt-1 text-xs text-slate-500">lowercase words joined with underscores; no two prompts share a name</p>
         </div>
 
         {/* Description */}
@@ -166,7 +167,7 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
           <label className="block text-sm font-medium text-slate-300 mb-1.5">Description</label>
           <input
             type="text"
-            placeholder="What does this gem do?"
+            placeholder="What it is for, in one sentence"
             value={form.description}
             onChange={(e) => handleChange("description", e.target.value)}
             className="w-full px-3 py-2 rounded-lg bg-gem-card border border-gem-border text-slate-100 text-sm placeholder:text-slate-600 focus:outline-hidden focus:ring-2 focus:ring-violet-500 transition"
@@ -176,7 +177,7 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
         {/* Provider + Model */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Provider</label>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">Which AI</label>
             <select
               value={form.provider}
               onChange={(e) => {
@@ -185,10 +186,10 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
               }}
               className="w-full px-3 py-2 rounded-lg bg-gem-card border border-gem-border text-slate-100 text-sm focus:outline-hidden focus:ring-2 focus:ring-violet-500 transition"
             >
-              <option value="auto">Let the model policy decide</option>
+              <option value="auto">Decide for me (follows the setting in the console)</option>
               <option value="anthropic">Anthropic (Claude)</option>
               <option value="openai">OpenAI (ChatGPT)</option>
-              <option value="local">Local (Ollama, LM Studio, oMLX, vLLM)</option>
+              <option value="local">The one on this PC (Ollama, LM Studio, oMLX, vLLM)</option>
             </select>
           </div>
           <div>
@@ -210,24 +211,24 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
         {/* Kind + tools (ADR-007) */}
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Kind</label>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">What it is</label>
             <select
               value={form.kind ?? "prompt"}
               onChange={(e) => handleChange("kind", e.target.value)}
               className="w-full px-3 py-2 rounded-lg bg-gem-card border border-gem-border text-slate-100 text-sm focus:outline-hidden focus:ring-2 focus:ring-violet-500 transition"
             >
-              <option value="prompt">Prompt (one model call)</option>
-              <option value="agent">Agent (may call its tools in a loop)</option>
+              <option value="prompt">A prompt (answers in one go)</option>
+              <option value="agent">An assistant (can use tools, step by step)</option>
             </select>
           </div>
           {form.kind === "agent" && (
             <div className="rounded-lg border border-gem-border bg-gem-card p-3 space-y-2">
               <p className="text-xs text-slate-400 flex items-center gap-1.5">
                 <Bot className="w-3.5 h-3.5 text-violet-400" />
-                Tools this agent may call
+                Tools this assistant may use
               </p>
               {toolList.length === 0 ? (
-                <p className="text-xs text-slate-600">No tools registered, or the backend is not reachable.</p>
+                <p className="text-xs text-slate-600">No tools to show. Start Lapidary and reload this page.</p>
               ) : (
                 Array.from(new Set(toolList.map((t) => t.source))).map((source) => {
                   const group = toolList.filter((t) => t.source === source);
@@ -254,7 +255,7 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
                             />
                             <span>
                               <span className="font-mono text-violet-300">{t.name}</span>
-                              {t.risky && <span className="ml-1.5 px-1.5 py-0.5 rounded bg-red-500/10 text-red-400">risky</span>}
+                              {t.risky && <span className="ml-1.5 px-1.5 py-0.5 rounded bg-red-500/10 text-red-400" title="Can change things, so each call waits for your approval">asks first</span>}
                               <span className="block text-slate-500">{t.description}</span>
                             </span>
                           </label>
@@ -304,12 +305,12 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <label className="text-sm font-medium text-slate-300">
-              System Prompt <span className="text-red-400">*</span>
+              The prompt <span className="text-red-400">*</span>
             </label>
             <div className="flex items-center gap-1 text-xs text-slate-500">
               <Info className="w-3 h-3" />
               <span>
-                <code className="text-violet-400">{"{{gem:name}}"}</code> to embed, <code className="text-blue-400">{"{variable}"}</code> for vars
+                <code className="text-violet-400">{"{{gem:name}}"}</code> pastes another prompt in, <code className="text-blue-400">{"{variable}"}</code> is a blank
               </span>
             </div>
           </div>
@@ -327,7 +328,7 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
             <div className="mt-2 p-3 rounded-lg bg-gem-surface border border-gem-border space-y-2">
               {gemRefs.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 items-center">
-                  <span className="text-xs text-slate-500">Embeds:</span>
+                  <span className="text-xs text-slate-500">Built from:</span>
                   {gemRefs.map((r) => (
                     <span key={r} className="px-2 py-0.5 rounded-md text-xs bg-violet-500/10 text-violet-400 border border-violet-500/20 font-mono">
                       {r}
@@ -337,7 +338,7 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
               )}
               {detectedVars.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 items-center">
-                  <span className="text-xs text-slate-500">Variables:</span>
+                  <span className="text-xs text-slate-500">Blanks:</span>
                   {detectedVars.map((v) => (
                     <span key={v} className="px-2 py-0.5 rounded-md text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono">
                       {"{" + v + "}"}
@@ -363,7 +364,7 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white text-sm font-medium transition-colors"
           >
             {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-            {mode === "create" ? "Create Gem" : "Save Changes"}
+            {mode === "create" ? "Save prompt" : "Save changes"}
           </button>
           <button
             type="button"
@@ -381,7 +382,7 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
           <div className="flex items-center justify-between px-4 py-3 border-b border-gem-border">
             <span className="text-sm font-medium text-slate-300 flex items-center gap-2">
               <Eye className="w-4 h-4 text-violet-400" />
-              Resolved Preview
+              Preview as sent
             </span>
             <button
               type="button"
@@ -390,14 +391,14 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
               className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-violet-600/20 hover:bg-violet-600/30 text-violet-300 text-xs transition-colors"
             >
               {loadingPreview && <Loader2 className="w-3 h-3 animate-spin" />}
-              Resolve
+              Build it
             </button>
           </div>
 
           {/* Variable input area */}
           {detectedVars.length > 0 && (
             <div className="px-4 py-3 border-b border-gem-border space-y-2">
-              <p className="text-xs text-slate-500">Fill variables for preview:</p>
+              <p className="text-xs text-slate-500">Fill the blanks for the preview:</p>
               {detectedVars.map((v) => (
                 <div key={v} className="flex items-center gap-2">
                   <code className="text-xs text-blue-400 w-24 shrink-0">{"{" + v + "}"}</code>
@@ -416,7 +417,7 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
           <div className="p-4 min-h-[300px]">
             {preview === null ? (
               <p className="text-slate-600 text-sm italic">
-                Click &quot;Resolve&quot; to see the fully expanded prompt including any referenced gems.
+                Press &quot;Build it&quot; to see the prompt as the AI will receive it, with other prompts pasted in.
               </p>
             ) : (
               <pre className="whitespace-pre-wrap font-mono text-xs text-slate-300 leading-relaxed">

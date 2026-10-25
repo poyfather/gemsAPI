@@ -124,11 +124,11 @@
       <section id="view-components" class="view hidden">
         <div class="panel">
           <h2>INSTALL / UPDATE</h2>
-          <p class="hint">Installs go through winget, Docker and npm. Each one prints to Logs.</p>
+          <p class="hint">Each one installs from its own publisher. Everything the installer prints goes to Logs.<span class="adv-only"> Installs run through winget, Docker and npm.</span></p>
           <table id="install-table"><thead><tr><th></th><th>Component</th><th>Version</th><th>Path</th><th></th></tr></thead><tbody></tbody></table>
         </div>
         <div class="panel">
-          <h2>TOOLBOX <span class="dim small-text">optional Windows management tools, installed from the publisher through winget or the PowerShell Gallery</span></h2>
+          <h2>TOOLBOX <span class="dim small-text">optional tools for looking after a Windows PC, each installed from its own publisher</span></h2>
           <div class="actions"><button data-act="toolbox-install-checked">Install checked</button><span class="dim small-text" id="toolbox-msg"></span></div>
           <table id="toolbox-table"><thead><tr><th></th><th></th><th>Tool</th><th>Publisher</th><th>Category</th><th>Source</th><th></th></tr></thead><tbody></tbody></table>
         </div>
@@ -138,9 +138,9 @@
         <div class="panel">
           <h2>CONNECT THE PIECES</h2>
           <dl class="conn">
-            <dt>Claude Desktop</dt><dd>Registers Lapidary and REA as MCP servers in claude_desktop_config.json. <button data-act="connect-claude">Connect</button></dd>
-            <dt>ChatGPT</dt><dd>Writes the same MCP entries to ChatGPT's config, where the app supports local MCP; remote MCP over HTTP is roadmap item 41. <button data-act="connect-chatgpt">Connect</button></dd>
-            <dt>Open WebUI</dt><dd>Writes a compose file with Lapidary, OpenAI and Ollama as providers and starts the container on port 3080. <button data-act="connect-openwebui">Start and connect</button></dd>
+            <dt>Claude Desktop</dt><dd>Lets Claude Desktop use your prompts, your assistants and REA. Restart the app afterwards.<span class="adv-only"> Adds lapidary and rea to mcpServers in claude_desktop_config.json; other entries are kept.</span> <button data-act="connect-claude">Connect</button></dd>
+            <dt>ChatGPT</dt><dd>The same for ChatGPT, where the app supports connections on this PC. Connecting over the internet is roadmap item 41.<span class="adv-only"> Writes the same entries to ChatGPT's mcp_config.json.</span> <button data-act="connect-chatgpt">Connect</button></dd>
+            <dt>Open WebUI</dt><dd>Starts the private chat on this PC, with your prompts, the online AI and the one on this PC all available in it. Needs Docker Desktop.<span class="adv-only"> Writes open-webui.compose.yml with Lapidary, OpenAI and Ollama as providers and runs docker compose up on port 3080.</span> <button data-act="connect-openwebui">Start and connect</button></dd>
           </dl>
           <pre id="conn-out" class="out"></pre>
         </div>
@@ -148,8 +148,8 @@
 
       <section id="view-settings" class="view hidden">
         <div class="panel">
-          <h2>KEYS AND STORAGE</h2>
-          <p class="hint">Stored with the operating system's credential encryption. Values are never shown again once saved.</p>
+          <h2>WHICH AI, KEYS AND STORAGE</h2>
+          <p class="hint">Keys come from your own Anthropic or OpenAI account and are paid by use. They are stored with the operating system's credential encryption and never shown again once saved. Press Save, then Restart Lapidary on the Dashboard.</p>
           <form id="settings-form">
             <label>Which AI should we use?
               <select name="modelPolicy">
@@ -162,8 +162,8 @@
             </label>
             <label class="adv-only">Local model server (Ollama by default) <input name="localBaseUrl" type="text" placeholder="http://127.0.0.1:11434/v1"></label>
             <label>Local model (downloaded by the first run; change it here) <input name="localModel" type="text" placeholder="qwen3:4b"></label>
-            <label>Anthropic API key <input name="anthropicKey" type="password" placeholder="sk-ant-..."></label>
-            <label>OpenAI API key <input name="openaiKey" type="password" placeholder="sk-..."></label>
+            <label>Anthropic key (for Claude) <input name="anthropicKey" type="password" placeholder="sk-ant-..."></label>
+            <label>OpenAI key (for ChatGPT) <input name="openaiKey" type="password" placeholder="sk-..."></label>
             <label class="adv-only">Lapidary API key <input name="gemsApiKey" type="text" placeholder="generated on first run"></label>
             <label class="adv-only">Supabase URL (hosted mode, optional) <input name="supabaseUrl" type="text" placeholder="https://xyz.supabase.co"></label>
             <label class="adv-only">Supabase service role key (optional) <input name="supabaseKey" type="password"></label>
@@ -183,7 +183,7 @@
       <section id="view-powershell" class="view hidden grow">
         <div class="panel grow">
           <h2>POWERSHELL 7 <span class="dim small-text" id="pwsh-note"></span></h2>
-          <p class="hint">Runs as you, with -NoProfile and -NonInteractive. Ctrl+Enter runs. Everything you run also goes to Logs. The same engine is available to agents as the risky tool <span class="mono">run_powershell</span>, behind the approval gate.</p>
+          <p class="hint">Runs commands as you. Ctrl+Enter runs. Everything you run also goes to Logs. Your assistants use the same engine, and every command they want to run waits for your approval first.<span class="adv-only"> Invoked with -NoProfile and -NonInteractive; the agents' tool is <span class="mono">run_powershell</span>, marked risky.</span></p>
           <textarea id="pwsh-in" rows="4" spellcheck="false" placeholder="Get-ComputerInfo | Select-Object OsName, OsVersion, CsName"></textarea>
           <div class="actions"><button data-act="pwsh-run">Run</button><button data-act="pwsh-clear">Clear</button></div>
           <pre id="pwsh-out" class="out tall"></pre>

@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { gems as gemsApi, Gem, errorMessage } from "@/lib/api";
+import { gems as gemsApi, Gem } from "@/lib/api";
+import { explain } from "@/lib/words";
 import GemForm from "@/components/GemForm";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
@@ -19,7 +20,7 @@ export default function EditGemPage() {
         const data = await gemsApi.get(id);
         setGem(data);
       } catch (e) {
-        setError(errorMessage(e, "Gem not found."));
+        setError(explain(e, "That prompt was not found."));
       } finally {
         setLoading(false);
       }
@@ -30,7 +31,7 @@ export default function EditGemPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20 text-slate-500">
-        <Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading gem...
+        <Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading...
       </div>
     );
   }
@@ -38,7 +39,7 @@ export default function EditGemPage() {
   if (error || !gem) {
     return (
       <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
-        {error || "Gem not found."}
+        {error || "That prompt was not found. Go back to the library and pick it again."}
       </div>
     );
   }
@@ -56,7 +57,7 @@ export default function EditGemPage() {
           <h1 className="text-xl font-bold text-white">
             Edit <span className="font-mono text-violet-300">{gem.name}</span>
           </h1>
-          <p className="text-slate-400 text-sm mt-0.5">Name cannot be changed after creation.</p>
+          <p className="text-slate-400 text-sm mt-0.5">The name cannot be changed once saved; everything else can.</p>
         </div>
       </div>
       <GemForm mode="edit" initialGem={gem} />
