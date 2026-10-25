@@ -1,4 +1,4 @@
-# Contributing to gemsAPI
+# Contributing to Lapidary
 
 Thanks for helping. The most useful contributions right now are tests around the resolver, fixes from the [roadmap](docs/ROADMAP.md), and well-evaluated gems.
 

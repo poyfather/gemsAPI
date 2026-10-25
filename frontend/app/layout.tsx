@@ -3,8 +3,8 @@ import "./globals.css";
 import Navigation from "@/components/Navigation";
 
 export const metadata: Metadata = {
-  title: "gemsAPI — Prompt Library",
-  description: "Manage, compose, and serve reusable LLM prompts with recursive gem references.",
+  title: "Lapidary, prompt library and agent harness",
+  description: "Compose reusable LLM prompts as gems, run them as agents, and serve them over REST, a web UI and MCP.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -1,6 +1,8 @@
-# gemsAPI
+# Lapidary
 
-A self-hosted prompt library. Store reusable LLM system prompts ("gems") in Supabase, compose them with `{{gem:name}}`, fill `{variable}` placeholders at call time, and serve the result over a REST API, a web UI and an MCP server that Claude Desktop, Cursor and other MCP clients can call directly.
+A self-hosted prompt library and agent harness. Store reusable LLM system prompts ("gems") in Supabase, compose them with `{{gem:name}}`, fill `{variable}` placeholders at call time, give a gem tools and run it as an agent, and serve all of it over a REST API, a web UI and an MCP server that Claude Desktop, Cursor and other MCP clients can call directly.
+
+A lapidary is the craftsperson who cuts and polishes rough stones into gems. That is the job here: rough prompts become named, composable, versioned gems, and the polished ones get to act. The project was called gemsAPI until October 2026; the repository URL and the `GEMS_*` environment variables are unchanged.
 
 [![CI](https://github.com/poyfather/gemsAPI/actions/workflows/ci.yml/badge.svg)](https://github.com/poyfather/gemsAPI/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/poyfather/gemsAPI/actions/workflows/codeql.yml/badge.svg)](https://github.com/poyfather/gemsAPI/actions/workflows/codeql.yml)
@@ -13,7 +15,7 @@ A self-hosted prompt library. Store reusable LLM system prompts ("gems") in Supa
 
 If you use AI tools a lot, you end up writing instructions for them: "you are a careful code reviewer, check for bugs first, then style." Good ones are worth keeping. The trouble is where they end up: one in a chat window, one in a text file, one pasted into Slack, three slightly different copies of the same thing. When you improve one, the others stay stale.
 
-gemsAPI is a labelled drawer for those instructions. Each one gets a name, a description and tags, and lives in one database. You can fetch it from a web page, from your own code, or straight from Claude Desktop and Cursor, which can open the drawer themselves and pull out the right prompt instead of you pasting it in.
+Lapidary is a labelled drawer for those instructions. Each one gets a name, a description and tags, and lives in one database. You can fetch it from a web page, from your own code, or straight from Claude Desktop and Cursor, which can open the drawer themselves and pull out the right prompt instead of you pasting it in.
 
 Two tricks make the drawer more than a list:
 
@@ -32,7 +34,7 @@ flowchart LR
         MCPC["MCP clients<br/>Claude Desktop, Cursor"]
     end
 
-    subgraph core["gemsAPI"]
+    subgraph core["Lapidary"]
         API["FastAPI service<br/>/gems and /chat, port 8000"]
         MCPS["FastMCP server<br/>7 tools, 2 resources, stdio"]
         RES["Resolver<br/>expand gem references,<br/>fill variables"]
@@ -103,7 +105,7 @@ The MCP server runs over stdio and reads `backend/.env`, so point the client at 
 ```json
 {
   "mcpServers": {
-    "gemsAPI": {
+    "lapidary": {
       "command": "/absolute/path/to/gemsAPI/backend/.venv/bin/python",
       "args": ["/absolute/path/to/gemsAPI/backend/mcp_server.py"]
     }

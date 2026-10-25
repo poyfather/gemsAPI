@@ -1,7 +1,7 @@
 # ROADMAP
 
 ## Purpose
-Track gemsAPI development priorities, sequencing, and delivery status.
+Track Lapidary development priorities, sequencing, and delivery status.
 This file tracks delivery status of agreed items. The prioritised list of improvements, with reasons, sizes and dependencies, is in [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ---
@@ -81,7 +81,7 @@ This file tracks delivery status of agreed items. The prioritised list of improv
 - Links: `scripts/`, `docker-compose.yml`
 
 ### Gem Import / Export
-- Goal: CLI or UI feature to export all gems as a JSON/YAML bundle and import them into another gemsAPI instance.
+- Goal: CLI or UI feature to export all gems as a JSON/YAML bundle and import them into another Lapidary instance.
 - Status: Planned
 - Owner: poyfather
 - Dependencies: stable schema

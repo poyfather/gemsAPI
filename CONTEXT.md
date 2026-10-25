@@ -1,7 +1,7 @@
 # CONTEXT
 
 ## System Purpose
-gemsAPI is a self-hosted prompt library for LLM system prompts. It solves the problem of prompts living scattered across code files, Notion docs, and personal notes by giving them a proper home: a named, tagged, version-controlled database entry ("gem") accessible from a web UI, a REST API, and an MCP server. The recursive composition feature lets complex prompts be built from smaller reusable parts — the same way good software is built from functions and modules.
+Lapidary (gemsAPI until October 2026) is a self-hosted prompt library and agent harness for LLM system prompts. It solves the problem of prompts living scattered across code files, Notion docs, and personal notes by giving them a proper home: a named, tagged, version-controlled database entry ("gem") accessible from a web UI, a REST API, and an MCP server. The recursive composition feature lets complex prompts be built from smaller reusable parts — the same way good software is built from functions and modules.
 
 ## Users & Stakeholders
 - **Primary users**: AI engineers, product builders, and power users who work with multiple LLM prompts across projects and want a central place to manage and reuse them.

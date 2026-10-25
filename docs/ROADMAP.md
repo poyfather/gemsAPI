@@ -1,4 +1,4 @@
-# gemsAPI improvement roadmap
+# Lapidary improvement roadmap
 
 A prioritised list of improvements to the project itself, written on 2026-10-23 from a read of the code at v0.0.2 plus the repository hygiene pull request that added this file. The root [ROADMAP.md](../ROADMAP.md) tracks delivery status of agreed items; this file is the reasoning: what to do, why, how big it is, and what it waits on.
 

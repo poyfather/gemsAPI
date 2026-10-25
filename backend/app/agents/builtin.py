@@ -2,7 +2,7 @@
 Built-in tools: read-only access to the gem library itself.
 
 Importing this module registers them. They are deliberately boring: the
-first agent shipped with gemsAPI is a librarian for its own prompts.
+first agent shipped with Lapidary is a librarian for its own prompts.
 """
 from __future__ import annotations
 
