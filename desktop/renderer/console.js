@@ -36,7 +36,7 @@ async function refresh() {
   const { components, status } = await window.lapidary.components();
   const rows = components.map((c) => {
     const s = status[c.id] || {};
-    return `<tr><td><span class="${lampFor(s)}"></span></td><td>${c.name}</td><td class="dim">${c.kind}</td><td>${stateText(s)}${s.note ? ` <span class="dim">(${s.note})</span>` : ""}</td><td></td></tr>`;
+    return `<tr><td><span class="${lampFor(s)}"></span></td><td>${c.name}<span class="blurb">${c.blurb || ""}</span></td><td class="dim">${c.kind}</td><td>${stateText(s)}${s.note ? ` <span class="dim">(${s.note})</span>` : ""}</td><td></td></tr>`;
   });
   $("#status-table tbody").innerHTML = rows.join("");
   const inst = components.map((c) => {

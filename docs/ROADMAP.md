@@ -4,7 +4,7 @@ A prioritised list of improvements to the project itself, written on 2026-10-23 
 
 Sizes: **S** is under half a day, **M** is one to three days, **L** is a week or more. Items are numbered so they can be referenced from issues and from the root roadmap.
 
-Two lenses run through the list. Items 1 to 27 come from reading the code: correctness, security, developer experience. Items 14, 21, 22 and 28 to 31 come from asking what a person who writes prompts for a living needs from a prompt library, and are summarised in [For the prompt practitioner](#for-the-prompt-practitioner) at the end. If only one thread gets attention, that one is the product. Items 32 to 35 follow ADR-007, which turned gems into agent definitions with a thin run loop. Items 36 to 42 follow ADR-009, the Windows console that installs and connects the AI tools on a machine with Lapidary as the hub.
+Two lenses run through the list. Items 1 to 27 come from reading the code: correctness, security, developer experience. Items 14, 21, 22 and 28 to 31 come from asking what a person who writes prompts for a living needs from a prompt library, and are summarised in [For the prompt practitioner](#for-the-prompt-practitioner) at the end. If only one thread gets attention, that one is the product. Items 32 to 35 follow ADR-007, which turned gems into agent definitions with a thin run loop. Items 36 to 42 follow ADR-009, the Windows console that installs and connects the AI tools on a machine with Lapidary as the hub. Items 47 to 50 follow ADR-012 and come first among the console items: the platform is for someone who does not know AI yet and should get something great out of it on day one.
 
 ## Already done in the hygiene pull request
 
@@ -65,6 +65,10 @@ These were found during the audit and fixed because CI could not pass without th
 | 44 | Local models as a provider: Ollama, oMLX, LM Studio, vLLM | Providers, hybrid | S | Next |
 | 45 | Gates: builder, tests, visual review, adversarial review, acceptance | Agents, quality | L | Next |
 | 46 | Workbench: parallel runs on worktrees; Codex and OpenCode as clients | Console, agents | L | Later |
+| 47 | Guided first run and recipes: outcomes in one click | Console, newcomers | L | Now |
+| 48 | Plain-language pass over the console and the web UI | Console, newcomers | M | Now |
+| 49 | Doctor: self-check with offered fixes | Console, newcomers | M | Next |
+| 50 | Explainers: every screen says what it is for and why | Console, newcomers | S | Now |
 
 ## Now
 
@@ -399,6 +403,34 @@ A Windows 11 application that installs, connects and manages the AI tools on a m
 - **Why**: ADR-011, modelled on Paseo. The console starts several runs or pipelines at once, each on its own git worktree when a repository is involved, and shows them side by side with their gates; Codex and OpenCode appear in Connections as MCP clients of Lapidary so they share its memory and gems.
 - **Size**: L.
 - **Depends on**: 45, 41.
+
+## For the newcomer (ADR-012)
+
+The person this is for does not know much about AI, installs the console, and should get something genuinely useful on day one. These items come before the rest of the console work.
+
+### 47. Guided first run and recipes: outcomes in one click
+
+- **Why**: a newcomer should pick what they want, not what to install. The first run asks one question ("what would you like?") and offers recipes: a private chat on this PC (Ollama, a small model, Open WebUI, connected, done), let Claude and ChatGPT use my prompts (keys form with a test button, the apps connected), an assistant that can run safe PowerShell for me (the `windows_operator` gem, with the approval gate explained), understand how an app works (REA and the `rea_analyst` gem). Each recipe installs and connects what it needs, shows progress in plain words, and ends with "here is what you can do now". Cloud keys are offered as an upgrade, never required.
+- **Size**: L.
+- **Depends on**: 37, 39, 40, 44 (local models so the default path needs no key).
+
+### 48. Plain-language pass over the console and the web UI
+
+- **Why**: "MCP", "gem", "run", "provider", "RLS" are our words. The console and the web UI get a pass against ADR-012: connect instead of MCP, prompts and assistants instead of gems and agents where a newcomer reads, "what the assistant did" for runs, acronyms only in details, every error message saying what to do next. The retro look stays.
+- **Size**: M.
+- **Depends on**: nothing.
+
+### 49. Doctor: self-check with offered fixes
+
+- **Why**: when something does not work, a newcomer cannot read logs. A Doctor view runs the checks (services up, keys valid, Docker running, ports free, Ollama has a model, connections written, versions current) and offers the fix for each failure in one click, with a plain explanation.
+- **Size**: M.
+- **Depends on**: 37, 39.
+
+### 50. Explainers: every screen says what it is for and why
+
+- **Why**: one sentence per component and per screen, in the person's language: what it is, what you get from it, what it costs or needs. Started in this PR with a blurb on every component and toolbox entry.
+- **Size**: S.
+- **Depends on**: nothing.
 
 ## For the prompt practitioner
 

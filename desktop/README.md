@@ -6,6 +6,10 @@ The Windows 11 application that installs, connects and manages the AI tools on a
 
 Simple and retro, on purpose. One typeface (Cascadia Mono, which Windows ships, then Consolas), one amber for headings and the active item, one green for "running" lamps, one red for "missing", near-black panels with a single bright corner tick, faint scanlines and nothing that flickers or animates. Seven views, reachable by the number keys: Dashboard, Components, Connections, Settings, Logs, PowerShell, Lapidary. Every action prints what it did in a monospace box under the button, and everything the console runs is in Logs. The look is a terminal from a better decade; the rules are the ones a console for operators needs: dense, legible, keyboard-first, no surprises.
 
+## Who it is for
+
+Someone who does not know much about AI, installs this, and gets something genuinely useful on day one (ADR-012). So: plain words on the surface, nothing that needs a file edited, a path that works without a cloud key, outcomes offered as one-click recipes, every component explaining itself in a sentence, and anything that changes the machine asking first. The power-user surfaces stay one click away.
+
 ## Layout
 
 ```

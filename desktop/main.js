@@ -96,7 +96,7 @@ function runCommand(program, args) {
 }
 
 // ---- IPC surface
-ipcMain.handle("console:components", async () => ({ components: COMPONENTS.map(({ id, name, kind }) => ({ id, name, kind })), status: await detectAll(io) }));
+ipcMain.handle("console:components", async () => ({ components: COMPONENTS.map(({ id, name, kind, blurb }) => ({ id, name, kind, blurb })), status: await detectAll(io) }));
 ipcMain.handle("console:toolbox", async () => ({ tools: TOOLBOX.map((t) => ({ id: t.id, name: t.name, publisher: t.publisher, category: t.category, source: toolboxSourceLabel(t), homepage: t.homepage })), status: await detectToolbox(io) }));
 ipcMain.handle("console:install", async (_e, id) => {
   const cmd = installCommand(id) || toolboxInstallCommand(id, { pwshPath: (await io.which("pwsh")) || "powershell.exe" });
