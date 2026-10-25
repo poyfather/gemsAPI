@@ -68,9 +68,9 @@ Every surface hands the gem to the same resolver, which expands `{{gem:name}}` r
 |---|---|
 | **Web UI** (Next.js 16, port 3000) | Browse, search and tag gems, edit them with a live resolved preview, test any gem in a chat view with streamed replies, run agent gems and watch each tool call as it happens, and open any past run by id |
 | **REST API** (FastAPI, port 8000) | CRUD on `/gems`, `POST /gems/resolve` to expand a gem, `POST /chat` with optional SSE streaming, Swagger at `/docs` |
-| **MCP server** (FastMCP, stdio) | Tools `list_gems`, `search_gems`, `get_gem`, `resolve_gem_prompt`, `chat_with_gem`, `create_gem`, `run_agent`, `approve_run`, `list_agent_tools`, `list_available_models`, `search_memory`, `get_memories`, `remember`, `forget`, plus `gems://list`, `gems://{name}` and `runs://{id}` resources |
+| **MCP server** (FastMCP, stdio) | Tools `list_gems`, `search_gems`, `get_gem`, `resolve_gem_prompt`, `chat_with_gem`, `create_gem`, `run_agent`, `approve_run`, `list_agent_tools`, `list_available_models`, `search_memory`, `get_memories`, `remember`, `forget`, `list_pipelines`, `run_pipeline`, `resume_pipeline`, plus `gems://list`, `gems://{name}` and `runs://{id}` resources |
 | **Agent runs** | A gem of kind `agent` lists tools it may call; `POST /agents/{name}/runs` runs the loop (model turn, tool calls, results, repeat) and records every step in `runs` and `run_events` |
-| **Seed gems** | `base_assistant`, `code_reviewer`, `creative_writer`, `summarizer`, `engineering_lead`, `prompt_enhancer`, the newcomer prompts `study_buddy`, `writing_coach` and `research_assistant`, `memory_summarizer`, and the agents `gem_librarian`, `rea_analyst`, `windows_operator` and `program_builder`, each also kept as a reviewable file in [`prompts/`](prompts/) |
+| **Seed gems** | `base_assistant`, `code_reviewer`, `creative_writer`, `summarizer`, `engineering_lead`, `prompt_enhancer`, the newcomer prompts `study_buddy`, `writing_coach` and `research_assistant`, `memory_summarizer`, the gate gems `test_runner` and `adversarial_reviewer`, and the agents `gem_librarian`, `rea_analyst`, `windows_operator` and `program_builder`, each also kept as a reviewable file in [`prompts/`](prompts/) |
 
 ## Quick start
 
@@ -160,6 +160,21 @@ A second seed agent, `rea_analyst`, shows the point of remote tools. With [REA (
 
 The response is the run (status, output, steps, tokens) plus its events; `GET /runs/{id}` returns the same later, and `"stream": true` delivers the events as Server-Sent Events while the run happens. The web UI does the same: mark a gem as an agent and pick its tools in the editor, send it a message on the chat page to watch the turns, tool calls and results stream in, then open the run at `/runs/{id}`. Over MCP the same loop is the `run_agent` tool, so Claude Desktop or Cursor can hand a task to one of your agents and get the answer and the run id back. A call to a tool marked risky pauses the run (status `waiting_approval`) with the call shown in the chat bubble or on the run page; approve or deny it there, or with `POST /runs/{id}/approve`, and the loop carries on from that exact point. A run started with `allow_risky` skips the gate. None of the shipped tools are risky. [ARCHITECTURE.md](ARCHITECTURE.md) has the loop as a sequence diagram, and ADR-007 in [DECISIONS.md](DECISIONS.md) explains the design.
 
+## Gates
+
+A model should never decide it is done (ADR-011, modelled on Ratchet Loop). A **pipeline** is a builder gem followed by gate gems with roles: a test gate that runs the tests through PowerShell, a review gate that tries to break the result (best on a different model or provider from the builder, with `provider_override` on the gate), a visual gate when a screenshot tool is connected, and finally you.
+
+- **How a run goes.** The builder works on the message. Each gate gets the task and the builder's output and must end its answer with `VERDICT: PASS` or `VERDICT: FAIL`, findings first; no verdict counts as a fail. A fail sends the findings back to the builder for another attempt, up to `max_attempts`, and becomes a `lesson` in Memory. When every gate passed, the run waits for you to accept (or send it back with a note), unless the pipeline has `acceptance: false`.
+- **Every attempt and gate is an ordinary run**, so `/runs/{id}` shows what the builder did and what each gate checked. A risky tool call pauses the pipeline the same way it pauses a run: approve or deny the run, then resume the pipeline.
+- **Surfaces.** `GET` and `POST /pipelines/`, `POST /pipelines/{name}/runs` (JSON or SSE), `GET /pipelines/runs/{id}`, `POST /pipelines/runs/{id}/resume`; the MCP tools `list_pipelines`, `run_pipeline` and `resume_pipeline`; and the Pipelines page in the web UI with a run page per attempt.
+- **Shipped.** The gate gems `test_runner` (agent, `run_powershell`) and `adversarial_reviewer` (prompt), and the pipeline `build_and_check`: `program_builder`, then the test gate, then the review gate, then acceptance. Existing Supabase installs run `supabase/add_pipelines.sql`.
+
+```sh
+curl -s http://localhost:8000/pipelines/build_and_check/runs \
+  -H "X-API-Key: $GEMS_API_KEY" -H "Content-Type: application/json" \
+  -d '{"message": "A PowerShell script that lists the ten largest files under my Documents folder, with tests."}'
+```
+
 ## Memory
 
 Every run used to start from nothing. Now Lapidary keeps a memory (ADR-010, modelled on claude-mem), and because Claude Desktop, ChatGPT, Open WebUI and the agents all go through Lapidary, it is one memory for every client on the machine.
@@ -226,12 +241,12 @@ Backend variables live in `backend/.env` (template: [`.env.example`](.env.exampl
 ## Project layout
 
 ```
-backend/app/        FastAPI app: routes/ (gems, chat, agents, memory, openai_compat), services/ (gem_service resolver, llm_service, memory_service), agents/ (tool registry, MCP sources, run loop), storage/ (SQLite and Supabase backends), auth.py, models.py
+backend/app/        FastAPI app: routes/ (gems, chat, agents, memory, pipelines, openai_compat), services/ (gem_service resolver, llm_service, memory_service), agents/ (tool registry, MCP sources, run loop, pipeline), storage/ (SQLite and Supabase backends), auth.py, models.py
 desktop/            Lapidary Console, the Windows 11 Electron application (see desktop/README.md)
 backend/mcp_server.py   FastMCP server over the same services
 frontend/           Next.js 16 app router UI (app/ including runs/[id], components/ including RunEvents, lib/api.ts with the SSE client, proxy.ts)
 configs/            mcp_servers.json (copy the example) for tools from other MCP servers
-supabase/           schema.sql (tables, RLS, seed gems; also the seed source for SQLite) and one-off migrations such as lock_down_rls.sql, add_agent_runs.sql, add_newcomer_gems.sql and add_memory.sql
+supabase/           schema.sql (tables, RLS, seed gems; also the seed source for SQLite) and one-off migrations such as lock_down_rls.sql, add_agent_runs.sql, add_newcomer_gems.sql, add_memory.sql and add_pipelines.sql
 prompts/            the shipped gems as markdown, one file per gem
 evals/              live-API quality checks for gems (eval_prompt_enhancer.py)
 tests/              pytest unit tests, no network

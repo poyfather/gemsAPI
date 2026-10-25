@@ -375,6 +375,40 @@ async def forget(memory_id: str) -> dict:
 
 
 @mcp.tool()
+async def list_pipelines() -> list[dict]:
+    """Pipelines (ADR-011): a builder gem followed by gate gems that pass or fail its output, with retries and acceptance."""
+    from app.storage import get_store
+    return [p.model_dump(mode="json") for p in await get_store().list_pipelines()]
+
+
+@mcp.tool()
+async def run_pipeline(name: str, message: str, variables: dict[str, str] | None = None, allow_risky: bool = False, memory_scope: str = "default") -> dict:
+    """
+    Run a pipeline: the builder works on the message, each gate checks the output,
+    failures go back to the builder up to max_attempts, then the run waits for
+    acceptance or finishes. Returns the pipeline run with its attempts and gate
+    verdicts; use resume_pipeline to accept, reject or continue after an approval.
+    """
+    from app.agents.pipeline import run_pipeline as _run_pipeline
+    try:
+        result = await _run_pipeline(name, message, variables or {}, allow_risky=allow_risky, memory_scope=memory_scope)
+    except ValueError as exc:
+        return {"error": str(exc)}
+    return result.run.model_dump(mode="json")
+
+
+@mcp.tool()
+async def resume_pipeline(run_id: str, accept: bool | None = None, note: str = "") -> dict:
+    """Continue a paused pipeline run: accept=true or false (with a note) when it waits for acceptance; no accept when it waited for an approval you have since given."""
+    from app.agents.pipeline import resume_pipeline as _resume_pipeline
+    try:
+        result = await _resume_pipeline(run_id, accept=accept, note=note)
+    except (LookupError, ValueError) as exc:
+        return {"error": str(exc)}
+    return result.run.model_dump(mode="json")
+
+
+@mcp.tool()
 async def list_agent_tools() -> list[dict]:
     """List the tools an agent gem may be given, built in and from configured MCP servers, with their argument schemas."""
     await refresh_remote_tools()

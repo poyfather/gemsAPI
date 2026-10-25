@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from app.database import get_supabase
-from app.models import Gem, GemCreate, Memory, MemoryCreate, Run, RunEvent
+from app.models import Gem, GemCreate, Memory, MemoryCreate, Pipeline, PipelineCreate, PipelineRun, Run, RunEvent
 
 
 class SupabaseStore:
@@ -85,6 +85,44 @@ class SupabaseStore:
     async def delete_memory(self, memory_id: str) -> bool:
         result = get_supabase().table("memories").delete().eq("id", memory_id).execute()
         return bool(result.data)
+
+
+    # ---- pipelines (ADR-011)
+    async def list_pipelines(self) -> list[Pipeline]:
+        result = get_supabase().table("pipelines").select("*").order("name").execute()
+        return [Pipeline(**r) for r in result.data]
+
+    async def get_pipeline(self, name: str) -> Pipeline | None:
+        result = get_supabase().table("pipelines").select("*").eq("name", name).limit(1).execute()
+        return Pipeline(**result.data[0]) if result.data else None
+
+    async def create_pipeline(self, data: PipelineCreate) -> Pipeline:
+        result = get_supabase().table("pipelines").insert(data.model_dump()).execute()
+        return Pipeline(**result.data[0])
+
+    async def update_pipeline(self, name: str, updates: dict) -> Pipeline:
+        result = get_supabase().table("pipelines").update(updates).eq("name", name).execute()
+        return Pipeline(**result.data[0])
+
+    async def delete_pipeline(self, name: str) -> bool:
+        result = get_supabase().table("pipelines").delete().eq("name", name).execute()
+        return bool(result.data)
+
+    async def create_pipeline_run(self, pipeline_name: str, input_text: str) -> PipelineRun:
+        result = get_supabase().table("pipeline_runs").insert({"pipeline_name": pipeline_name, "input": input_text, "status": "running"}).execute()
+        return PipelineRun(**result.data[0])
+
+    async def update_pipeline_run(self, run_id: str, **fields) -> PipelineRun:
+        result = get_supabase().table("pipeline_runs").update(fields).eq("id", run_id).execute()
+        return PipelineRun(**result.data[0])
+
+    async def get_pipeline_run(self, run_id: str) -> PipelineRun | None:
+        result = get_supabase().table("pipeline_runs").select("*").eq("id", run_id).limit(1).execute()
+        return PipelineRun(**result.data[0]) if result.data else None
+
+    async def get_pipeline_run_state(self, run_id: str) -> dict | None:
+        result = get_supabase().table("pipeline_runs").select("state").eq("id", run_id).limit(1).execute()
+        return result.data[0].get("state") if result.data else None
 
 
 def now_iso() -> str:

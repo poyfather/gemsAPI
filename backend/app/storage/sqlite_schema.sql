@@ -69,3 +69,30 @@ END;
 CREATE TRIGGER IF NOT EXISTS memories_ad AFTER DELETE ON memories BEGIN
   INSERT INTO memories_fts (memories_fts, rowid, text, tags) VALUES ('delete', old.rowid, old.text, old.tags);
 END;
+
+-- Pipelines and gates (ADR-011): a builder gem, then gate gems that pass or fail its output.
+CREATE TABLE IF NOT EXISTS pipelines (
+  id           TEXT PRIMARY KEY,
+  name         TEXT UNIQUE NOT NULL,
+  description  TEXT NOT NULL DEFAULT '',
+  builder      TEXT NOT NULL,
+  gates        TEXT NOT NULL DEFAULT '[]',
+  max_attempts INTEGER NOT NULL DEFAULT 3,
+  acceptance   INTEGER NOT NULL DEFAULT 1,
+  created_at   TEXT NOT NULL,
+  updated_at   TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS pipeline_runs (
+  id             TEXT PRIMARY KEY,
+  pipeline_name  TEXT NOT NULL,
+  status         TEXT NOT NULL DEFAULT 'running' CHECK (status IN ('running', 'waiting_approval', 'waiting_acceptance', 'passed', 'failed', 'max_attempts')),
+  input          TEXT NOT NULL,
+  output         TEXT,
+  attempts       TEXT NOT NULL DEFAULT '[]',
+  state          TEXT,
+  waiting_run_id TEXT,
+  error          TEXT,
+  created_at     TEXT NOT NULL,
+  finished_at    TEXT
+);
+CREATE INDEX IF NOT EXISTS pipeline_runs_created_at_idx ON pipeline_runs (created_at DESC);

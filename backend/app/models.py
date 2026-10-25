@@ -172,3 +172,93 @@ class MemoryIndexEntry(BaseModel):
     created_at: datetime
     line: str = Field(..., description="The first line of the text, at most 160 characters")
     tags: list[str] = []
+
+
+# ─── Pipelines and gates (ADR-011, roadmap 45) ────────────────────────────────
+
+PIPELINE_STATUSES = ("running", "waiting_approval", "waiting_acceptance", "passed", "failed", "max_attempts")
+GATE_ROLES = ("test", "visual", "review", "custom")
+
+
+class PipelineGate(BaseModel):
+    gem: str = Field(..., description="The gate gem; it answers with findings and a final line VERDICT: PASS or VERDICT: FAIL")
+    role: str = Field(default="review", description="test, visual, review or custom; shown to the gem and in the record")
+    provider_override: Optional[str] = Field(default=None, description="Run the gate on another provider, for an adversarial review on a different model")
+    model_override: Optional[str] = None
+    instructions: str = Field(default="", description="Extra instructions appended to what the gate is given")
+
+
+class PipelineBase(BaseModel):
+    name: str = Field(..., description="Unique snake_case name")
+    description: str = ""
+    builder: str = Field(..., description="The gem that does the work; its output goes through the gates")
+    gates: list[PipelineGate] = Field(default=[])
+    max_attempts: int = Field(default=3, ge=1, le=10, description="How many times the builder may try before the pipeline gives up")
+    acceptance: bool = Field(default=True, description="Pause for a person to accept the result after every gate passed")
+
+
+class PipelineCreate(PipelineBase):
+    pass
+
+
+class PipelineUpdate(BaseModel):
+    description: Optional[str] = None
+    builder: Optional[str] = None
+    gates: Optional[list[PipelineGate]] = None
+    max_attempts: Optional[int] = None
+    acceptance: Optional[bool] = None
+
+
+class Pipeline(PipelineBase):
+    id: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class GateResult(BaseModel):
+    gem: str
+    role: str
+    run_id: Optional[str] = None
+    verdict: str = Field(default="waiting", description="pass, fail or waiting")
+    findings: str = ""
+
+
+class Attempt(BaseModel):
+    number: int
+    builder_run_id: Optional[str] = None
+    builder_status: str = "running"
+    output: Optional[str] = None
+    gates: list[GateResult] = []
+    feedback: str = Field(default="", description="What the builder was told from the previous attempt")
+
+
+class PipelineRunRequest(BaseModel):
+    message: str = Field(..., description="The task for the builder")
+    variables: dict[str, str] = Field(default={})
+    allow_risky: bool = False
+    stream: bool = False
+    memory_scope: str = "default"
+
+
+class PipelineResumeRequest(BaseModel):
+    accept: Optional[bool] = Field(default=None, description="For a run waiting for acceptance: true accepts, false sends it back to the builder with the note")
+    note: str = Field(default="", description="Why it was rejected; given to the builder as findings")
+    stream: bool = False
+
+
+class PipelineRun(BaseModel):
+    id: str
+    pipeline_name: str
+    status: str = Field(..., description="running, waiting_approval, waiting_acceptance, passed, failed, max_attempts")
+    input: str
+    output: Optional[str] = None
+    attempts: list[Attempt] = []
+    waiting_run_id: Optional[str] = Field(default=None, description="The agent run to approve when the status is waiting_approval")
+    error: Optional[str] = None
+    created_at: datetime
+    finished_at: Optional[datetime] = None
+
+
+class PipelineResult(BaseModel):
+    run: PipelineRun
+    events: list[RunEvent] = []
