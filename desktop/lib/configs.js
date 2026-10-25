@@ -64,6 +64,7 @@ export function backendEnv(settings, { dataDir, mcpServersFile }) {
   };
   env.GEMS_MODEL_POLICY = settings.modelPolicy || "auto";
   if (settings.localBaseUrl) env.LOCAL_OPENAI_BASE_URL = settings.localBaseUrl;
+  if (settings.localModel) env.GEMS_LOCAL_DEFAULT_MODEL = settings.localModel;
   if (settings.anthropicKey) env.ANTHROPIC_API_KEY = settings.anthropicKey;
   if (settings.openaiKey) env.OPENAI_API_KEY = settings.openaiKey;
   if (settings.supabaseUrl && settings.supabaseKey) {

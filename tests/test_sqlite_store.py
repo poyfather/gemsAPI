@@ -33,7 +33,10 @@ def run(coro):
 def test_seed_parser_reads_every_gem_from_schema_sql() -> None:
     gems = parse_seed_gems(SEEDS.read_text())
     names = [g["name"] for g in gems]
-    assert names == ["windows_operator", "rea_analyst", "gem_librarian", "base_assistant", "code_reviewer", "creative_writer", "summarizer", "engineering_lead", "prompt_enhancer"]
+    assert names == ["study_buddy", "writing_coach", "research_assistant", "program_builder", "windows_operator", "rea_analyst", "gem_librarian", "base_assistant", "code_reviewer", "creative_writer", "summarizer", "engineering_lead", "prompt_enhancer"]
+    builder = next(g for g in gems if g["name"] == "program_builder")
+    assert builder["kind"] == "agent" and builder["tools"] == ["run_powershell"] and builder["provider"] == "auto"
+    assert "writer's voice" in next(g for g in gems if g["name"] == "writing_coach")["system_prompt"]
     lib = next(g for g in gems if g["name"] == "gem_librarian")
     assert lib["kind"] == "agent" and lib["tools"] == ["search_gems", "get_gem", "resolve_gem"]
     cr = next(g for g in gems if g["name"] == "code_reviewer")
@@ -43,9 +46,9 @@ def test_seed_parser_reads_every_gem_from_schema_sql() -> None:
 
 def test_fresh_database_is_seeded_once(sqlite) -> None:
     names = [g.name for g in run(sqlite.list_gems())]
-    assert "base_assistant" in names and "rea_analyst" in names and len(names) == 9
+    assert "base_assistant" in names and "rea_analyst" in names and len(names) == 13
     again = SQLiteStore(settings.SQLITE_PATH, seed_sql_file=str(SEEDS))   # reopening does not duplicate
-    assert len(run(again.list_gems())) == 9
+    assert len(run(again.list_gems())) == 13
     again.close()
 
 
@@ -85,7 +88,7 @@ def test_runs_events_and_state_round_trip(sqlite) -> None:
 
 def test_routes_end_to_end_on_sqlite(client, sqlite) -> None:
     names = [g["name"] for g in client.get("/gems/", headers=KEY).json()]
-    assert "prompt_enhancer" in names and len(names) == 9
+    assert "prompt_enhancer" in names and len(names) == 13
     created = client.post("/gems/", headers=KEY, json={"name": "haiku", "description": "", "system_prompt": "{{gem:base_assistant}} Write a haiku about {topic}."}).json()
     assert created["variables"] == ["topic"] and created["model"] == settings.DEFAULT_MODEL
     assert client.post("/gems/", headers=KEY, json={"name": "haiku", "system_prompt": "x"}).status_code == 400

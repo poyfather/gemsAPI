@@ -50,7 +50,7 @@ export function paths(env, platform) {
 /**
  * Detect every component. `io` supplies the side effects:
  *   io.which(cmd) -> path or null;  io.exists(path) -> bool;  io.version(cmd, args) -> string or null
- *   io.fetchOk(url) -> bool
+ *   io.fetchOk(url) -> bool;  io.fetchJson(url) -> parsed body or null (optional, lists Ollama's models)
  */
 export async function detectAll(io, env = process.env, platform = process.platform) {
   const p = paths(env, platform);
@@ -87,7 +87,9 @@ async function detectOne(c, io, p) {
       return { installed: await io.exists(p.chatgptApp), path: p.chatgptApp, configured: await io.exists(p.chatgptConfig) };
     case "ollama": {
       const path = (await io.which("ollama")) || ((await io.exists(p.ollamaApp)) ? p.ollamaApp : null);
-      return { installed: !!path, path, running: await io.fetchOk(c.health) };
+      const running = await io.fetchOk(c.health);
+      const models = running && io.fetchJson ? ((await io.fetchJson(c.health))?.models || []).map((m) => m.name) : [];
+      return { installed: !!path, path, running, models };
     }
     case "openwebui":
       return { installed: await io.fetchOk(c.health), running: await io.fetchOk(c.health), note: "detected by its health endpoint" };

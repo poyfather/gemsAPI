@@ -9,7 +9,7 @@
     "start": "electron .",
     "test": "node --test",
     "dist:win": "electron-builder --win --x64",
-    "lint": "node --check main.js && node --check preload.js && node --check lib/components.js && node --check lib/configs.js && node --check lib/sidecars.js && node --check lib/pwsh.js && node --check lib/toolbox.js && node --check renderer/console.js"
+    "lint": "node --check main.js && node --check preload.js && node --check lib/components.js && node --check lib/configs.js && node --check lib/sidecars.js && node --check lib/pwsh.js && node --check lib/toolbox.js && node --check lib/recipes.js && node --check renderer/console.js"
   },
   "devDependencies": {
     "electron": "^38.2.1",

@@ -70,7 +70,7 @@ Every surface hands the gem to the same resolver, which expands `{{gem:name}}` r
 | **REST API** (FastAPI, port 8000) | CRUD on `/gems`, `POST /gems/resolve` to expand a gem, `POST /chat` with optional SSE streaming, Swagger at `/docs` |
 | **MCP server** (FastMCP, stdio) | Tools `list_gems`, `search_gems`, `get_gem`, `resolve_gem_prompt`, `chat_with_gem`, `create_gem`, `run_agent`, `list_agent_tools`, `list_available_models`, plus `gems://list`, `gems://{name}` and `runs://{id}` resources |
 | **Agent runs** | A gem of kind `agent` lists tools it may call; `POST /agents/{name}/runs` runs the loop (model turn, tool calls, results, repeat) and records every step in `runs` and `run_events` |
-| **Seed gems** | `base_assistant`, `code_reviewer`, `creative_writer`, `summarizer`, `engineering_lead`, `prompt_enhancer`, and the agents `gem_librarian`, `rea_analyst` and `windows_operator`, each also kept as a reviewable file in [`prompts/`](prompts/) |
+| **Seed gems** | `base_assistant`, `code_reviewer`, `creative_writer`, `summarizer`, `engineering_lead`, `prompt_enhancer`, the newcomer prompts `study_buddy`, `writing_coach` and `research_assistant`, and the agents `gem_librarian`, `rea_analyst`, `windows_operator` and `program_builder`, each also kept as a reviewable file in [`prompts/`](prompts/) |
 
 ## Quick start
 
@@ -182,7 +182,7 @@ In [Open WebUI](https://github.com/open-webui/open-webui), add a connection unde
 
 ## Lapidary Console (Windows)
 
-[`desktop/`](desktop/) holds the Windows 11 application from ADR-009: an Electron console that installs and updates PowerShell 7, Claude Desktop, ChatGPT, Docker Desktop, Ollama and Open WebUI, runs PowerShell 7 commands from its own view, offers a toolbox of other Windows management tools installed from their publishers through winget or the PowerShell Gallery, registers Lapidary and REA as MCP servers in Claude Desktop and ChatGPT, points Open WebUI at Lapidary, OpenAI and Ollama, keeps the provider keys in the operating system's credential store, runs the backend and the UI as sidecars, and embeds this web UI. Simple and retro by design; the [desktop README](desktop/README.md) has the layout, the design notes and the build. The Windows installer is built by the `desktop` workflow in CI.
+[`desktop/`](desktop/) holds the Windows 11 application from ADR-009 and ADR-012. Its first run asks two questions in plain words, "Which AI should we use?" and "What would you like?", and turns the answer into one click: a private chat on this PC, help with homework and writing, questions over your own documents, a research assistant over your own sources, a program built for you, your prompts inside Claude and ChatGPT, an assistant that runs safe PowerShell, or understanding how an app works. Each recipe installs and connects only what it needs, shows every step, and ends with what you can do now; an Advanced path walks a system administrator through every choice and shows every file before it is written. Underneath, an Electron console that installs and updates PowerShell 7, Claude Desktop, ChatGPT, Docker Desktop, Ollama and Open WebUI, runs PowerShell 7 commands from its own view, offers a toolbox of other Windows management tools installed from their publishers through winget or the PowerShell Gallery, registers Lapidary and REA as MCP servers in Claude Desktop and ChatGPT, points Open WebUI at Lapidary, OpenAI and Ollama, keeps the provider keys in the operating system's credential store, runs the backend and the UI as sidecars, and embeds this web UI. Simple and retro by design; the [desktop README](desktop/README.md) has the layout, the design notes and the build. The Windows installer is built by the `desktop` workflow in CI.
 
 ## Configuration
 
@@ -215,7 +215,7 @@ desktop/            Lapidary Console, the Windows 11 Electron application (see d
 backend/mcp_server.py   FastMCP server over the same services
 frontend/           Next.js 16 app router UI (app/ including runs/[id], components/ including RunEvents, lib/api.ts with the SSE client, proxy.ts)
 configs/            mcp_servers.json (copy the example) for tools from other MCP servers
-supabase/           schema.sql (tables, RLS, seed gems; also the seed source for SQLite) and one-off migrations such as lock_down_rls.sql and add_agent_runs.sql
+supabase/           schema.sql (tables, RLS, seed gems; also the seed source for SQLite) and one-off migrations such as lock_down_rls.sql, add_agent_runs.sql and add_newcomer_gems.sql
 prompts/            the shipped gems as markdown, one file per gem
 evals/              live-API quality checks for gems (eval_prompt_enhancer.py)
 tests/              pytest unit tests, no network

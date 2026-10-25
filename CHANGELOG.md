@@ -4,6 +4,11 @@ All notable changes to Lapidary are documented here. The format follows [Keep a 
 
 ## [Unreleased]
 
+### Added
+- Guided first run and recipes in the console (roadmap item 47, ADR-012). A new Start view with two paths. Basic asks "Which AI should we use?" (the five model policies in plain words, with what is private and what costs money) and "What would you like?", then shows the steps for this machine before running them with progress and ends with "here is what you can do now". Eight recipes: a private chat on this PC, help with homework and writing, ask my own documents privately, a research assistant over my own sources, build me a program, let Claude and ChatGPT use my prompts, an assistant that runs safe PowerShell, understand how an app works. Advanced walks a system administrator through components, AI and keys, SQLite or Supabase, connections, ports and folders, what assistants may do without asking, logging and updates, and lists every file and command before applying. An Advanced switch in the top bar reveals the details on every screen. `desktop/lib/recipes.js` plans the steps from the machine's state (pure, 10 tests); the main process runs them (winget, `ollama serve` and `ollama pull`, docker compose, config files, settings) and streams progress. Ollama detection now lists the models it has.
+- Four newcomer gems, provider `auto` so the model policy decides: `study_buddy` (explains and quizzes instead of doing the homework), `writing_coach` (edits and explains the edits, keeps your voice), `research_assistant` (answers only from your sources, with citations) and the agent `program_builder` (plans, writes and tests a program through approved PowerShell calls). Each also in `prompts/`.
+- Console settings: `localModel` (the model the first run downloads and the backend prefers, `GEMS_LOCAL_DEFAULT_MODEL`).
+
 ### Changed
 - The project is now called Lapidary (ADR-008). README, docs, the API title and root endpoint, the MCP server name (`lapidary`), the web UI branding and the frontend package name use it. The repository URL, the `GEMS_*` environment variables and the word gem are unchanged.
 
