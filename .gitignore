@@ -41,3 +41,6 @@ configs/mcp_servers.json
 desktop/dist/
 desktop/node_modules/
 build/
+
+# Local SQLite database
+data/

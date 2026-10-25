@@ -74,12 +74,12 @@ Every surface hands the gem to the same resolver, which expands `{{gem:name}}` r
 
 ## Quick start
 
-You need Python 3.12 or newer, Node 20 or newer, a free [Supabase](https://supabase.com) project, and an `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` (the chat features need at least one; the library itself works without).
+You need Python 3.12 or newer, Node 20 or newer, and an `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` (the chat features need at least one; the library itself works without). A database is optional: with no Supabase project configured, Lapidary keeps everything in one SQLite file under `data/` and seeds it with the shipped gems on first start. A free [Supabase](https://supabase.com) project is the hosted alternative.
 
-1. **Create the database and your env files.** In the Supabase SQL editor, run [`supabase/schema.sql`](supabase/schema.sql); it creates the `gems` table and the seed gems and is safe to run twice. Then:
+1. **Create your env files** (and, only for the hosted mode, the database: run [`supabase/schema.sql`](supabase/schema.sql) in the Supabase SQL editor; it is safe to run twice). Then:
    ```sh
    git clone https://github.com/poyfather/lapidary.git && cd lapidary
-   cp .env.example backend/.env                    # Supabase URL and key, LLM keys, GEMS_API_KEY
+   cp .env.example backend/.env                    # LLM keys, GEMS_API_KEY; Supabase only for the hosted mode
    cp frontend/.env.local.example frontend/.env.local   # the same GEMS_API_KEY
    python -c "import secrets; print(secrets.token_urlsafe(32))"   # a value for GEMS_API_KEY
    ```
@@ -176,7 +176,9 @@ Backend variables live in `backend/.env` (template: [`.env.example`](.env.exampl
 
 | Variable | Where | What it does |
 |---|---|---|
-| `SUPABASE_URL` | backend | Your project URL |
+| `GEMS_STORAGE` | backend | `sqlite` (default when `SUPABASE_URL` is unset) or `supabase` |
+| `GEMS_SQLITE_PATH`, `GEMS_SEED_SQL_FILE` | backend | The SQLite file (`data/lapidary.db`) and the file the seed gems are read from on first start (`supabase/schema.sql`) |
+| `SUPABASE_URL` | backend | Your project URL (hosted mode) |
 | `SUPABASE_SERVICE_ROLE_KEY` | backend | Server-side key, the only Supabase credential the backend accepts. RLS has no policies for any other role, so the anon key reads nothing |
 | `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` | backend | Providers for `/chat` and `chat_with_gem`. Set the ones you use |
 | `GEMS_API_KEY` | backend and frontend | Shared secret for the `X-API-Key` header. Required |
@@ -192,12 +194,12 @@ Backend variables live in `backend/.env` (template: [`.env.example`](.env.exampl
 ## Project layout
 
 ```
-backend/app/        FastAPI app: routes/ (gems, chat, agents, openai_compat), services/ (gem_service resolver, llm_service), agents/ (tool registry, MCP sources, run loop, run store), auth.py, models.py
+backend/app/        FastAPI app: routes/ (gems, chat, agents, openai_compat), services/ (gem_service resolver, llm_service), agents/ (tool registry, MCP sources, run loop), storage/ (SQLite and Supabase backends), auth.py, models.py
 desktop/            Lapidary Console, the Windows 11 Electron application (see desktop/README.md)
 backend/mcp_server.py   FastMCP server over the same services
 frontend/           Next.js 16 app router UI (app/ including runs/[id], components/ including RunEvents, lib/api.ts with the SSE client, proxy.ts)
 configs/            mcp_servers.json (copy the example) for tools from other MCP servers
-supabase/           schema.sql (tables, RLS, seed gems) and one-off migrations such as lock_down_rls.sql and add_agent_runs.sql
+supabase/           schema.sql (tables, RLS, seed gems; also the seed source for SQLite) and one-off migrations such as lock_down_rls.sql and add_agent_runs.sql
 prompts/            the shipped gems as markdown, one file per gem
 evals/              live-API quality checks for gems (eval_prompt_enhancer.py)
 tests/              pytest unit tests, no network

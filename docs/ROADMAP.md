@@ -56,11 +56,15 @@ These were found during the audit and fixed because CI could not pass without th
 | 35 | Managed Agents as an execution backend | Agents | M | Later |
 | 36 | OpenAI-compatible API: gems and agents as models for Open WebUI | Console, API | M | Next |
 | 37 | Console shell: Electron app, detection, config writers, sidecars | Console | L | Next |
-| 38 | Storage layer with a SQLite backend | Console, data | L | Next |
+| 38 | Storage layer with a SQLite backend | Console, data | L | Next, done |
 | 39 | Installers and updates through winget and Docker; Open WebUI management | Console | L | Next |
 | 40 | Settings and connections: keys, MCP servers, client configs | Console | M | Next |
 | 41 | Lapidary's MCP server over HTTP for Claude Desktop and ChatGPT | Console, MCP | M | Next |
 | 42 | Windows installer, CI build and smoke test, REA bundling, first run | Console | M | Next |
+| 43 | Lapidary Memory: observations across runs, chats and clients | Memory, product | L | Next |
+| 44 | Local models as a provider: Ollama, oMLX, LM Studio, vLLM | Providers, hybrid | S | Next |
+| 45 | Gates: builder, tests, visual review, adversarial review, acceptance | Agents, quality | L | Next |
+| 46 | Workbench: parallel runs on worktrees; Codex and OpenCode as clients | Console, agents | L | Later |
 
 ## Now
 
@@ -342,6 +346,8 @@ A Windows 11 application that installs, connects and manages the AI tools on a m
 
 ### 38. Storage layer with a SQLite backend
 
+**Status: done.** `backend/app/storage/` holds the `Store` interface, `SQLiteStore` (one file, schema from `sqlite_schema.sql`, seeded from `supabase/schema.sql` on first use) and `SupabaseStore`; `gem_service` and `run_service` delegate to `get_store()`, chosen by `GEMS_STORAGE` (sqlite unless `SUPABASE_URL` is set). The packaged backend carries the seeds. Integration tests run the real routes against SQLite.
+
 - **Why**: `gem_service.py` and `run_service.py` call supabase-py directly, so nothing runs without a Supabase project. The console needs a local database that works offline. One repository interface, two implementations (SQLite in the app data folder, Supabase as today), chosen by `GEMS_STORAGE`. `tests/conftest.py` already shows the shape.
 - **Size**: L.
 - **Depends on**: nothing; it also unlocks integration tests in CI.
@@ -369,6 +375,30 @@ A Windows 11 application that installs, connects and manages the AI tools on a m
 - **Why**: an NSIS installer from electron-builder, built on `windows-latest` with the backend as a PyInstaller single file, smoke-tested by launching and hitting `/health`; `rea-agents` bundled; a first-run screen that takes the keys, creates the database with the seed gems and opens the console.
 - **Size**: M.
 - **Depends on**: 37, 38, 40.
+
+### 43. Lapidary Memory: observations across runs, chats and clients
+
+- **Why**: ADR-010. Every run and chat starts from nothing, and the console's whole point is that Claude Desktop, ChatGPT, Open WebUI and the agents share one place. Modelled on claude-mem: capture a compressed observation when a run finishes, keep it with full-text search in the storage layer, bring it back by search then fetch (`search_memory`, `get_memories`, `remember`, `forget`) as agent tools, MCP tools and REST, inject the top matches into gems marked `memory: true`, and show it all in a Memory view with delete. `<private>` text is never stored.
+- **Size**: L.
+- **Depends on**: 38 (done). Embeddings later, behind the same interface.
+
+### 44. Local models as a provider: Ollama, oMLX, LM Studio, vLLM
+
+- **Why**: ADR-011. The console manages Ollama already, and the reference stack shows what local models are for: the high-volume build and review work, with a frontier model kept for planning. A third provider, `local`, is any OpenAI-compatible server at `LOCAL_OPENAI_BASE_URL` (default Ollama's `http://127.0.0.1:11434/v1`), key optional; `available_models()` asks the server; the gem editor offers it; the console's Ollama entry fills the base URL.
+- **Size**: S.
+- **Depends on**: 17 (done).
+
+### 45. Gates: builder, tests, visual review, adversarial review, acceptance
+
+- **Why**: ADR-011, modelled on Ratchet Loop. A pipeline is an ordered list of gems with roles. The builder runs first; then each gate gem (a tester with `run_powershell` or a test tool, a visual reviewer with a vision model and screenshots from Playwright, an adversarial reviewer on a different model or provider) returns pass or fail with findings; a failure goes back to the builder with the findings and the pipeline retries up to a cap; acceptance is the existing approval gate. Every attempt is a run, and a failed gate's findings become a memory `lesson` (43). Surfaces: `POST /pipelines/{name}/runs`, a pipeline view in the UI, an MCP tool.
+- **Size**: L.
+- **Depends on**: 43, 44; 32 for a test or screenshot tool from an MCP server.
+
+### 46. Workbench: parallel runs on worktrees; Codex and OpenCode as clients
+
+- **Why**: ADR-011, modelled on Paseo. The console starts several runs or pipelines at once, each on its own git worktree when a repository is involved, and shows them side by side with their gates; Codex and OpenCode appear in Connections as MCP clients of Lapidary so they share its memory and gems.
+- **Size**: L.
+- **Depends on**: 45, 41.
 
 ## For the prompt practitioner
 

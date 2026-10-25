@@ -17,6 +17,11 @@ def _env_list(name: str) -> list[str]:
     return [item.strip() for item in raw.split(",") if item.strip()]
 
 
+# Storage (roadmap item 38): sqlite unless a Supabase project is configured.
+STORAGE: str = _env("GEMS_STORAGE", "supabase" if os.environ.get("SUPABASE_URL") else "sqlite")
+SQLITE_PATH: str = _env("GEMS_SQLITE_PATH", os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")), "data", "lapidary.db"))
+SEED_SQL_FILE: str = _env("GEMS_SEED_SQL_FILE", os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")), "supabase", "schema.sql"))
+
 # Default provider and model for new gems (REST, UI and MCP all read these).
 DEFAULT_PROVIDER: str = _env("GEMS_DEFAULT_PROVIDER", "anthropic")
 DEFAULT_MODEL: str = _env("GEMS_DEFAULT_MODEL", "claude-opus-5-5")
