@@ -135,3 +135,4 @@ class ToolInfo(BaseModel):
     description: str
     parameters: dict
     risky: bool
+    source: str = Field(default="builtin", description="'builtin' or the MCP server the tool comes from")

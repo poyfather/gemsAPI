@@ -186,3 +186,22 @@ def test_approve_endpoint_resumes_a_waiting_run(client, fake_library, fake_runs,
     assert client.get(f"/runs/{run_id}", headers=KEY).json()["run"]["status"] == "finished"
     # A finished run cannot be approved again.
     assert client.post(f"/runs/{run_id}/approve", headers=KEY, json={"approve": True}).status_code == 409
+
+
+def test_agent_tools_endpoint_includes_remote_tools(client, monkeypatch, tmp_path) -> None:
+    from app.agents import mcp_sources
+    from app.agents.tools import Tool
+
+    async def fake_refresh(force=False):
+        async def h(**kw):
+            return "x"
+        mcp_sources._remote["rea.list_strings"] = Tool("rea.list_strings", "List strings.", {"type": "object", "properties": {}}, h, False)
+        return dict(mcp_sources._remote)
+
+    monkeypatch.setattr("app.routes.agents.refresh_remote_tools", fake_refresh)
+    try:
+        body = client.get("/agents/tools", headers=KEY).json()
+    finally:
+        mcp_sources.clear_remote_tools()
+    by_name = {t["name"]: t for t in body}
+    assert by_name["rea.list_strings"]["source"] == "rea" and by_name["get_gem"]["source"] == "builtin"

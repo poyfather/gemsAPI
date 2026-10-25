@@ -4,8 +4,8 @@ A self-hosted prompt library and agent harness. Store reusable LLM system prompt
 
 A lapidary is the craftsperson who cuts and polishes rough stones into gems. That is the job here: rough prompts become named, composable, versioned gems, and the polished ones get to act. The project was called gemsAPI until October 2026; the repository URL and the `GEMS_*` environment variables are unchanged.
 
-[![CI](https://github.com/poyfather/gemsAPI/actions/workflows/ci.yml/badge.svg)](https://github.com/poyfather/gemsAPI/actions/workflows/ci.yml)
-[![CodeQL](https://github.com/poyfather/gemsAPI/actions/workflows/codeql.yml/badge.svg)](https://github.com/poyfather/gemsAPI/actions/workflows/codeql.yml)
+[![CI](https://github.com/poyfather/lapidary/actions/workflows/ci.yml/badge.svg)](https://github.com/poyfather/lapidary/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/poyfather/lapidary/actions/workflows/codeql.yml/badge.svg)](https://github.com/poyfather/lapidary/actions/workflows/codeql.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-1B2A4A.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-0.3.0-7c3aed.svg)](CHANGELOG.md)
 [![Python 3.12+](https://img.shields.io/badge/Python-3.12%2B-3776AB.svg)](backend/requirements.txt)
@@ -70,7 +70,7 @@ Every surface hands the gem to the same resolver, which expands `{{gem:name}}` r
 | **REST API** (FastAPI, port 8000) | CRUD on `/gems`, `POST /gems/resolve` to expand a gem, `POST /chat` with optional SSE streaming, Swagger at `/docs` |
 | **MCP server** (FastMCP, stdio) | Tools `list_gems`, `search_gems`, `get_gem`, `resolve_gem_prompt`, `chat_with_gem`, `create_gem`, `run_agent`, `list_agent_tools`, `list_available_models`, plus `gems://list`, `gems://{name}` and `runs://{id}` resources |
 | **Agent runs** | A gem of kind `agent` lists tools it may call; `POST /agents/{name}/runs` runs the loop (model turn, tool calls, results, repeat) and records every step in `runs` and `run_events` |
-| **Seed gems** | `base_assistant`, `code_reviewer`, `creative_writer`, `summarizer`, `engineering_lead`, `prompt_enhancer`, and the agent `gem_librarian`, each also kept as a reviewable file in [`prompts/`](prompts/) |
+| **Seed gems** | `base_assistant`, `code_reviewer`, `creative_writer`, `summarizer`, `engineering_lead`, `prompt_enhancer`, and the agents `gem_librarian` and `rea_analyst`, each also kept as a reviewable file in [`prompts/`](prompts/) |
 
 ## Quick start
 
@@ -78,7 +78,7 @@ You need Python 3.12 or newer, Node 20 or newer, a free [Supabase](https://supab
 
 1. **Create the database and your env files.** In the Supabase SQL editor, run [`supabase/schema.sql`](supabase/schema.sql); it creates the `gems` table and the seed gems and is safe to run twice. Then:
    ```sh
-   git clone https://github.com/poyfather/gemsAPI.git && cd gemsAPI
+   git clone https://github.com/poyfather/lapidary.git && cd lapidary
    cp .env.example backend/.env                    # Supabase URL and key, LLM keys, GEMS_API_KEY
    cp frontend/.env.local.example frontend/.env.local   # the same GEMS_API_KEY
    python -c "import secrets; print(secrets.token_urlsafe(32))"   # a value for GEMS_API_KEY
@@ -106,8 +106,8 @@ The MCP server runs over stdio and reads `backend/.env`, so point the client at 
 {
   "mcpServers": {
     "lapidary": {
-      "command": "/absolute/path/to/gemsAPI/backend/.venv/bin/python",
-      "args": ["/absolute/path/to/gemsAPI/backend/mcp_server.py"]
+      "command": "/absolute/path/to/lapidary/backend/.venv/bin/python",
+      "args": ["/absolute/path/to/lapidary/backend/mcp_server.py"]
     }
   }
 }
@@ -148,13 +148,15 @@ The response carries `resolved_prompt`, `referenced_gems` (`["code_reviewer", "b
 
 A gem can act as well as answer. Set its `kind` to `agent` and list the tools it may call; the run loop then lets the model call those tools, feeds the results back, and repeats until the model answers or `AGENT_MAX_STEPS` is reached. Every model turn, tool call and tool result is recorded, so a run can be read back, compared and evaluated.
 
-The shipped tools are read-only and about the library itself (`search_gems`, `get_gem`, `resolve_gem`); `GET /agents/tools` lists them with their argument schemas. The seed agent `gem_librarian` uses all three:
+The built-in tools are read-only and about the library itself (`search_gems`, `get_gem`, `resolve_gem`). Any other MCP server's tools can be added: copy [`configs/mcp_servers.example.json`](configs/mcp_servers.example.json) to `configs/mcp_servers.json` (the same `mcpServers` shape as a Claude Desktop config) and every tool of each server appears as `<server>.<tool>`, with `<server>.*` meaning all of them. Tools from other servers count as risky unless the entry says `"risky": false` or lists the risky ones by name. `GET /agents/tools` lists everything with argument schemas and sources. The seed agent `gem_librarian` uses the three built-ins:
 
 ```sh
 curl -s http://localhost:8000/agents/gem_librarian/runs \
   -H "X-API-Key: $GEMS_API_KEY" -H "Content-Type: application/json" \
   -d '{"message": "Which gems take a language variable, and what does code_reviewer expand to for Python?"}'
 ```
+
+A second seed agent, `rea_analyst`, shows the point of remote tools. With [REA (Reverse Engineer Anything)](https://www.npmjs.com/package/rea-agents) configured as the `rea` server, it follows an evidence-first process (scope the target, map the surface, trace the feature from its UI trigger, collect evidence, reconstruct, verify, report) over the `rea.*` tools, with `{target_app}` and `{feature}` as its variables. Only analyse software you own or are authorised to examine; the gem says so too.
 
 The response is the run (status, output, steps, tokens) plus its events; `GET /runs/{id}` returns the same later, and `"stream": true` delivers the events as Server-Sent Events while the run happens. The web UI does the same: mark a gem as an agent and pick its tools in the editor, send it a message on the chat page to watch the turns, tool calls and results stream in, then open the run at `/runs/{id}`. Over MCP the same loop is the `run_agent` tool, so Claude Desktop or Cursor can hand a task to one of your agents and get the answer and the run id back. A call to a tool marked risky pauses the run (status `waiting_approval`) with the call shown in the chat bubble or on the run page; approve or deny it there, or with `POST /runs/{id}/approve`, and the loop carries on from that exact point. A run started with `allow_risky` skips the gate. None of the shipped tools are risky. [ARCHITECTURE.md](ARCHITECTURE.md) has the loop as a sequence diagram, and ADR-007 in [DECISIONS.md](DECISIONS.md) explains the design.
 
@@ -174,6 +176,7 @@ Backend variables live in `backend/.env` (template: [`.env.example`](.env.exampl
 | `GEMS_MODELS_ANTHROPIC`, `GEMS_MODELS_OPENAI` | backend | Optional comma-separated model lists. When unset, `GET /chat/models` asks each configured provider for its current models and caches the answer for `GEMS_MODEL_LIST_TTL_SECONDS` (default 600) |
 | `LLM_TIMEOUT_SECONDS`, `LLM_MAX_RETRIES`, `LLM_MAX_TOKENS` | backend | Per-attempt timeout (60), SDK retries on 429 and 5xx (2), and the completion cap (4096) |
 | `AGENT_MAX_STEPS`, `AGENT_TOOL_RESULT_MAX_CHARS` | backend | Model turns per agent run (8) and the longest tool result sent back to the model (8000) |
+| `GEMS_MCP_SERVERS_FILE`, `GEMS_MCP_TOOLS_TTL_SECONDS`, `GEMS_MCP_CALL_TIMEOUT_SECONDS` | backend | Where the MCP server list lives (`configs/mcp_servers.json`), how long a server's tool list is cached (300), and the per-call timeout (120) |
 
 ## Project layout
 
@@ -181,6 +184,7 @@ Backend variables live in `backend/.env` (template: [`.env.example`](.env.exampl
 backend/app/        FastAPI app: routes/ (gems, chat, agents), services/ (gem_service resolver, llm_service), agents/ (tool registry, run loop, run store), auth.py, models.py
 backend/mcp_server.py   FastMCP server over the same services
 frontend/           Next.js 16 app router UI (app/ including runs/[id], components/ including RunEvents, lib/api.ts with the SSE client, proxy.ts)
+configs/            mcp_servers.json (copy the example) for tools from other MCP servers
 supabase/           schema.sql (tables, RLS, seed gems) and one-off migrations such as lock_down_rls.sql and add_agent_runs.sql
 prompts/            the shipped gems as markdown, one file per gem
 evals/              live-API quality checks for gems (eval_prompt_enhancer.py)

@@ -8,6 +8,7 @@ from fastapi.responses import StreamingResponse
 
 import app.agents.builtin  # noqa: F401  (registers the built-in tools)
 from app.agents import run_service
+from app.agents.mcp_sources import refresh_remote_tools
 from app.agents.runner import resume_run, run_agent
 from app.agents.tools import all_tools
 from app.auth import require_api_key
@@ -18,7 +19,9 @@ runs_router = APIRouter(prefix="/runs", tags=["agents"], dependencies=[Depends(r
 
 
 @router.get("/tools", response_model=list[ToolInfo], summary="List the tools an agent gem may use")
-async def list_tools():
+async def list_tools(refresh: bool = False):
+    """Built-in tools plus every tool of the MCP servers in the config file (cached; refresh=true reconnects)."""
+    await refresh_remote_tools(force=refresh)
     return [t.info() for t in all_tools()]
 
 

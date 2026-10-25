@@ -17,7 +17,7 @@ flowchart LR
         MCPS["FastMCP server<br/>7 tools, 2 resources, stdio"]
         RES["Resolver<br/>expand gem references,<br/>fill variables"]
         LLM["LLM adapter<br/>complete and stream"]
-        LOOP["Agent run loop<br/>tools, step cap, run record"]
+        LOOP["Agent run loop<br/>tools (built in and from<br/>other MCP servers),<br/>step cap, run record"]
     end
 
     DB[("Supabase Postgres<br/>gems, runs, run_events")]
@@ -124,7 +124,7 @@ flowchart TB
 | Gems routes | `backend/app/routes/gems.py` | List, create, get by name or id, update, soft delete, resolve | `gem_service` | Async calls |
 | Chat routes | `backend/app/routes/chat.py` | Resolve the gem, pick model and provider, call the LLM, return JSON or an SSE stream | `gem_service`, `llm_service` | Async calls, `StreamingResponse` |
 | Agent routes | `backend/app/routes/agents.py` | `POST /agents/{name}/runs` (JSON or SSE), `GET /runs/{id}`, `GET /agents/tools` | `agents.runner`, `agents.run_service` | Async calls, a queue for SSE |
-| Tool registry | `backend/app/agents/tools.py`, `builtin.py` | `@tool` functions with a JSON schema from the signature; the three built-ins read the library | `gem_service` | In-process |
+| Tool registry | `backend/app/agents/tools.py`, `builtin.py`, `mcp_sources.py` | `@tool` functions with a JSON schema from the signature; the three built-ins read the library; every tool of each MCP server in `configs/mcp_servers.json` as `<server>.<tool>`, listed and called through a fastmcp client, risky by default | `gem_service`, other MCP servers | In-process; stdio or streamable HTTP to the servers |
 | Run loop | `backend/app/agents/runner.py` | Resolve the gem, call the model with its tools, execute calls, feed results back, stop on an answer or the step cap; record every event | `llm_service.complete_turn`, registry, run store | Async calls |
 | Run store | `backend/app/agents/run_service.py` | `runs` and `run_events` rows | `database.py` | `supabase-py` |
 | Resolver and CRUD | `backend/app/services/gem_service.py` | Supabase queries; `{variable}` and `{{gem:name}}` extraction; recursive, cycle-safe resolution | `database.py` | `supabase-py` table API |
@@ -240,7 +240,7 @@ sequenceDiagram
     R-->>C: RunResult (run + events), or the events as SSE while it happens
 ```
 
-What the loop promises: a tool error never escapes the run (unknown tool, denied tool, bad arguments and tool exceptions all go back to the model as text); a provider failure ends the run as `failed` with a record; every run has at most `AGENT_MAX_STEPS` model turns; nothing is held in memory between requests. A risky tool call pauses the run instead of running: the loop state (conversation, calls still to execute, results so far) is saved in the `runs.state` column, `approval_requested` is the last event, and `resume_run()` picks up from that call once `POST /runs/{id}/approve` arrives, approving (the call runs) or denying (the model gets an error result), then continues the turn and the loop, pausing again at the next risky call. What it does not do yet: remote MCP or HTTP tool sources, a token budget per run, or a list of past runs (roadmap items 32 and 35; the viewer itself is `app/runs/[id]` and the chat page).
+What the loop promises: a tool error never escapes the run (unknown tool, denied tool, bad arguments and tool exceptions all go back to the model as text); a provider failure ends the run as `failed` with a record; every run has at most `AGENT_MAX_STEPS` model turns; nothing is held in memory between requests. A risky tool call pauses the run instead of running: the loop state (conversation, calls still to execute, results so far) is saved in the `runs.state` column, `approval_requested` is the last event, and `resume_run()` picks up from that call once `POST /runs/{id}/approve` arrives, approving (the call runs) or denying (the model gets an error result), then continues the turn and the loop, pausing again at the next risky call. Tools from other MCP servers are listed when a run or the tools endpoint asks for them (cached), and each call opens the server's transport for that call. What it does not do yet: plain HTTP endpoints as tools without an MCP server in front, a token budget per run, or a list of past runs (roadmap item 35; the viewer itself is `app/runs/[id]` and the chat page).
 
 ## Gem composition and resolution
 

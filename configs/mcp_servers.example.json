@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "rea": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "rea-agents@6.4.0",
+        "mcp"
+      ],
+      "risky": false,
+      "_comment": "Reverse Engineer Anything. Its tools are analysis only, so they are not marked risky."
+    },
+    "example_remote": {
+      "url": "https://example.com/mcp",
+      "headers": {
+        "Authorization": "Bearer replace-me"
+      },
+      "disabled": true,
+      "_comment": "A remote server over streamable HTTP. Tools are risky unless 'risky' is false or lists names."
+    }
+  }
+}

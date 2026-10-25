@@ -225,21 +225,40 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
               {toolList.length === 0 ? (
                 <p className="text-xs text-slate-600">No tools registered, or the backend is not reachable.</p>
               ) : (
-                toolList.map((t) => (
-                  <label key={t.name} className="flex items-start gap-2 text-xs text-slate-300 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={(form.tools ?? []).includes(t.name)}
-                      onChange={() => toggleTool(t.name)}
-                      className="mt-0.5 accent-violet-500"
-                    />
-                    <span>
-                      <span className="font-mono text-violet-300">{t.name}</span>
-                      {t.risky && <span className="ml-1.5 px-1.5 py-0.5 rounded bg-red-500/10 text-red-400">risky</span>}
-                      <span className="block text-slate-500">{t.description}</span>
-                    </span>
-                  </label>
-                ))
+                Array.from(new Set(toolList.map((t) => t.source))).map((source) => {
+                  const group = toolList.filter((t) => t.source === source);
+                  const wildcard = `${source}.*`;
+                  const allChosen = (form.tools ?? []).includes(wildcard);
+                  return (
+                    <div key={source} className="space-y-1">
+                      {source !== "builtin" && (
+                        <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                          <input type="checkbox" checked={allChosen} onChange={() => toggleTool(wildcard)} className="accent-violet-500" />
+                          <span>All {group.length} tools from <span className="font-mono text-violet-300">{source}</span> (<span className="font-mono">{wildcard}</span>)</span>
+                        </label>
+                      )}
+                      {source === "builtin" && <p className="text-xs text-slate-500">Built in</p>}
+                      <div className={source === "builtin" ? "space-y-1" : "pl-5 space-y-1 max-h-48 overflow-y-auto"}>
+                        {group.map((t) => (
+                          <label key={t.name} className="flex items-start gap-2 text-xs text-slate-300 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={allChosen || (form.tools ?? []).includes(t.name)}
+                              disabled={allChosen}
+                              onChange={() => toggleTool(t.name)}
+                              className="mt-0.5 accent-violet-500"
+                            />
+                            <span>
+                              <span className="font-mono text-violet-300">{t.name}</span>
+                              {t.risky && <span className="ml-1.5 px-1.5 py-0.5 rounded bg-red-500/10 text-red-400">risky</span>}
+                              <span className="block text-slate-500">{t.description}</span>
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })
               )}
             </div>
           )}
