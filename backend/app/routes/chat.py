@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 
 from app.models import ChatRequest, ChatResponse
-from app.services import gem_service
+from app.services import gem_service, memory_service
 from app.services import router as model_router
 from app.services.llm_service import available_models, complete, complete_stream
 from app.auth import require_api_key
@@ -44,6 +44,11 @@ async def chat(request: ChatRequest):
 
     # Get defaults from gem
     gem = await gem_service.get_gem_by_name(request.gem_name)
+    if gem.memory and request.messages:
+        last_user = next((m.content for m in reversed(request.messages) if m.role == "user"), "")
+        block = await memory_service.recall_block(last_user, scope=request.memory_scope)
+        if block:
+            resolved_prompt += "\n\n" + block
     choice = await model_router.choose(gem, provider_override=request.provider_override, model_override=request.model_override)
     model, provider = choice.model, choice.provider
 

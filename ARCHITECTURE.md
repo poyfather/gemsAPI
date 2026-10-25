@@ -311,6 +311,7 @@ erDiagram
 - Row level security is enabled with no policies, so only the service role key, used by the backend and the MCP server, can read or write rows; the anon key gets nothing. The API key on the REST edge is the access control for callers (ADR-006).
 - Deletes are soft (`is_active = false`); listing and name lookups filter on `is_active`, lookups by id do not.
 - `prompts/<name>.md` mirrors each shipped gem for review; CI checks that every file has a seed row of the same name in `supabase/schema.sql`.
+- `memories` (ADR-010) holds one row per observation, summary, decision, preference, lesson, handoff or note: text, source (run, chat, mcp, console, user), the gem and run it came from, tags, a scope, and a full-text index (FTS5 on SQLite, a generated `tsvector` on Postgres). `gems.memory` marks the gems that get the top matches for a message inside a `<memory>` block before their prompt. RLS on, no policies, like the rest.
 - `kind` (`prompt` or `agent`) and `tools` (registered tool names) make a gem runnable by the agent loop. `runs` holds one row per run (status, model, tokens, output, and `state` while it waits for an approval) and `run_events` one row per model turn, tool call, tool result, approval request or decision, or failure, in order. Both tables have RLS enabled with no policies, like `gems`.
 
 ## Model and provider integration

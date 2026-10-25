@@ -7,13 +7,14 @@ they run inline under a lock rather than on a thread pool.
 from __future__ import annotations
 import json
 import logging
+import re
 import pathlib
 import sqlite3
 import threading
 import uuid
 from datetime import datetime, timezone
 
-from app.models import Gem, GemCreate, Run, RunEvent
+from app.models import Gem, GemCreate, Memory, MemoryCreate, Run, RunEvent
 from app.storage.seeds import load_seed_gems
 
 logger = logging.getLogger(__name__)
@@ -30,6 +31,7 @@ def _gem(row: sqlite3.Row) -> Gem:
     for k in _JSON_GEM:
         d[k] = json.loads(d[k] or "[]")
     d["is_active"] = bool(d["is_active"])
+    d["memory"] = bool(d.get("memory", 0))
     return Gem(**d)
 
 
@@ -37,6 +39,22 @@ def _run(row: sqlite3.Row) -> Run:
     d = dict(row)
     d.pop("state", None)
     return Run(**d)
+
+
+def _memory(row: sqlite3.Row) -> Memory:
+    d = dict(row)
+    d.pop("rank", None)
+    d["tags"] = json.loads(d["tags"] or "[]")
+    return Memory(**d)
+
+
+def _fts_query(query: str) -> str:
+    """Any word of the query may match (OR), each quoted so FTS syntax in user text cannot break the search."""
+    words = [w for w in re.findall(r"[\w'-]+", query.lower()) if len(w) > 1 and w not in _STOPWORDS]
+    return " OR ".join(f'"{w}"' for w in dict.fromkeys(words))
+
+
+_STOPWORDS = {"the", "and", "for", "with", "that", "this", "from", "what", "how", "was", "are", "did", "you", "about", "into", "when", "where", "which", "have", "has", "can", "not", "but", "all", "any", "our", "your", "its", "will", "should", "could", "would", "does", "them", "then", "than", "also", "just", "more", "some", "one", "two"}
 
 
 def _event(row: sqlite3.Row) -> RunEvent:
@@ -55,10 +73,18 @@ class SQLiteStore:
         self._db.row_factory = sqlite3.Row
         self._db.execute("PRAGMA foreign_keys = ON")
         self._db.executescript(_SCHEMA)
+        self._migrate()
         self._seed(seed_sql_file)
 
     def close(self) -> None:
         self._db.close()
+
+    def _migrate(self) -> None:
+        """Columns added after a database was created (CREATE TABLE IF NOT EXISTS does not add them)."""
+        cols = {r["name"] for r in self._db.execute("PRAGMA table_info(gems)").fetchall()}
+        if "memory" not in cols:
+            with self._lock, self._db:
+                self._db.execute("ALTER TABLE gems ADD COLUMN memory INTEGER NOT NULL DEFAULT 0")
 
     def _seed(self, seed_sql_file: str | None) -> None:
         if self._db.execute("SELECT COUNT(*) FROM gems").fetchone()[0]:
@@ -96,10 +122,10 @@ class SQLiteStore:
         d = data.model_dump()
         with self._lock, self._db:
             self._db.execute(
-                "INSERT INTO gems (id, name, description, system_prompt, model, provider, tags, variables, kind, tools, is_active, created_at, updated_at)"
-                " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)",
+                "INSERT INTO gems (id, name, description, system_prompt, model, provider, tags, variables, kind, tools, memory, is_active, created_at, updated_at)"
+                " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)",
                 (gem_id, d["name"], d["description"], d["system_prompt"], d["model"], d["provider"],
-                 json.dumps(d["tags"]), json.dumps(variables), d["kind"], json.dumps(d["tools"]), now, now),
+                 json.dumps(d["tags"]), json.dumps(variables), d["kind"], json.dumps(d["tools"]), int(bool(d.get("memory"))), now, now),
             )
         return await self.get_gem_by_id(gem_id)
 
@@ -107,7 +133,7 @@ class SQLiteStore:
         cols, vals = [], []
         for k, v in updates.items():
             cols.append(f"{k} = ?")
-            vals.append(json.dumps(v) if k in _JSON_GEM else v)
+            vals.append(json.dumps(v) if k in _JSON_GEM else (int(v) if k == "memory" else v))
         cols.append("updated_at = ?")
         vals.append(_now())
         with self._lock, self._db:
@@ -154,3 +180,46 @@ class SQLiteStore:
     async def get_run_state(self, run_id):
         row = self._db.execute("SELECT state FROM runs WHERE id = ?", (run_id,)).fetchone()
         return json.loads(row["state"]) if row and row["state"] else None
+
+    # ---- memory (ADR-010)
+    async def add_memory(self, data: MemoryCreate) -> Memory:
+        mem_id, now = str(uuid.uuid4()), _now()
+        d = data.model_dump()
+        with self._lock, self._db:
+            self._db.execute(
+                "INSERT INTO memories (id, kind, text, source, gem_name, run_id, tags, scope, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (mem_id, d["kind"], d["text"], d["source"], d["gem_name"], d["run_id"], json.dumps(d["tags"]), d["scope"], now),
+            )
+        return _memory(self._db.execute("SELECT * FROM memories WHERE id = ?", (mem_id,)).fetchone())
+
+    async def search_memories(self, query: str, *, scope: str | None = None, kinds: list[str] | None = None, limit: int = 20) -> list[Memory]:
+        where, params = [], []
+        if scope:
+            where.append("m.scope = ?")
+            params.append(scope)
+        if kinds:
+            where.append(f"m.kind IN ({', '.join('?' for _ in kinds)})")
+            params.extend(kinds)
+        match = _fts_query(query or "")
+        if match:
+            sql = (
+                "SELECT m.*, bm25(memories_fts) AS rank FROM memories_fts f JOIN memories m ON m.rowid = f.rowid "
+                f"WHERE memories_fts MATCH ? {'AND ' + ' AND '.join(where) if where else ''} ORDER BY rank, m.created_at DESC LIMIT ?"
+            )
+            rows = self._db.execute(sql, (match, *params, limit)).fetchall()
+        else:
+            sql = f"SELECT m.* FROM memories m {'WHERE ' + ' AND '.join(where) if where else ''} ORDER BY m.created_at DESC LIMIT ?"
+            rows = self._db.execute(sql, (*params, limit)).fetchall()
+        return [_memory(r) for r in rows]
+
+    async def get_memories(self, ids: list[str]) -> list[Memory]:
+        if not ids:
+            return []
+        rows = self._db.execute(f"SELECT * FROM memories WHERE id IN ({', '.join('?' for _ in ids)})", ids).fetchall()
+        by_id = {r["id"]: _memory(r) for r in rows}
+        return [by_id[i] for i in ids if i in by_id]
+
+    async def delete_memory(self, memory_id: str) -> bool:
+        with self._lock, self._db:
+            cur = self._db.execute("DELETE FROM memories WHERE id = ?", (memory_id,))
+        return cur.rowcount > 0

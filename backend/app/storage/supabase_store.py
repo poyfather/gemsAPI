@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from app.database import get_supabase
-from app.models import Gem, GemCreate, Run, RunEvent
+from app.models import Gem, GemCreate, Memory, MemoryCreate, Run, RunEvent
 
 
 class SupabaseStore:
@@ -57,6 +57,34 @@ class SupabaseStore:
     async def get_run_state(self, run_id):
         result = get_supabase().table("runs").select("state").eq("id", run_id).limit(1).execute()
         return result.data[0].get("state") if result.data else None
+
+
+    # ---- memory (ADR-010)
+    async def add_memory(self, data: MemoryCreate) -> Memory:
+        result = get_supabase().table("memories").insert(data.model_dump()).execute()
+        return Memory(**result.data[0])
+
+    async def search_memories(self, query: str, *, scope: str | None = None, kinds: list[str] | None = None, limit: int = 20) -> list[Memory]:
+        q = get_supabase().table("memories").select("id, kind, text, source, gem_name, run_id, tags, scope, created_at")
+        if scope:
+            q = q.eq("scope", scope)
+        if kinds:
+            q = q.in_("kind", kinds)
+        if query and query.strip():
+            q = q.text_search("search", query.strip(), options={"config": "english", "type": "websearch"})
+        result = q.order("created_at", desc=True).limit(limit).execute()
+        return [Memory(**r) for r in result.data]
+
+    async def get_memories(self, ids: list[str]) -> list[Memory]:
+        if not ids:
+            return []
+        result = get_supabase().table("memories").select("id, kind, text, source, gem_name, run_id, tags, scope, created_at").in_("id", ids).execute()
+        by_id = {r["id"]: Memory(**r) for r in result.data}
+        return [by_id[i] for i in ids if i in by_id]
+
+    async def delete_memory(self, memory_id: str) -> bool:
+        result = get_supabase().table("memories").delete().eq("id", memory_id).execute()
+        return bool(result.data)
 
 
 def now_iso() -> str:

@@ -126,3 +126,41 @@ def fake_runs(monkeypatch):
                      ("finish_run", finish_run), ("get_run", get_run), ("get_run_state", get_run_state)]:
         monkeypatch.setattr(run_service, name, fn)
     return store
+
+
+@pytest.fixture(autouse=True)
+def fake_memory(monkeypatch):
+    """In-memory stand-in for the memories table, so runs can record observations without a database. Search is a word match."""
+    import uuid
+
+    from app.models import Memory, MemoryCreate
+    from app.services import memory_service
+
+    rows: list[Memory] = []
+
+    class FakeMemoryStore:
+        async def add_memory(self, data: MemoryCreate) -> Memory:
+            m = Memory(id=str(uuid.uuid4()), created_at=datetime(2026, 1, 2, tzinfo=timezone.utc), **data.model_dump())
+            rows.append(m)
+            return m
+
+        async def search_memories(self, query, *, scope=None, kinds=None, limit=20):
+            words = [w for w in query.lower().split() if len(w) > 1]
+            out = [m for m in reversed(rows) if (not scope or m.scope == scope) and (not kinds or m.kind in kinds)]
+            if words:
+                out = [m for m in out if any(w in m.text.lower() or w in " ".join(m.tags) for w in words)]
+            return out[:limit]
+
+        async def get_memories(self, ids):
+            by_id = {m.id: m for m in rows}
+            return [by_id[i] for i in ids if i in by_id]
+
+        async def delete_memory(self, memory_id):
+            before = len(rows)
+            rows[:] = [m for m in rows if m.id != memory_id]
+            return len(rows) < before
+
+    store = FakeMemoryStore()
+    monkeypatch.setattr(memory_service, "_store", lambda: store)
+    monkeypatch.setattr(settings, "MEMORY_SUMMARIZE", False)
+    return rows

@@ -77,7 +77,7 @@ async def start_run(gem_name: str, request: RunRequest):
     """
     kwargs = dict(
         variables=request.variables, model_override=request.model_override,
-        provider_override=request.provider_override, allow_risky=request.allow_risky,
+        provider_override=request.provider_override, allow_risky=request.allow_risky, memory_scope=request.memory_scope,
     )
     if not request.stream:
         try:

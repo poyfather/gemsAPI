@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Gem, MessageSquare, Plus, Github } from "lucide-react";
+import { Gem, MessageSquare, Plus, Github, Brain } from "lucide-react";
 import clsx from "clsx";
 
 const navLinks = [
   { href: "/gems",  label: "Prompts",  icon: Gem },
   { href: "/chat",  label: "Chat",  icon: MessageSquare },
+  { href: "/memory", label: "Memory", icon: Brain },
 ];
 
 export default function Navigation() {

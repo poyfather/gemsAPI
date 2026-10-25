@@ -68,9 +68,9 @@ Every surface hands the gem to the same resolver, which expands `{{gem:name}}` r
 |---|---|
 | **Web UI** (Next.js 16, port 3000) | Browse, search and tag gems, edit them with a live resolved preview, test any gem in a chat view with streamed replies, run agent gems and watch each tool call as it happens, and open any past run by id |
 | **REST API** (FastAPI, port 8000) | CRUD on `/gems`, `POST /gems/resolve` to expand a gem, `POST /chat` with optional SSE streaming, Swagger at `/docs` |
-| **MCP server** (FastMCP, stdio) | Tools `list_gems`, `search_gems`, `get_gem`, `resolve_gem_prompt`, `chat_with_gem`, `create_gem`, `run_agent`, `list_agent_tools`, `list_available_models`, plus `gems://list`, `gems://{name}` and `runs://{id}` resources |
+| **MCP server** (FastMCP, stdio) | Tools `list_gems`, `search_gems`, `get_gem`, `resolve_gem_prompt`, `chat_with_gem`, `create_gem`, `run_agent`, `approve_run`, `list_agent_tools`, `list_available_models`, `search_memory`, `get_memories`, `remember`, `forget`, plus `gems://list`, `gems://{name}` and `runs://{id}` resources |
 | **Agent runs** | A gem of kind `agent` lists tools it may call; `POST /agents/{name}/runs` runs the loop (model turn, tool calls, results, repeat) and records every step in `runs` and `run_events` |
-| **Seed gems** | `base_assistant`, `code_reviewer`, `creative_writer`, `summarizer`, `engineering_lead`, `prompt_enhancer`, the newcomer prompts `study_buddy`, `writing_coach` and `research_assistant`, and the agents `gem_librarian`, `rea_analyst`, `windows_operator` and `program_builder`, each also kept as a reviewable file in [`prompts/`](prompts/) |
+| **Seed gems** | `base_assistant`, `code_reviewer`, `creative_writer`, `summarizer`, `engineering_lead`, `prompt_enhancer`, the newcomer prompts `study_buddy`, `writing_coach` and `research_assistant`, `memory_summarizer`, and the agents `gem_librarian`, `rea_analyst`, `windows_operator` and `program_builder`, each also kept as a reviewable file in [`prompts/`](prompts/) |
 
 ## Quick start
 
@@ -148,7 +148,7 @@ The response carries `resolved_prompt`, `referenced_gems` (`["code_reviewer", "b
 
 A gem can act as well as answer. Set its `kind` to `agent` and list the tools it may call; the run loop then lets the model call those tools, feeds the results back, and repeats until the model answers or `AGENT_MAX_STEPS` is reached. Every model turn, tool call and tool result is recorded, so a run can be read back, compared and evaluated.
 
-The built-in tools are `search_gems`, `get_gem` and `resolve_gem`, which read the library, and `run_powershell`, which runs a PowerShell 7 script on the machine that runs Lapidary and is marked risky, so the approval gate shows every call before it runs. The seed agent `windows_operator` uses it. Any other MCP server's tools can be added: copy [`configs/mcp_servers.example.json`](configs/mcp_servers.example.json) to `configs/mcp_servers.json` (the same `mcpServers` shape as a Claude Desktop config) and every tool of each server appears as `<server>.<tool>`, with `<server>.*` meaning all of them. Tools from other servers count as risky unless the entry says `"risky": false` or lists the risky ones by name. `GET /agents/tools` lists everything with argument schemas and sources. The seed agent `gem_librarian` uses the three built-ins:
+The built-in tools are `search_gems`, `get_gem` and `resolve_gem`, which read the library, `search_memory`, `get_memories`, `remember` and `forget` for [Memory](#memory), and `run_powershell`, which runs a PowerShell 7 script on the machine that runs Lapidary and is marked risky, so the approval gate shows every call before it runs. The seed agent `windows_operator` uses it. Any other MCP server's tools can be added: copy [`configs/mcp_servers.example.json`](configs/mcp_servers.example.json) to `configs/mcp_servers.json` (the same `mcpServers` shape as a Claude Desktop config) and every tool of each server appears as `<server>.<tool>`, with `<server>.*` meaning all of them. Tools from other servers count as risky unless the entry says `"risky": false` or lists the risky ones by name. `GET /agents/tools` lists everything with argument schemas and sources. The seed agent `gem_librarian` uses the three built-ins:
 
 ```sh
 curl -s http://localhost:8000/agents/gem_librarian/runs \
@@ -159,6 +159,21 @@ curl -s http://localhost:8000/agents/gem_librarian/runs \
 A second seed agent, `rea_analyst`, shows the point of remote tools. With [REA (Reverse Engineer Anything)](https://www.npmjs.com/package/rea-agents) configured as the `rea` server, it follows an evidence-first process (scope the target, map the surface, trace the feature from its UI trigger, collect evidence, reconstruct, verify, report) over the `rea.*` tools, with `{target_app}` and `{feature}` as its variables. Only analyse software you own or are authorised to examine; the gem says so too.
 
 The response is the run (status, output, steps, tokens) plus its events; `GET /runs/{id}` returns the same later, and `"stream": true` delivers the events as Server-Sent Events while the run happens. The web UI does the same: mark a gem as an agent and pick its tools in the editor, send it a message on the chat page to watch the turns, tool calls and results stream in, then open the run at `/runs/{id}`. Over MCP the same loop is the `run_agent` tool, so Claude Desktop or Cursor can hand a task to one of your agents and get the answer and the run id back. A call to a tool marked risky pauses the run (status `waiting_approval`) with the call shown in the chat bubble or on the run page; approve or deny it there, or with `POST /runs/{id}/approve`, and the loop carries on from that exact point. A run started with `allow_risky` skips the gate. None of the shipped tools are risky. [ARCHITECTURE.md](ARCHITECTURE.md) has the loop as a sequence diagram, and ADR-007 in [DECISIONS.md](DECISIONS.md) explains the design.
+
+## Memory
+
+Every run used to start from nothing. Now Lapidary keeps a memory (ADR-010, modelled on claude-mem), and because Claude Desktop, ChatGPT, Open WebUI and the agents all go through Lapidary, it is one memory for every client on the machine.
+
+- **Capture.** When a run finishes, an observation is stored: what was asked, which tools ran, how it ended, what it said. The `memory_summarizer` gem writes it in two or three sentences when a model is available; otherwise a plain digest is stored. Anything inside `<private>...</private>` is never stored. Set `GEMS_MEMORY_CAPTURE=off` to keep nothing.
+- **Recall, in three steps so context stays small.** `search_memory` returns a compact index (id, kind, date, one line each), `get_memories` returns the full text of the ones that matter, and `remember` and `forget` write. The four are built-in agent tools, MCP tools and REST routes under `/memory`. A gem with `memory: true` ("remembers earlier work" in the editor) gets the top matches for the message inside a `<memory>` block before its prompt, capped by `GEMS_MEMORY_RECALL_MAX_CHARS`.
+- **Kinds and scopes.** A memory is an observation, summary, decision, preference, lesson, handoff or note (the kinds Second Brain uses), and belongs to a scope (`default` unless you say otherwise) so projects stay apart. Search is full-text: FTS5 on SQLite, `tsvector` on Supabase; embeddings can come later behind the same interface.
+- **The Memory page** in the web UI lists, searches, writes and forgets. Everything stored is readable and deletable by the owner.
+
+```sh
+curl -s "http://localhost:8000/memory/search?q=docker" -H "X-API-Key: $GEMS_API_KEY"
+curl -s http://localhost:8000/memory/ -H "X-API-Key: $GEMS_API_KEY" -H "Content-Type: application/json" \
+  -d '{"text": "Keep the project under D:\\work\\shop.", "kind": "decision", "tags": ["shop"]}'
+```
 
 ## Which AI should we use?
 
@@ -203,6 +218,7 @@ Backend variables live in `backend/.env` (template: [`.env.example`](.env.exampl
 | `GEMS_DEFAULT_PROVIDER`, `GEMS_DEFAULT_MODEL` | backend | Provider and model for new gems, default `auto` (the policy decides); `GEMS_CLOUD_DEFAULT_PROVIDER` and `GEMS_CLOUD_DEFAULT_MODEL` (`anthropic`, `claude-opus-5-5`) are what the policy picks online |
 | `GEMS_MODELS_ANTHROPIC`, `GEMS_MODELS_OPENAI` | backend | Optional comma-separated model lists. When unset, `GET /chat/models` asks each configured provider for its current models and caches the answer for `GEMS_MODEL_LIST_TTL_SECONDS` (default 600) |
 | `LLM_TIMEOUT_SECONDS`, `LLM_MAX_RETRIES`, `LLM_MAX_TOKENS` | backend | Per-attempt timeout (60), SDK retries on 429 and 5xx (2), and the completion cap (4096) |
+| `GEMS_MEMORY_CAPTURE`, `GEMS_MEMORY_SUMMARIZE`, `GEMS_MEMORY_RECALL_LIMIT`, `GEMS_MEMORY_RECALL_MAX_CHARS`, `GEMS_MEMORY_MAX_CHARS` | backend | Memory: store an observation per run (on), write it with the `memory_summarizer` gem (on), how many matches a gem with memory on gets (6) and their size cap (2500), and the longest memory stored (4000) |
 | `AGENT_MAX_STEPS`, `AGENT_TOOL_RESULT_MAX_CHARS` | backend | Model turns per agent run (8) and the longest tool result sent back to the model (8000) |
 | `POWERSHELL_TIMEOUT_SECONDS`, `POWERSHELL_MAX_OUTPUT_CHARS` | backend | The `run_powershell` tool's per-call timeout (120) and output cap (20000) |
 | `GEMS_MCP_SERVERS_FILE`, `GEMS_MCP_TOOLS_TTL_SECONDS`, `GEMS_MCP_CALL_TIMEOUT_SECONDS` | backend | Where the MCP server list lives (`configs/mcp_servers.json`), how long a server's tool list is cached (300), and the per-call timeout (120) |
@@ -210,12 +226,12 @@ Backend variables live in `backend/.env` (template: [`.env.example`](.env.exampl
 ## Project layout
 
 ```
-backend/app/        FastAPI app: routes/ (gems, chat, agents, openai_compat), services/ (gem_service resolver, llm_service), agents/ (tool registry, MCP sources, run loop), storage/ (SQLite and Supabase backends), auth.py, models.py
+backend/app/        FastAPI app: routes/ (gems, chat, agents, memory, openai_compat), services/ (gem_service resolver, llm_service, memory_service), agents/ (tool registry, MCP sources, run loop), storage/ (SQLite and Supabase backends), auth.py, models.py
 desktop/            Lapidary Console, the Windows 11 Electron application (see desktop/README.md)
 backend/mcp_server.py   FastMCP server over the same services
 frontend/           Next.js 16 app router UI (app/ including runs/[id], components/ including RunEvents, lib/api.ts with the SSE client, proxy.ts)
 configs/            mcp_servers.json (copy the example) for tools from other MCP servers
-supabase/           schema.sql (tables, RLS, seed gems; also the seed source for SQLite) and one-off migrations such as lock_down_rls.sql, add_agent_runs.sql and add_newcomer_gems.sql
+supabase/           schema.sql (tables, RLS, seed gems; also the seed source for SQLite) and one-off migrations such as lock_down_rls.sql, add_agent_runs.sql, add_newcomer_gems.sql and add_memory.sql
 prompts/            the shipped gems as markdown, one file per gem
 evals/              live-API quality checks for gems (eval_prompt_enhancer.py)
 tests/              pytest unit tests, no network

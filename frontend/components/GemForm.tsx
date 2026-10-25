@@ -24,6 +24,7 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
     tags:          initialGem?.tags          ?? [],
     kind:          initialGem?.kind          ?? "prompt",
     tools:         initialGem?.tools         ?? [],
+    memory:        initialGem?.memory        ?? false,
   });
   const [tagInput, setTagInput]   = useState("");
   const [saving, setSaving]       = useState(false);
@@ -268,6 +269,15 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
             </div>
           )}
         </div>
+
+        {/* Memory (ADR-010) */}
+        <label className="flex items-start gap-2 text-sm text-slate-300 cursor-pointer">
+          <input type="checkbox" checked={Boolean(form.memory)} onChange={(e) => setForm((f) => ({ ...f, memory: e.target.checked }))} className="mt-1 accent-violet-500" />
+          <span>
+            Remembers earlier work
+            <span className="block text-xs text-slate-500">Before each message, the best matches from Memory (what assistants did, your notes and decisions) are added to the prompt, so it can build on them.</span>
+          </span>
+        </label>
 
         {/* Tags */}
         <div>
