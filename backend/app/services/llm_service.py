@@ -19,11 +19,12 @@ from app import settings
 
 logger = logging.getLogger(__name__)
 
-PROVIDERS = ("anthropic", "openai")
+PROVIDERS = ("anthropic", "openai", "local")
 
 # Lazy singletons
 _anthropic: AsyncAnthropic | None = None
 _openai: AsyncOpenAI | None = None
+_local: AsyncOpenAI | None = None
 
 
 class ProviderError(RuntimeError):
@@ -58,9 +59,26 @@ def _get_openai() -> AsyncOpenAI:
     return _openai
 
 
+def _get_local() -> AsyncOpenAI:
+    """Any OpenAI-compatible server on this machine or network: Ollama, oMLX, LM Studio, vLLM."""
+    global _local
+    if _local is None:
+        _local = AsyncOpenAI(
+            api_key=settings.LOCAL_OPENAI_API_KEY or "local",
+            base_url=settings.LOCAL_OPENAI_BASE_URL,
+            timeout=settings.LLM_TIMEOUT_SECONDS,
+            max_retries=settings.LLM_MAX_RETRIES,
+        )
+    return _local
+
+
+def _openai_like(provider: str) -> AsyncOpenAI:
+    return _get_local() if provider == "local" else _get_openai()
+
+
 def _check_provider(provider: str) -> None:
     if provider not in PROVIDERS:
-        raise ValueError(f"Unknown provider '{provider}'. Use 'anthropic' or 'openai'.")
+        raise ValueError(f"Unknown provider '{provider}'. Use 'anthropic', 'openai' or 'local'.")
 
 
 # ─── Single completion ─────────────────────────────────────────────────────────
@@ -86,7 +104,7 @@ async def complete(
             )
             return "".join(block.text for block in response.content if getattr(block, "type", "") == "text")
 
-        client = _get_openai()
+        client = _openai_like(provider)
         full_messages = [{"role": "system", "content": system_prompt}] + messages
         response = await client.chat.completions.create(
             model=model,
@@ -125,7 +143,7 @@ async def complete_stream(
                     yield text
             return
 
-        client = _get_openai()
+        client = _openai_like(provider)
         full_messages = [{"role": "system", "content": system_prompt}] + messages
         stream = await client.chat.completions.create(
             model=model,
@@ -156,6 +174,8 @@ _cache: dict[str, tuple[float, list[str]]] = {}
 
 
 def _has_key(provider: str) -> bool:
+    if provider == "local":
+        return True   # a local server needs no key; reachability is checked by the listing itself
     return bool(os.environ.get("ANTHROPIC_API_KEY" if provider == "anthropic" else "OPENAI_API_KEY"))
 
 
@@ -164,6 +184,9 @@ async def _fetch_models(provider: str) -> list[str]:
         client = _get_anthropic()
         ids = [m.id async for m in client.models.list()]
         return sorted(ids, reverse=True)
+    if provider == "local":
+        client = _get_local()
+        return sorted(m.id async for m in client.models.list())
     client = _get_openai()
     ids = [m.id async for m in client.models.list()]
     chat = [i for i in ids if _OPENAI_CHAT_RE.match(i) and not _OPENAI_EXCLUDE_RE.search(i)]
@@ -204,6 +227,12 @@ async def available_models(force_refresh: bool = False) -> dict[str, list[str]]:
 
 def clear_model_cache() -> None:
     _cache.clear()
+
+
+def reset_clients() -> None:
+    """Drop the lazy clients (tests, and the console after settings change)."""
+    global _anthropic, _openai, _local
+    _anthropic = _openai = _local = None
 
 
 # ─── Tool-use turns (agent harness, ADR-007) ───────────────────────────────────
@@ -272,7 +301,7 @@ async def complete_turn(
                 raw=response,
             )
 
-        client = _get_openai()
+        client = _openai_like(provider)
         full_messages = [{"role": "system", "content": system_prompt}] + messages
         kwargs = dict(model=model, messages=full_messages, max_tokens=max_tokens)
         if tools:

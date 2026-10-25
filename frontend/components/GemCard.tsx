@@ -11,6 +11,8 @@ interface GemCardProps {
 const PROVIDER_COLORS: Record<string, string> = {
   anthropic: "bg-orange-500/10 text-orange-400 border-orange-500/20",
   openai:    "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+  local:     "bg-sky-500/10 text-sky-400 border-sky-500/20",
+  auto:      "bg-violet-500/10 text-violet-300 border-violet-500/20",
 };
 
 export default function GemCard({ gem, onDelete }: GemCardProps) {

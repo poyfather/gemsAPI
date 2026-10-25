@@ -23,8 +23,24 @@ SQLITE_PATH: str = _env("GEMS_SQLITE_PATH", os.path.join(os.path.abspath(os.path
 SEED_SQL_FILE: str = _env("GEMS_SEED_SQL_FILE", os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")), "supabase", "schema.sql"))
 
 # Default provider and model for new gems (REST, UI and MCP all read these).
-DEFAULT_PROVIDER: str = _env("GEMS_DEFAULT_PROVIDER", "anthropic")
-DEFAULT_MODEL: str = _env("GEMS_DEFAULT_MODEL", "claude-opus-5-5")
+# "auto" means the model policy decides at call time (see router.py).
+DEFAULT_PROVIDER: str = _env("GEMS_DEFAULT_PROVIDER", "auto")
+DEFAULT_MODEL: str = _env("GEMS_DEFAULT_MODEL", "auto")
+# The cloud defaults the policy falls back to for a gem that does not pin a model.
+CLOUD_DEFAULT_PROVIDER: str = _env("GEMS_CLOUD_DEFAULT_PROVIDER", "anthropic")
+CLOUD_DEFAULT_MODEL: str = _env("GEMS_CLOUD_DEFAULT_MODEL", "claude-opus-5-5")
+OPENAI_DEFAULT_MODEL: str = _env("GEMS_OPENAI_DEFAULT_MODEL", "")   # empty: first model the API lists
+
+# Local models (ADR-011): any OpenAI-compatible server. Ollama's default, LM Studio uses 1234, vLLM 8000.
+LOCAL_OPENAI_BASE_URL: str = _env("LOCAL_OPENAI_BASE_URL", "http://127.0.0.1:11434/v1")
+LOCAL_OPENAI_API_KEY: str = _env("LOCAL_OPENAI_API_KEY", "ollama")
+LOCAL_DEFAULT_MODEL: str = _env("GEMS_LOCAL_DEFAULT_MODEL", "")      # empty: first model the server lists
+
+# The model policy, answered in the UI by "Which AI should we use?":
+#   local  = the free one on this PC      online = the online ones
+#   mix    = a mix (hard thinking online, volume local)
+#   auto   = decide for me               manual = I'll choose each time (gems name their models)
+MODEL_POLICY: str = _env("GEMS_MODEL_POLICY", "auto")
 
 # Models offered in the UI and by the list_available_models tool when a
 # provider's live model list cannot be fetched (no key, network error).
@@ -33,10 +49,12 @@ DEFAULT_MODEL: str = _env("GEMS_DEFAULT_MODEL", "claude-opus-5-5")
 FALLBACK_MODELS: dict[str, list[str]] = {
     "anthropic": ["claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5", "claude-fable-5-1"],
     "openai": [],
+    "local": [],
 }
 PINNED_MODELS: dict[str, list[str]] = {
     "anthropic": _env_list("GEMS_MODELS_ANTHROPIC"),
     "openai": _env_list("GEMS_MODELS_OPENAI"),
+    "local": _env_list("GEMS_MODELS_LOCAL"),
 }
 
 # How long a fetched model list is reused before asking the provider again.

@@ -104,7 +104,7 @@ ipcMain.handle("console:install", async (_e, id) => {
   const code = await runCommand(cmd.program, cmd.args);
   return { ok: code === 0, message: code === 0 ? "installed" : `exit code ${code}` };
 });
-ipcMain.handle("console:settings:get", async () => { const s = loadSettings(); return { ...s, anthropicKey: s.anthropicKey ? "set" : "", openaiKey: s.openaiKey ? "set" : "", supabaseKey: s.supabaseKey ? "set" : "" }; });
+ipcMain.handle("console:settings:get", async () => { const s = loadSettings(); return { modelPolicy: "auto", ...s, anthropicKey: s.anthropicKey ? "set" : "", openaiKey: s.openaiKey ? "set" : "", supabaseKey: s.supabaseKey ? "set" : "" }; });
 ipcMain.handle("console:settings:set", async (_e, patch) => {
   const s = loadSettings();
   for (const [k, v] of Object.entries(patch)) if (typeof v === "string" && v !== "set") s[k] = v;

@@ -28,6 +28,7 @@ from app.agents.runner import run_agent
 from app.auth import require_api_key
 from app.models import RunEvent
 from app.services import gem_service
+from app.services import router as model_router
 from app.services.llm_service import complete, complete_stream
 
 router = APIRouter(prefix="/v1", tags=["openai-compatible"], dependencies=[Depends(require_api_key)])
@@ -166,10 +167,11 @@ async def chat_completions(request: ChatCompletionRequest):
     except ValueError as exc:
         raise HTTPException(status_code=400, detail={"message": str(exc), "type": "invalid_request_error"})
     system = resolved.resolved_prompt + (f"\n\n{addendum}" if addendum else "")
+    choice = await model_router.choose(gem)
 
     if not request.stream:
         try:
-            text = await complete(system, convo, gem.model, gem.provider, request.max_tokens)
+            text = await complete(system, convo, choice.model, choice.provider, request.max_tokens)
         except Exception:
             raise HTTPException(status_code=502, detail={"message": "The LLM provider returned an error.", "type": "server_error"})
         return _completion(gem.name, text)
@@ -177,7 +179,7 @@ async def chat_completions(request: ChatCompletionRequest):
     async def prompt_stream() -> AsyncGenerator[str, None]:
         yield _chunk(cid, gem.name, {"role": "assistant", "content": ""})
         try:
-            async for piece in complete_stream(system, convo, gem.model, gem.provider, request.max_tokens):
+            async for piece in complete_stream(system, convo, choice.model, choice.provider, request.max_tokens):
                 yield _chunk(cid, gem.name, {"content": piece})
         except Exception:
             yield _chunk(cid, gem.name, {"content": "\n[The LLM provider returned an error.]"}, "stop")

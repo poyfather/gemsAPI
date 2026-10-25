@@ -8,7 +8,7 @@ export interface Gem {
   description: string;
   system_prompt: string;
   model: string;
-  provider: "anthropic" | "openai";
+  provider: "anthropic" | "openai" | "local" | "auto";
   tags: string[];
   variables: string[];
   kind?: "prompt" | "agent";
@@ -23,7 +23,7 @@ export interface GemCreate {
   description: string;
   system_prompt: string;
   model: string;
-  provider: "anthropic" | "openai";
+  provider: "anthropic" | "openai" | "local" | "auto";
   tags: string[];
   kind?: "prompt" | "agent";
   tools?: string[];
@@ -58,6 +58,17 @@ export interface ChatResponse {
   model: string;
   provider: string;
   gem_name: string;
+  reason?: string;
+}
+
+export interface ModelPolicy {
+  policy: "local" | "online" | "mix" | "auto" | "manual";
+  policies: string[];
+  available: { anthropic: boolean; openai: boolean; local: boolean };
+  local_base_url: string;
+  local_models: string[];
+  cloud_default: [string, string] | null;
+  local_default: [string, string] | null;
 }
 
 export type AvailableModels = Record<string, string[]>;
@@ -220,6 +231,9 @@ export const chat = {
 
   models: (): Promise<AvailableModels> =>
     request<AvailableModels>("/chat/models"),
+
+  policy: (): Promise<ModelPolicy> =>
+    request<ModelPolicy>("/chat/policy"),
 
   /** Stream a reply token by token. Resolves when the stream ends; rejects on an HTTP or stream error. */
   stream: async (data: ChatRequest, onChunk: (text: string) => void): Promise<void> => {

@@ -23,6 +23,7 @@ from app.agents.mcp_sources import refresh_remote_tools
 from app.agents.tools import Tool, call_tool, resolve_tools
 from app.models import RunEvent, RunResult
 from app.services import gem_service
+from app.services import router as model_router
 from app.services.llm_service import ToolCall, complete_turn, tool_result_messages
 
 logger = logging.getLogger(__name__)
@@ -210,8 +211,8 @@ async def run_agent(
     gem = await gem_service.get_gem_by_name(gem_name)
     if gem is None:
         raise ValueError(f"Gem '{gem_name}' not found or is inactive.")
-    model = model_override or gem.model
-    provider = provider_override or gem.provider
+    choice = await model_router.choose(gem, provider_override=provider_override, model_override=model_override)
+    model, provider = choice.model, choice.provider
     if any("." in n or n.endswith("*") for n in gem.tools):
         await refresh_remote_tools()
     tools, unknown = resolve_tools(gem.tools)
@@ -219,7 +220,7 @@ async def run_agent(
     run = await run_service.create_run(gem.id, gem.name, model, provider, message)
     rec = _Recorder(run.id, 0, on_event)
     await rec.emit("run_started", {
-        "run_id": run.id, "gem": gem.name, "kind": gem.kind, "model": model, "provider": provider,
+        "run_id": run.id, "gem": gem.name, "kind": gem.kind, "model": model, "provider": provider, "reason": choice.reason,
         "tools": [t.name for t in tools], "unknown_tools": unknown, "allow_risky": allow_risky,
         "variables_missing": resolved.variables_missing, "max_steps": settings.AGENT_MAX_STEPS,
     })

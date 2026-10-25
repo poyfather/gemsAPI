@@ -160,6 +160,20 @@ A second seed agent, `rea_analyst`, shows the point of remote tools. With [REA (
 
 The response is the run (status, output, steps, tokens) plus its events; `GET /runs/{id}` returns the same later, and `"stream": true` delivers the events as Server-Sent Events while the run happens. The web UI does the same: mark a gem as an agent and pick its tools in the editor, send it a message on the chat page to watch the turns, tool calls and results stream in, then open the run at `/runs/{id}`. Over MCP the same loop is the `run_agent` tool, so Claude Desktop or Cursor can hand a task to one of your agents and get the answer and the run id back. A call to a tool marked risky pauses the run (status `waiting_approval`) with the call shown in the chat bubble or on the run page; approve or deny it there, or with `POST /runs/{id}/approve`, and the loop carries on from that exact point. A run started with `allow_risky` skips the gate. None of the shipped tools are risky. [ARCHITECTURE.md](ARCHITECTURE.md) has the loop as a sequence diagram, and ADR-007 in [DECISIONS.md](DECISIONS.md) explains the design.
 
+## Which AI should we use?
+
+Lapidary runs prompts and agents on Claude, on ChatGPT, or on a local model server on your own machine (Ollama by default; LM Studio, oMLX and vLLM work the same way, any OpenAI-compatible server does). One setting decides which, in the words a person would use:
+
+| Answer | `GEMS_MODEL_POLICY` | What happens |
+|---|---|---|
+| The free one on this PC | `local` | Only the local server. Private, works offline, costs nothing |
+| The online ones | `online` | Only Claude and ChatGPT, with your keys, paid by use |
+| A mix | `mix` | Hard thinking (prompts tagged `planning` or `reasoning`, and plain chat) goes online; high-volume work (agents, gems tagged `builder`, `review`, `test`) stays local |
+| Decide for me | `auto` | The default. Uses what is set up: online for hard thinking when a key exists, local for the rest when a server answers, and falls back the other way when one side is missing |
+| I'll choose each time | `manual` | Every gem names its provider and model, as before |
+
+A gem may still pin a provider (`anthropic`, `openai`, `local`) and a model, or say `auto` and leave it to the policy; new gems default to `auto`. An override on a call always wins. Every answer and every run records which model was used and why (`GET /chat/policy` shows the current policy, what is available and what it would pick). Set `LOCAL_OPENAI_BASE_URL` if your local server is not Ollama on port 11434.
+
 ## Use gems from Open WebUI and other OpenAI-compatible clients
 
 Lapidary speaks the OpenAI chat completions API as well: `GET /v1/models` lists every gem and agent as a model, and `POST /v1/chat/completions` answers with the gem's resolved prompt in front of the conversation, streamed in OpenAI's chunk format when asked, by whichever provider and model the gem names. Agent gems run the loop and return the final answer, with their tool calls visible in the run record. The key is the same `GEMS_API_KEY`, sent as `Authorization: Bearer`.
@@ -184,7 +198,9 @@ Backend variables live in `backend/.env` (template: [`.env.example`](.env.exampl
 | `GEMS_API_KEY` | backend and frontend | Shared secret for the `X-API-Key` header. Required |
 | `CORS_ORIGINS` | backend | Comma-separated allowed origins, default `http://localhost:3000` |
 | `BACKEND_URL` | frontend | Where `/api/*` is proxied, default `http://localhost:8000` |
-| `GEMS_DEFAULT_PROVIDER`, `GEMS_DEFAULT_MODEL` | backend | Provider and model for new gems, default `anthropic` and `claude-opus-5-5` |
+| `GEMS_MODEL_POLICY` | backend | `local`, `online`, `mix`, `auto` (default) or `manual`; see "Which AI should we use?" |
+| `LOCAL_OPENAI_BASE_URL`, `LOCAL_OPENAI_API_KEY`, `GEMS_LOCAL_DEFAULT_MODEL` | backend | The local model server (default `http://127.0.0.1:11434/v1`, Ollama), its key if it wants one, and the model to prefer (default: the first it lists) |
+| `GEMS_DEFAULT_PROVIDER`, `GEMS_DEFAULT_MODEL` | backend | Provider and model for new gems, default `auto` (the policy decides); `GEMS_CLOUD_DEFAULT_PROVIDER` and `GEMS_CLOUD_DEFAULT_MODEL` (`anthropic`, `claude-opus-5-5`) are what the policy picks online |
 | `GEMS_MODELS_ANTHROPIC`, `GEMS_MODELS_OPENAI` | backend | Optional comma-separated model lists. When unset, `GET /chat/models` asks each configured provider for its current models and caches the answer for `GEMS_MODEL_LIST_TTL_SECONDS` (default 600) |
 | `LLM_TIMEOUT_SECONDS`, `LLM_MAX_RETRIES`, `LLM_MAX_TOKENS` | backend | Per-attempt timeout (60), SDK retries on 429 and 5xx (2), and the completion cap (4096) |
 | `AGENT_MAX_STEPS`, `AGENT_TOOL_RESULT_MAX_CHARS` | backend | Model turns per agent run (8) and the longest tool result sent back to the model (8000) |

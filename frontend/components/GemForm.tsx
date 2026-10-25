@@ -18,8 +18,8 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
     name:          initialGem?.name          ?? "",
     description:   initialGem?.description   ?? "",
     system_prompt: initialGem?.system_prompt ?? "",
-    model:         initialGem?.model         ?? "",
-    provider:      initialGem?.provider      ?? "anthropic",
+    model:         initialGem?.model         ?? "auto",
+    provider:      initialGem?.provider      ?? "auto",
     tags:          initialGem?.tags          ?? [],
     kind:          initialGem?.kind          ?? "prompt",
     tools:         initialGem?.tools         ?? [],
@@ -43,7 +43,7 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
         if (cancelled) return;
         setModels(list);
         // A new gem starts on the provider's first model once the list is known.
-        setForm((prev) => (prev.model ? prev : { ...prev, model: list[prev.provider]?.[0] ?? "" }));
+        setForm((prev) => (prev.model || prev.provider === "auto" ? prev : { ...prev, model: list[prev.provider]?.[0] ?? "" }));
       })
       .catch(() => { /* the select still shows the gem's own model */ });
     agentsApi
@@ -181,21 +181,25 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
               value={form.provider}
               onChange={(e) => {
                 const provider = e.target.value as GemCreate["provider"];
-                setForm((prev) => ({ ...prev, provider, model: models[provider]?.[0] ?? "" }));
+                setForm((prev) => ({ ...prev, provider, model: provider === "auto" ? "auto" : (models[provider]?.[0] ?? "") }));
               }}
               className="w-full px-3 py-2 rounded-lg bg-gem-card border border-gem-border text-slate-100 text-sm focus:outline-hidden focus:ring-2 focus:ring-violet-500 transition"
             >
-              <option value="anthropic">Anthropic</option>
-              <option value="openai">OpenAI</option>
+              <option value="auto">Let the model policy decide</option>
+              <option value="anthropic">Anthropic (Claude)</option>
+              <option value="openai">OpenAI (ChatGPT)</option>
+              <option value="local">Local (Ollama, LM Studio, oMLX, vLLM)</option>
             </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1.5">Model</label>
             <select
-              value={form.model}
+              disabled={form.provider === "auto"}
+              value={form.provider === "auto" ? "auto" : form.model}
               onChange={(e) => handleChange("model", e.target.value)}
               className="w-full px-3 py-2 rounded-lg bg-gem-card border border-gem-border text-slate-100 text-sm focus:outline-hidden focus:ring-2 focus:ring-violet-500 transition"
             >
+              {form.provider === "auto" && <option value="auto">decided per call</option>}
               {modelOptions.map((m) => (
                 <option key={m} value={m}>{m}</option>
               ))}

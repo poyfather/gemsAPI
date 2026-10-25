@@ -80,7 +80,7 @@ async function refreshLogs() {
 
 async function loadSettings() {
   const s = await window.lapidary.settings.get();
-  for (const [k, v] of Object.entries(s)) { const f = document.querySelector(`[name="${k}"]`); if (f) f.placeholder = v === "set" ? "set (leave blank to keep)" : f.placeholder; if (f && k === "gemsApiKey") f.value = v || ""; if (f && k === "supabaseUrl") f.value = v || ""; }
+  for (const [k, v] of Object.entries(s)) { const f = document.querySelector(`[name="${k}"]`); if (f) f.placeholder = v === "set" ? "set (leave blank to keep)" : f.placeholder; if (f && ["gemsApiKey", "supabaseUrl", "localBaseUrl", "modelPolicy"].includes(k) && v) f.value = v; }
 }
 $("#settings-form").addEventListener("submit", async (e) => {
   e.preventDefault();

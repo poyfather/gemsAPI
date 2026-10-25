@@ -16,7 +16,7 @@ class GemBase(BaseModel):
         description="The prompt content. Use {variable} for variables, {{gem:name}} to embed another gem."
     )
     model: str = Field(default_factory=lambda: settings.DEFAULT_MODEL, description="Default LLM model")
-    provider: str = Field(default_factory=lambda: settings.DEFAULT_PROVIDER, description="LLM provider: 'anthropic' or 'openai'")
+    provider: str = Field(default_factory=lambda: settings.DEFAULT_PROVIDER, description="LLM provider: 'anthropic', 'openai', 'local', or 'auto' to let the model policy decide")
     tags: list[str] = Field(default=[], description="Tags for searching and filtering")
     kind: str = Field(default="prompt", description="'prompt' (one model call) or 'agent' (may call its tools in a loop)")
     tools: list[str] = Field(default=[], description="Registered tool names an agent gem may call; see GET /agents/tools")
@@ -84,6 +84,7 @@ class ChatResponse(BaseModel):
     model: str
     provider: str
     gem_name: str
+    reason: str = Field(default="", description="Why this model answered (the model policy's explanation)")
 
 
 # ─── Agent run models (ADR-007) ────────────────────────────────────────────────
