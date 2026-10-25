@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Gem } from "@/lib/api";
-import { Cpu, Tag, Variable, LinkIcon, Clock } from "lucide-react";
+import { Cpu, Tag, Variable, LinkIcon, Clock, Bot } from "lucide-react";
 import clsx from "clsx";
 
 interface GemCardProps {
@@ -44,6 +44,12 @@ export default function GemCard({ gem, onDelete }: GemCardProps) {
 
       {/* Metadata chips */}
       <div className="flex flex-wrap gap-1.5 mb-4">
+        {gem.kind === "agent" && (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs bg-violet-500/10 text-violet-300 border border-violet-500/20">
+            <Bot className="w-3 h-3" />
+            agent{gem.tools && gem.tools.length > 0 ? `, ${gem.tools.length} tool${gem.tools.length !== 1 ? "s" : ""}` : ""}
+          </span>
+        )}
         {gem.tags.map((tag) => (
           <span
             key={tag}

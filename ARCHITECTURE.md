@@ -59,9 +59,9 @@ A **gem** is a named system prompt stored in Postgres. It can embed other gems w
 ```mermaid
 flowchart TB
     subgraph browser["Browser"]
-        PAGES["app/ pages<br/>gems list, detail, new, edit, chat"]
-        COMPS["components/<br/>GemCard, GemForm, Navigation"]
-        APITS["lib/api.ts<br/>typed client, calls /api/*"]
+        PAGES["app/ pages<br/>gems list, detail, new, edit,<br/>chat, runs/[id]"]
+        COMPS["components/<br/>GemCard, GemForm, Navigation,<br/>RunEvents"]
+        APITS["lib/api.ts<br/>typed client, calls /api/*,<br/>SSE reader for streams"]
         PAGES --> COMPS
         PAGES --> APITS
     end
@@ -116,8 +116,8 @@ flowchart TB
 
 | Component | Where | Responsibility | Talks to | How |
 |---|---|---|---|---|
-| Web UI | `frontend/app`, `frontend/components` | Browse, search and tag gems; create and edit with a live resolved preview; chat against a gem | `lib/api.ts` | React state, client components |
-| API client | `frontend/lib/api.ts` | The only place the UI calls the network; typed wrappers for every route | Next.js server | `fetch("/api/...")`, same origin |
+| Web UI | `frontend/app`, `frontend/components` | Browse, search and tag gems; create and edit with a live resolved preview, kind and tool picker; chat against a gem with streamed replies; run agent gems with live events; view a run by id | `lib/api.ts` | React state, client components |
+| API client | `frontend/lib/api.ts` | The only place the UI calls the network; typed wrappers for every route and one SSE reader used by `chat.stream` and `agents.stream` | Next.js server | `fetch("/api/...")`, same origin |
 | Proxy and key injection | `frontend/proxy.ts`, `frontend/next.config.mjs` | Add `X-API-Key` from a server-only env var, then rewrite `/api/*` to the backend | FastAPI | HTTP to `BACKEND_URL` |
 | FastAPI app | `backend/app/main.py` | App factory, CORS from `CORS_ORIGINS`, startup check that `GEMS_API_KEY` is set, `/` and `/health` | Routers | In-process |
 | Auth | `backend/app/auth.py` | Router-level dependency: 401 unless `X-API-Key` matches `GEMS_API_KEY` | `/gems`, `/chat` | FastAPI `Security` |
@@ -172,7 +172,7 @@ sequenceDiagram
     A-->>B: text/event-stream: data: {"content": ...} ... data: [DONE]
 ```
 
-Without `stream`, step 13 onward is a single `complete()` call and the response is one `ChatResponse` JSON body. Provider errors are logged on the server and the client receives a fixed 502 message (or a fixed SSE `error` event), never the exception text.
+The chat page uses the streamed form for prompt gems and renders the chunks as they arrive. Without `stream`, step 13 onward is a single `complete()` call and the response is one `ChatResponse` JSON body. Provider errors are logged on the server and the client receives a fixed 502 message (or a fixed SSE `error` event), never the exception text.
 
 ### A tool call from an MCP client
 
@@ -239,7 +239,7 @@ sequenceDiagram
     R-->>C: RunResult (run + events), or the events as SSE while it happens
 ```
 
-What the loop promises: a tool error never escapes the run (unknown tool, refused risky tool, bad arguments and tool exceptions all go back to the model as text); a provider failure ends the run as `failed` with a record; every run has at most `AGENT_MAX_STEPS` model turns; nothing is held in memory between runs. What it does not do yet: approval gates with resume, remote MCP or HTTP tool sources, a token budget per run, or a run viewer in the UI (roadmap items 32 to 35).
+What the loop promises: a tool error never escapes the run (unknown tool, refused risky tool, bad arguments and tool exceptions all go back to the model as text); a provider failure ends the run as `failed` with a record; every run has at most `AGENT_MAX_STEPS` model turns; nothing is held in memory between runs. What it does not do yet: approval gates with resume, remote MCP or HTTP tool sources, a token budget per run, or a list of past runs (roadmap items 32, 33 and 35; the viewer itself is `app/runs/[id]` and the chat page).
 
 ## Gem composition and resolution
 

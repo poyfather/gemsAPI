@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { gems as gemsApi, chat as chatApi, GemCreate, Gem, AvailableModels, errorMessage } from "@/lib/api";
-import { Info, Plus, X, Loader2, Eye } from "lucide-react";
+import { gems as gemsApi, chat as chatApi, agents as agentsApi, GemCreate, Gem, AvailableModels, ToolInfo, errorMessage } from "@/lib/api";
+import { Info, Plus, X, Loader2, Eye, Bot } from "lucide-react";
 import clsx from "clsx";
 
 
@@ -21,6 +21,8 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
     model:         initialGem?.model         ?? "",
     provider:      initialGem?.provider      ?? "anthropic",
     tags:          initialGem?.tags          ?? [],
+    kind:          initialGem?.kind          ?? "prompt",
+    tools:         initialGem?.tools         ?? [],
   });
   const [tagInput, setTagInput]   = useState("");
   const [saving, setSaving]       = useState(false);
@@ -30,6 +32,8 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
   const [varValues, setVarValues] = useState<Record<string, string>>({});
   // The backend owns the model list (GET /chat/models: live per provider, cached).
   const [models, setModels] = useState<AvailableModels>({});
+  // Tools an agent gem may be given (GET /agents/tools).
+  const [toolList, setToolList] = useState<ToolInfo[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -42,8 +46,19 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
         setForm((prev) => (prev.model ? prev : { ...prev, model: list[prev.provider]?.[0] ?? "" }));
       })
       .catch(() => { /* the select still shows the gem's own model */ });
+    agentsApi
+      .tools()
+      .then((list) => { if (!cancelled) setToolList(list); })
+      .catch(() => { /* the picker stays empty */ });
     return () => { cancelled = true; };
   }, []);
+
+  const toggleTool = (name: string) => {
+    setForm((f) => {
+      const tools = f.tools ?? [];
+      return { ...f, tools: tools.includes(name) ? tools.filter((t) => t !== name) : [...tools, name] };
+    });
+  };
 
   // Detect variables in the prompt
   const detectedVars: string[] = [];
@@ -186,6 +201,48 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
               ))}
             </select>
           </div>
+        </div>
+
+        {/* Kind + tools (ADR-007) */}
+        <div className="space-y-3">
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">Kind</label>
+            <select
+              value={form.kind ?? "prompt"}
+              onChange={(e) => handleChange("kind", e.target.value)}
+              className="w-full px-3 py-2 rounded-lg bg-gem-card border border-gem-border text-slate-100 text-sm focus:outline-hidden focus:ring-2 focus:ring-violet-500 transition"
+            >
+              <option value="prompt">Prompt (one model call)</option>
+              <option value="agent">Agent (may call its tools in a loop)</option>
+            </select>
+          </div>
+          {form.kind === "agent" && (
+            <div className="rounded-lg border border-gem-border bg-gem-card p-3 space-y-2">
+              <p className="text-xs text-slate-400 flex items-center gap-1.5">
+                <Bot className="w-3.5 h-3.5 text-violet-400" />
+                Tools this agent may call
+              </p>
+              {toolList.length === 0 ? (
+                <p className="text-xs text-slate-600">No tools registered, or the backend is not reachable.</p>
+              ) : (
+                toolList.map((t) => (
+                  <label key={t.name} className="flex items-start gap-2 text-xs text-slate-300 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={(form.tools ?? []).includes(t.name)}
+                      onChange={() => toggleTool(t.name)}
+                      className="mt-0.5 accent-violet-500"
+                    />
+                    <span>
+                      <span className="font-mono text-violet-300">{t.name}</span>
+                      {t.risky && <span className="ml-1.5 px-1.5 py-0.5 rounded bg-red-500/10 text-red-400">risky</span>}
+                      <span className="block text-slate-500">{t.description}</span>
+                    </span>
+                  </label>
+                ))
+              )}
+            </div>
+          )}
         </div>
 
         {/* Tags */}

@@ -64,7 +64,7 @@ Every surface hands the gem to the same resolver, which expands `{{gem:name}}` r
 
 | Surface | What it does |
 |---|---|
-| **Web UI** (Next.js 16, port 3000) | Browse, search and tag gems, edit them with a live resolved preview, and test any gem in a chat view against Anthropic or OpenAI models |
+| **Web UI** (Next.js 16, port 3000) | Browse, search and tag gems, edit them with a live resolved preview, test any gem in a chat view with streamed replies, run agent gems and watch each tool call as it happens, and open any past run by id |
 | **REST API** (FastAPI, port 8000) | CRUD on `/gems`, `POST /gems/resolve` to expand a gem, `POST /chat` with optional SSE streaming, Swagger at `/docs` |
 | **MCP server** (FastMCP, stdio) | Tools `list_gems`, `search_gems`, `get_gem`, `resolve_gem_prompt`, `chat_with_gem`, `create_gem`, `run_agent`, `list_agent_tools`, `list_available_models`, plus `gems://list`, `gems://{name}` and `runs://{id}` resources |
 | **Agent runs** | A gem of kind `agent` lists tools it may call; `POST /agents/{name}/runs` runs the loop (model turn, tool calls, results, repeat) and records every step in `runs` and `run_events` |
@@ -154,7 +154,7 @@ curl -s http://localhost:8000/agents/gem_librarian/runs \
   -d '{"message": "Which gems take a language variable, and what does code_reviewer expand to for Python?"}'
 ```
 
-The response is the run (status, output, steps, tokens) plus its events; `GET /runs/{id}` returns the same later, and `"stream": true` delivers the events as Server-Sent Events while the run happens. Over MCP the same loop is the `run_agent` tool, so Claude Desktop or Cursor can hand a task to one of your agents and get the answer and the run id back. Tools marked risky are refused unless a run is started with `allow_risky`; none of the shipped tools are. [ARCHITECTURE.md](ARCHITECTURE.md) has the loop as a sequence diagram, and ADR-007 in [DECISIONS.md](DECISIONS.md) explains the design.
+The response is the run (status, output, steps, tokens) plus its events; `GET /runs/{id}` returns the same later, and `"stream": true` delivers the events as Server-Sent Events while the run happens. The web UI does the same: mark a gem as an agent and pick its tools in the editor, send it a message on the chat page to watch the turns, tool calls and results stream in, then open the run at `/runs/{id}`. Over MCP the same loop is the `run_agent` tool, so Claude Desktop or Cursor can hand a task to one of your agents and get the answer and the run id back. Tools marked risky are refused unless a run is started with `allow_risky`; none of the shipped tools are. [ARCHITECTURE.md](ARCHITECTURE.md) has the loop as a sequence diagram, and ADR-007 in [DECISIONS.md](DECISIONS.md) explains the design.
 
 ## Configuration
 
@@ -178,7 +178,7 @@ Backend variables live in `backend/.env` (template: [`.env.example`](.env.exampl
 ```
 backend/app/        FastAPI app: routes/ (gems, chat, agents), services/ (gem_service resolver, llm_service), agents/ (tool registry, run loop, run store), auth.py, models.py
 backend/mcp_server.py   FastMCP server over the same services
-frontend/           Next.js 16 app router UI (app/, components/, lib/api.ts, proxy.ts)
+frontend/           Next.js 16 app router UI (app/ including runs/[id], components/ including RunEvents, lib/api.ts with the SSE client, proxy.ts)
 supabase/           schema.sql (tables, RLS, seed gems) and one-off migrations such as lock_down_rls.sql and add_agent_runs.sql
 prompts/            the shipped gems as markdown, one file per gem
 evals/              live-API quality checks for gems (eval_prompt_enhancer.py)
