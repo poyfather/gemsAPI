@@ -11,6 +11,8 @@ import { fileURLToPath } from "node:url";
 import { COMPONENTS, detectAll, installCommand, paths } from "./lib/components.js";
 import { backendEnv, lapidaryMcpEntries, lapidaryMcpServersFile, mergeMcpServers, openWebUICompose } from "./lib/configs.js";
 import { Sidecar, waitForHealth } from "./lib/sidecars.js";
+import { capOutput, pwshInvocation } from "./lib/pwsh.js";
+import { TOOLBOX, detectToolbox, toolboxInstallCommand, toolboxSourceLabel } from "./lib/toolbox.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
@@ -95,8 +97,9 @@ function runCommand(program, args) {
 
 // ---- IPC surface
 ipcMain.handle("console:components", async () => ({ components: COMPONENTS.map(({ id, name, kind }) => ({ id, name, kind })), status: await detectAll(io) }));
+ipcMain.handle("console:toolbox", async () => ({ tools: TOOLBOX.map((t) => ({ id: t.id, name: t.name, publisher: t.publisher, category: t.category, source: toolboxSourceLabel(t), homepage: t.homepage })), status: await detectToolbox(io) }));
 ipcMain.handle("console:install", async (_e, id) => {
-  const cmd = installCommand(id);
+  const cmd = installCommand(id) || toolboxInstallCommand(id, { pwshPath: (await io.which("pwsh")) || "powershell.exe" });
   if (!cmd) return { ok: false, message: "nothing to install for this component" };
   const code = await runCommand(cmd.program, cmd.args);
   return { ok: code === 0, message: code === 0 ? "installed" : `exit code ${code}` };
@@ -120,6 +123,19 @@ ipcMain.handle("console:connect:openwebui", async () => {
 });
 ipcMain.handle("console:lapidary:restart", async () => { backend?.stop(); frontend?.stop(); await startSidecars(); return { ok: true }; });
 ipcMain.handle("console:logs", async () => logLines.slice(-400));
+ipcMain.handle("console:pwsh", async (_e, script) => {
+  const pwshPath = await io.which("pwsh");
+  const inv = pwshInvocation(String(script || ""), { pwshPath });
+  log(`pwsh> ${String(script).split("\n")[0]}`);
+  return new Promise((resolve) => {
+    let out = "", err = "";
+    const p = spawn(inv.program, inv.args, { windowsHide: true });
+    const timer = setTimeout(() => { p.kill(); err += "\n[stopped after 120 seconds]"; }, 120000);
+    p.stdout.on("data", (d) => (out += d)); p.stderr.on("data", (d) => (err += d));
+    p.on("close", (code) => { clearTimeout(timer); resolve({ code, output: capOutput(out), error: capOutput(err), note: inv.note }); });
+    p.on("error", (e) => { clearTimeout(timer); resolve({ code: -1, output: "", error: e.message, note: inv.note }); });
+  });
+});
 ipcMain.handle("console:open", async (_e, url) => { await shell.openExternal(url); return { ok: true }; });
 
 function writeMcp(file) {

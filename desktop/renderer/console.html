@@ -16,7 +16,8 @@
         <button data-view="connections">3 Connections</button>
         <button data-view="settings">4 Settings</button>
         <button data-view="logs">5 Logs</button>
-        <button data-view="lapidary">6 Lapidary</button>
+        <button data-view="powershell">6 PowerShell</button>
+        <button data-view="lapidary">7 Lapidary</button>
       </nav>
       <span class="clock" id="clock"></span>
     </header>
@@ -45,6 +46,11 @@
           <h2>INSTALL / UPDATE</h2>
           <p class="hint">Installs go through winget, Docker and npm. Each one prints to Logs.</p>
           <table id="install-table"><thead><tr><th></th><th>Component</th><th>Version</th><th>Path</th><th></th></tr></thead><tbody></tbody></table>
+        </div>
+        <div class="panel">
+          <h2>TOOLBOX <span class="dim small-text">optional Windows management tools, installed from the publisher through winget or the PowerShell Gallery</span></h2>
+          <div class="actions"><button data-act="toolbox-install-checked">Install checked</button><span class="dim small-text" id="toolbox-msg"></span></div>
+          <table id="toolbox-table"><thead><tr><th></th><th></th><th>Tool</th><th>Publisher</th><th>Category</th><th>Source</th><th></th></tr></thead><tbody></tbody></table>
         </div>
       </section>
 
@@ -83,12 +89,22 @@
         </div>
       </section>
 
+      <section id="view-powershell" class="view hidden grow">
+        <div class="panel grow">
+          <h2>POWERSHELL 7 <span class="dim small-text" id="pwsh-note"></span></h2>
+          <p class="hint">Runs as you, with -NoProfile and -NonInteractive. Ctrl+Enter runs. Everything you run also goes to Logs. The same engine is available to agents as the risky tool <span class="mono">run_powershell</span>, behind the approval gate.</p>
+          <textarea id="pwsh-in" rows="4" spellcheck="false" placeholder="Get-ComputerInfo | Select-Object OsName, OsVersion, CsName"></textarea>
+          <div class="actions"><button data-act="pwsh-run">Run</button><button data-act="pwsh-clear">Clear</button></div>
+          <pre id="pwsh-out" class="out tall"></pre>
+        </div>
+      </section>
+
       <section id="view-lapidary" class="view hidden grow">
         <iframe id="lapidary-frame" title="Lapidary" src="about:blank"></iframe>
       </section>
     </main>
 
-    <footer class="bar foot"><span id="foot-msg">ready</span><span class="dim">keys 1 to 6 switch views</span></footer>
+    <footer class="bar foot"><span id="foot-msg">ready</span><span class="dim">keys 1 to 7 switch views</span></footer>
   </div>
   <script src="console.js"></script>
 </body>

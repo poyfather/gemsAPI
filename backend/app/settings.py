@@ -49,6 +49,10 @@ LLM_MAX_TOKENS: int = int(_env("LLM_MAX_TOKENS", "4096"))
 AGENT_MAX_STEPS: int = int(_env("AGENT_MAX_STEPS", "8"))
 AGENT_TOOL_RESULT_MAX_CHARS: int = int(_env("AGENT_TOOL_RESULT_MAX_CHARS", "8000"))
 
+# The run_powershell tool (risky): per-call timeout and output cap.
+POWERSHELL_TIMEOUT_SECONDS: float = float(_env("POWERSHELL_TIMEOUT_SECONDS", "120"))
+POWERSHELL_MAX_OUTPUT_CHARS: int = int(_env("POWERSHELL_MAX_OUTPUT_CHARS", "20000"))
+
 # Tools from other MCP servers (roadmap item 32): a JSON file in Claude
 # Desktop's mcpServers shape. Default: configs/mcp_servers.json at the repo root.
 _REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))

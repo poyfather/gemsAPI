@@ -70,7 +70,7 @@ Every surface hands the gem to the same resolver, which expands `{{gem:name}}` r
 | **REST API** (FastAPI, port 8000) | CRUD on `/gems`, `POST /gems/resolve` to expand a gem, `POST /chat` with optional SSE streaming, Swagger at `/docs` |
 | **MCP server** (FastMCP, stdio) | Tools `list_gems`, `search_gems`, `get_gem`, `resolve_gem_prompt`, `chat_with_gem`, `create_gem`, `run_agent`, `list_agent_tools`, `list_available_models`, plus `gems://list`, `gems://{name}` and `runs://{id}` resources |
 | **Agent runs** | A gem of kind `agent` lists tools it may call; `POST /agents/{name}/runs` runs the loop (model turn, tool calls, results, repeat) and records every step in `runs` and `run_events` |
-| **Seed gems** | `base_assistant`, `code_reviewer`, `creative_writer`, `summarizer`, `engineering_lead`, `prompt_enhancer`, and the agents `gem_librarian` and `rea_analyst`, each also kept as a reviewable file in [`prompts/`](prompts/) |
+| **Seed gems** | `base_assistant`, `code_reviewer`, `creative_writer`, `summarizer`, `engineering_lead`, `prompt_enhancer`, and the agents `gem_librarian`, `rea_analyst` and `windows_operator`, each also kept as a reviewable file in [`prompts/`](prompts/) |
 
 ## Quick start
 
@@ -148,7 +148,7 @@ The response carries `resolved_prompt`, `referenced_gems` (`["code_reviewer", "b
 
 A gem can act as well as answer. Set its `kind` to `agent` and list the tools it may call; the run loop then lets the model call those tools, feeds the results back, and repeats until the model answers or `AGENT_MAX_STEPS` is reached. Every model turn, tool call and tool result is recorded, so a run can be read back, compared and evaluated.
 
-The built-in tools are read-only and about the library itself (`search_gems`, `get_gem`, `resolve_gem`). Any other MCP server's tools can be added: copy [`configs/mcp_servers.example.json`](configs/mcp_servers.example.json) to `configs/mcp_servers.json` (the same `mcpServers` shape as a Claude Desktop config) and every tool of each server appears as `<server>.<tool>`, with `<server>.*` meaning all of them. Tools from other servers count as risky unless the entry says `"risky": false` or lists the risky ones by name. `GET /agents/tools` lists everything with argument schemas and sources. The seed agent `gem_librarian` uses the three built-ins:
+The built-in tools are `search_gems`, `get_gem` and `resolve_gem`, which read the library, and `run_powershell`, which runs a PowerShell 7 script on the machine that runs Lapidary and is marked risky, so the approval gate shows every call before it runs. The seed agent `windows_operator` uses it. Any other MCP server's tools can be added: copy [`configs/mcp_servers.example.json`](configs/mcp_servers.example.json) to `configs/mcp_servers.json` (the same `mcpServers` shape as a Claude Desktop config) and every tool of each server appears as `<server>.<tool>`, with `<server>.*` meaning all of them. Tools from other servers count as risky unless the entry says `"risky": false` or lists the risky ones by name. `GET /agents/tools` lists everything with argument schemas and sources. The seed agent `gem_librarian` uses the three built-ins:
 
 ```sh
 curl -s http://localhost:8000/agents/gem_librarian/runs \
@@ -168,7 +168,7 @@ In [Open WebUI](https://github.com/open-webui/open-webui), add a connection unde
 
 ## Lapidary Console (Windows)
 
-[`desktop/`](desktop/) holds the Windows 11 application from ADR-009: an Electron console that installs and updates Claude Desktop, ChatGPT, Docker Desktop, Ollama and Open WebUI, registers Lapidary and REA as MCP servers in Claude Desktop and ChatGPT, points Open WebUI at Lapidary, OpenAI and Ollama, keeps the provider keys in the operating system's credential store, runs the backend and the UI as sidecars, and embeds this web UI. Simple and retro by design; the [desktop README](desktop/README.md) has the layout, the design notes and the build. The Windows installer is built by the `desktop` workflow in CI.
+[`desktop/`](desktop/) holds the Windows 11 application from ADR-009: an Electron console that installs and updates PowerShell 7, Claude Desktop, ChatGPT, Docker Desktop, Ollama and Open WebUI, runs PowerShell 7 commands from its own view, offers a toolbox of other Windows management tools installed from their publishers through winget or the PowerShell Gallery, registers Lapidary and REA as MCP servers in Claude Desktop and ChatGPT, points Open WebUI at Lapidary, OpenAI and Ollama, keeps the provider keys in the operating system's credential store, runs the backend and the UI as sidecars, and embeds this web UI. Simple and retro by design; the [desktop README](desktop/README.md) has the layout, the design notes and the build. The Windows installer is built by the `desktop` workflow in CI.
 
 ## Configuration
 
@@ -186,6 +186,7 @@ Backend variables live in `backend/.env` (template: [`.env.example`](.env.exampl
 | `GEMS_MODELS_ANTHROPIC`, `GEMS_MODELS_OPENAI` | backend | Optional comma-separated model lists. When unset, `GET /chat/models` asks each configured provider for its current models and caches the answer for `GEMS_MODEL_LIST_TTL_SECONDS` (default 600) |
 | `LLM_TIMEOUT_SECONDS`, `LLM_MAX_RETRIES`, `LLM_MAX_TOKENS` | backend | Per-attempt timeout (60), SDK retries on 429 and 5xx (2), and the completion cap (4096) |
 | `AGENT_MAX_STEPS`, `AGENT_TOOL_RESULT_MAX_CHARS` | backend | Model turns per agent run (8) and the longest tool result sent back to the model (8000) |
+| `POWERSHELL_TIMEOUT_SECONDS`, `POWERSHELL_MAX_OUTPUT_CHARS` | backend | The `run_powershell` tool's per-call timeout (120) and output cap (20000) |
 | `GEMS_MCP_SERVERS_FILE`, `GEMS_MCP_TOOLS_TTL_SECONDS`, `GEMS_MCP_CALL_TIMEOUT_SECONDS` | backend | Where the MCP server list lives (`configs/mcp_servers.json`), how long a server's tool list is cached (300), and the per-call timeout (120) |
 
 ## Project layout

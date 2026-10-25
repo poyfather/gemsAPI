@@ -95,7 +95,7 @@ def test_chat_models_returns_the_available_models(client, monkeypatch) -> None:
 
 def test_agent_tools_endpoint_lists_the_registry(client) -> None:
     names = [t["name"] for t in client.get("/agents/tools", headers=KEY).json()]
-    assert names == ["get_gem", "resolve_gem", "search_gems"]
+    assert names == ["get_gem", "resolve_gem", "run_powershell", "search_gems"]
 
 
 def test_run_endpoint_returns_the_run_and_events(client, fake_library, fake_runs, monkeypatch) -> None:

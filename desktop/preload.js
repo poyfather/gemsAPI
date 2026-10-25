@@ -4,6 +4,7 @@ import { contextBridge, ipcRenderer } from "electron";
 contextBridge.exposeInMainWorld("lapidary", {
   components: () => ipcRenderer.invoke("console:components"),
   install: (id) => ipcRenderer.invoke("console:install", id),
+  toolbox: () => ipcRenderer.invoke("console:toolbox"),
   settings: { get: () => ipcRenderer.invoke("console:settings:get"), set: (patch) => ipcRenderer.invoke("console:settings:set", patch) },
   connect: {
     claude: () => ipcRenderer.invoke("console:connect:claude"),
@@ -12,6 +13,7 @@ contextBridge.exposeInMainWorld("lapidary", {
   },
   restartLapidary: () => ipcRenderer.invoke("console:lapidary:restart"),
   logs: () => ipcRenderer.invoke("console:logs"),
+  pwsh: (script) => ipcRenderer.invoke("console:pwsh", script),
   open: (url) => ipcRenderer.invoke("console:open", url),
   onReady: (cb) => ipcRenderer.on("console:ready", cb),
 });

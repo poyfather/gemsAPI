@@ -54,6 +54,7 @@ The rest of this file is the operating policy for running Lapidary. The short ve
 - The `chat_with_gem` MCP tool and the `/chat` endpoint send real LLM requests and incur API costs. Do not expose either on a public network without authentication and a rate limit.
 - Human review is recommended before deploying a gem that will be used in automated or production pipelines.
 - Validate gem output before using it in high-impact actions (sending emails, writing to databases, and so on).
+- The built-in `run_powershell` tool runs scripts as the backend's user. It is risky, so a run pauses for approval before every call; the `windows_operator` gem is written to read before it changes anything. Do not mark it safe.
 - Tools from other MCP servers (`configs/mcp_servers.json`) run with that server's privileges on the machine that runs the backend. They are risky by default, which pauses a run for approval; mark a server `"risky": false` only when its tools cannot change anything. The config file may hold auth headers and is git-ignored.
 
 ## Environment and deployment controls

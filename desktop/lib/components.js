@@ -10,6 +10,7 @@ import { join } from "node:path";
 
 export const COMPONENTS = [
   { id: "winget",   name: "winget (Windows Package Manager)", kind: "tooling",  install: null },
+  { id: "pwsh",     name: "PowerShell 7",                     kind: "tooling",  install: { winget: "Microsoft.PowerShell" } },
   { id: "node",     name: "Node.js",                          kind: "tooling",  install: { winget: "OpenJS.NodeJS.LTS" } },
   { id: "docker",   name: "Docker Desktop",                   kind: "tooling",  install: { winget: "Docker.DockerDesktop" } },
   { id: "claude",   name: "Claude Desktop",                   kind: "client",   install: { winget: "Anthropic.Claude" } },
@@ -65,6 +66,11 @@ async function detectOne(c, io, p) {
     case "winget": {
       const path = await io.which("winget");
       return { installed: !!path, path, version: path ? await io.version("winget", ["--version"]) : null };
+    }
+    case "pwsh": {
+      const path = await io.which("pwsh");
+      return { installed: !!path, path, version: path ? await io.version("pwsh", ["-NoProfile", "-Command", "$PSVersionTable.PSVersion.ToString()"]) : null,
+               note: path ? null : "Windows PowerShell 5 will be used until PowerShell 7 is installed" };
     }
     case "node": {
       const path = await io.which("node");

@@ -19,14 +19,15 @@ test("mac paths use Application Support", () => {
 
 test("detection reports installed, running and missing from the injected io", async () => {
   const io = {
-    which: async (cmd) => ({ winget: "C:\\winget.exe", node: "C:\\node.exe" }[cmd] || null),
+    which: async (cmd) => ({ winget: "C:\\winget.exe", node: "C:\\node.exe", pwsh: "C:\\Program Files\\PowerShell\\7\\pwsh.exe" }[cmd] || null),
     exists: async (path) => path.includes("AnthropicClaude") || path.includes("claude_desktop_config"),
-    version: async (cmd) => ({ winget: "v1.9", node: "v24.14.1" }[cmd] || null),
+    version: async (cmd) => ({ winget: "v1.9", node: "v24.14.1", pwsh: "7.5.2" }[cmd] || null),
     fetchOk: async (url) => url.includes("11434"),
   };
   const s = await detectAll(io, winEnv, "win32");
   assert.deepEqual({ installed: s.winget.installed, version: s.winget.version }, { installed: true, version: "v1.9" });
   assert.equal(s.node.version, "v24.14.1");
+  assert.equal(s.pwsh.installed, true); assert.equal(s.pwsh.version, "7.5.2");
   assert.equal(s.docker.installed, false);
   assert.equal(s.claude.installed, true); assert.equal(s.claude.configured, true);
   assert.equal(s.chatgpt.installed, false);
@@ -41,6 +42,7 @@ test("install commands are winget, docker or npm, and nothing for winget itself"
   assert.ok(installCommand("claude").args.includes("Anthropic.Claude"));
   assert.deepEqual(installCommand("openwebui"), { program: "docker", args: ["pull", "ghcr.io/open-webui/open-webui:main"] });
   assert.deepEqual(installCommand("rea"), { program: "npm", args: ["install", "-g", "rea-agents"] });
+  assert.ok(installCommand("pwsh").args.includes("Microsoft.PowerShell"));
   assert.equal(installCommand("winget"), null);
   assert.equal(installCommand("nope"), null);
 });

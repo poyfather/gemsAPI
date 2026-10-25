@@ -1,6 +1,6 @@
 // Console page logic: tiny, no framework. Everything privileged goes through window.lapidary.
 const $ = (s) => document.querySelector(s);
-const views = ["dashboard", "components", "connections", "settings", "logs", "lapidary"];
+const views = ["dashboard", "components", "connections", "settings", "logs", "powershell", "lapidary"];
 const LAMP = { on: "lamp on", warn: "lamp warn", off: "lamp off" };
 
 function show(view) {
@@ -8,11 +8,13 @@ function show(view) {
   for (const b of document.querySelectorAll("nav button")) b.classList.toggle("active", b.dataset.view === view);
   if (view === "lapidary" && $("#lapidary-frame").src === "about:blank") $("#lapidary-frame").src = "http://127.0.0.1:3000/gems";
   if (view === "logs") refreshLogs();
+  if (view === "components") refreshToolbox();
   if (view === "settings") loadSettings();
 }
 document.querySelectorAll("nav button").forEach((b) => b.addEventListener("click", () => show(b.dataset.view)));
 document.addEventListener("keydown", (e) => {
-  if (e.target.tagName === "INPUT") return;
+  if (e.target.id === "pwsh-in" && e.key === "Enter" && e.ctrlKey) { e.preventDefault(); runPwsh(); return; }
+  if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
   const i = Number(e.key) - 1;
   if (i >= 0 && i < views.length) show(views[i]);
   if (e.key.toLowerCase() === "r") refresh();
@@ -52,6 +54,25 @@ async function refresh() {
   $("#foot-msg").textContent = `ready, ${new Date().toLocaleTimeString()}`;
 }
 
+async function refreshToolbox() {
+  const { tools, status } = await window.lapidary.toolbox();
+  const rows = tools.map((t) => {
+    const s = status[t.id] || {};
+    const lamp = s.installed === null ? "lamp" : (s.installed ? LAMP.on : LAMP.off);
+    const btn = s.installed ? `<span class="dim">installed</span>` : `<button data-toolbox="${t.id}" class="small">install</button>`;
+    return `<tr><td><input type="checkbox" data-pick="${t.id}" ${s.installed ? "disabled" : ""}></td><td><span class="${lamp}"></span></td><td>${t.name}</td><td class="dim">${t.publisher}</td><td class="dim">${t.category}</td><td class="dim">${t.source}</td><td class="act">${btn}</td></tr>`;
+  });
+  $("#toolbox-table tbody").innerHTML = rows.join("");
+  document.querySelectorAll("[data-toolbox]").forEach((b) => b.addEventListener("click", () => installTool(b.dataset.toolbox)));
+}
+
+async function installTool(id) {
+  $("#toolbox-msg").textContent = `installing ${id}...`;
+  const r = await window.lapidary.install(id);
+  $("#toolbox-msg").textContent = `${id}: ${r.message}`;
+  await refreshToolbox();
+}
+
 async function refreshLogs() {
   const lines = await window.lapidary.logs();
   const el = $("#logs"); el.textContent = lines.join("\n"); el.scrollTop = el.scrollHeight;
@@ -70,7 +91,21 @@ $("#settings-form").addEventListener("submit", async (e) => {
   e.target.reset(); loadSettings();
 });
 
+async function runPwsh() {
+  const script = $("#pwsh-in").value.trim();
+  if (!script) return;
+  const out = $("#pwsh-out");
+  out.textContent += `PS> ${script}\n`;
+  const r = await window.lapidary.pwsh(script);
+  if (r.note) $("#pwsh-note").textContent = r.note;
+  out.textContent += (r.output || "") + (r.error ? `\n${r.error}` : "") + `\n[exit ${r.code}]\n\n`;
+  out.scrollTop = out.scrollHeight;
+}
+
 const actions = {
+  "toolbox-install-checked": async () => { for (const c of document.querySelectorAll("[data-pick]:checked")) await installTool(c.dataset.pick); return ""; },
+  "pwsh-run": async () => (await runPwsh(), ""),
+  "pwsh-clear": async () => (($("#pwsh-out").textContent = ""), ""),
   "restart": async () => (await window.lapidary.restartLapidary(), "Lapidary restarted"),
   "open-ui": async () => (await window.lapidary.open("http://127.0.0.1:3000"), "opened Lapidary UI"),
   "open-webui": async () => (await window.lapidary.open("http://localhost:3080"), "opened Open WebUI"),
@@ -83,7 +118,7 @@ const actions = {
 document.querySelectorAll("[data-act]").forEach((b) => b.addEventListener("click", async () => {
   const out = b.closest("#view-connections") ? $("#conn-out") : $("#action-out");
   b.disabled = true;
-  try { out.textContent = await actions[b.dataset.act](); } catch (err) { out.textContent = `error: ${err.message}`; }
+  try { const msg = await actions[b.dataset.act](); if (msg) out.textContent = msg; } catch (err) { out.textContent = `error: ${err.message}`; }
   b.disabled = false;
 }));
 
