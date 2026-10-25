@@ -76,7 +76,7 @@ export default function RunPage() {
             <Bot className="w-5 h-5 text-violet-400" />
             What <span className="font-mono text-violet-300">{run.gem_name}</span> did
           </h1>
-          <p className="text-xs text-slate-500 font-mono mt-0.5 truncate">{run.id}</p>
+          <p className="text-xs text-slate-500 mt-0.5">Everything the assistant did for one request, kept so you can check it later or continue it if it is waiting for you.<span className="font-mono"> {run.id}</span></p>
         </div>
         <span className={clsx("px-2 py-0.5 rounded-md text-xs border", STATUS_STYLES[run.status] ?? "")}>{statusLabel(run.status)}</span>
         <Link

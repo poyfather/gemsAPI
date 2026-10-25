@@ -38,13 +38,13 @@ async function refresh() {
   const { components, status } = await window.lapidary.components();
   const rows = components.map((c) => {
     const s = status[c.id] || {};
-    return `<tr><td><span class="${lampFor(s)}"></span></td><td>${c.name}<span class="blurb">${c.blurb || ""}</span></td><td class="dim">${c.kind}</td><td>${stateText(s)}${s.note ? ` <span class="dim">(${s.note})</span>` : ""}</td><td></td></tr>`;
+    return `<tr><td><span class="${lampFor(s)}"></span></td><td>${c.name}<span class="blurb">${c.blurb || ""}${c.costs ? ` <span class="costs">${c.costs}.</span>` : ""}</span></td><td class="dim adv-only">${c.kind}</td><td>${stateText(s)}${s.note ? ` <span class="dim">(${s.note})</span>` : ""}</td><td></td></tr>`;
   });
   $("#status-table tbody").innerHTML = rows.join("");
   const inst = components.map((c) => {
     const s = status[c.id] || {};
     const btn = s.installed ? `<button data-install="${c.id}" class="small">update</button>` : `<button data-install="${c.id}" class="small">install</button>`;
-    return `<tr><td><span class="${lampFor(s)}"></span></td><td>${c.name}</td><td class="dim">${s.version || ""}</td><td class="path">${s.path || ""}</td><td class="act">${c.id === "winget" || c.id === "lapidary" ? "" : btn}</td></tr>`;
+    return `<tr><td><span class="${lampFor(s)}"></span></td><td>${c.name}<span class="blurb">${c.blurb || ""}${c.costs ? ` <span class="costs">${c.costs}.</span>` : ""}</span></td><td class="dim">${s.version || ""}</td><td class="path adv-only">${s.path || ""}</td><td class="act">${c.id === "winget" || c.id === "lapidary" ? "" : btn}</td></tr>`;
   });
   $("#install-table tbody").innerHTML = inst.join("");
   document.querySelectorAll("[data-install]").forEach((b) => b.addEventListener("click", async () => {
@@ -62,7 +62,7 @@ async function refreshToolbox() {
     const s = status[t.id] || {};
     const lamp = s.installed === null ? "lamp" : (s.installed ? LAMP.on : LAMP.off);
     const btn = s.installed ? `<span class="dim">installed</span>` : `<button data-toolbox="${t.id}" class="small">install</button>`;
-    return `<tr><td><input type="checkbox" data-pick="${t.id}" ${s.installed ? "disabled" : ""}></td><td><span class="${lamp}"></span></td><td>${t.name}</td><td class="dim">${t.publisher}</td><td class="dim">${t.category}</td><td class="dim">${t.source}</td><td class="act">${btn}</td></tr>`;
+    return `<tr><td><input type="checkbox" data-pick="${t.id}" ${s.installed ? "disabled" : ""}></td><td><span class="${lamp}"></span></td><td>${t.name}<span class="blurb">${t.blurb || ""}${t.needs ? ` <span class="costs">${t.needs}.</span>` : ""}</span></td><td class="dim">${t.publisher}</td><td class="dim adv-only">${t.category}</td><td class="dim adv-only">${t.source}</td><td class="act">${btn}</td></tr>`;
   });
   $("#toolbox-table tbody").innerHTML = rows.join("");
   document.querySelectorAll("[data-toolbox]").forEach((b) => b.addEventListener("click", () => installTool(b.dataset.toolbox)));

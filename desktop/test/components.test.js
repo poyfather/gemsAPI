@@ -37,6 +37,10 @@ test("detection reports installed, running and missing from the injected io", as
   assert.equal(Object.keys(s).length, COMPONENTS.length);
 });
 
+test("every component says what it costs or needs", () => {
+  for (const c of COMPONENTS) assert.ok(c.costs && /free|built in/.test(c.costs), `${c.id} has no cost line`);
+});
+
 test("every component has a plain-language blurb", () => {
   for (const c of COMPONENTS) assert.ok(c.blurb && c.blurb.length > 20, c.id);
 });

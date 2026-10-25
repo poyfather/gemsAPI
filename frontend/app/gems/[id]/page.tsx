@@ -96,7 +96,7 @@ export default function GemDetailPage() {
         </Link>
         <div className="flex-1">
           <h1 className="text-xl font-bold text-white font-mono">{gem.name}</h1>
-          {gem.description && <p className="text-slate-400 text-sm mt-0.5">{gem.description}</p>}
+          <p className="text-slate-400 text-sm mt-0.5">{gem.description || (gem.kind === "agent" ? "An assistant: a prompt with tools it may use, step by step." : "A prompt: words the AI is given before your message.")}</p>
         </div>
         <div className="flex gap-2">
           <Link

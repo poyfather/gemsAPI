@@ -68,7 +68,7 @@ These were found during the audit and fixed because CI could not pass without th
 | 47 | Guided first run and recipes: outcomes in one click | Console, newcomers | L | Now, done |
 | 48 | Plain-language pass over the console and the web UI | Console, newcomers | M | Now, done |
 | 49 | Doctor: self-check with offered fixes | Console, newcomers | M | Now, done |
-| 50 | Explainers: every screen says what it is for and why | Console, newcomers | S | Now |
+| 50 | Explainers: every screen says what it is for and why | Console, newcomers | S | Now, done |
 
 ## Now
 
@@ -435,6 +435,8 @@ The person this is for does not know much about AI, installs the console, and sh
 - **Depends on**: 37, 39.
 
 ### 50. Explainers: every screen says what it is for and why
+
+**Status: done** (one sentence under the heading of every console view: Dashboard, Components, Connections, Settings, Logs, PowerShell, Lapidary; a cost or needs line on every component, green, after its blurb; a blurb and a needs line on every toolbox entry, with the category and source columns moved behind the Advanced switch; one sentence on the web UI's library, chat, run and prompt pages. Tests check that every component and toolbox entry has them.)
 
 - **Why**: one sentence per component and per screen, in the person's language: what it is, what you get from it, what it costs or needs. Started in this PR with a blurb on every component and toolbox entry.
 - **Size**: S.
