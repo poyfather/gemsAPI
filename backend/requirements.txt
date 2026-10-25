@@ -1,3 +1,5 @@
+# Runtime dependencies for the FastAPI service and the MCP server.
+# Dev tooling (pytest, ruff) is in ../requirements.txt. Keep exact pins; CI installs both files.
 fastapi==0.159.1
 uvicorn[standard]==0.54.0
 supabase==2.33.0

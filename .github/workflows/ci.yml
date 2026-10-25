@@ -109,6 +109,15 @@ jobs:
           done
           exit $status
 
+      - name: Version strings agree (version.py, package.json, CHANGELOG, README badge)
+        run: |
+          py=$(sed -nE 's/^__version__ = "([^"]+)"/\1/p' backend/app/version.py)
+          js=$(python3 -c "import json; print(json.load(open('frontend/package.json'))['version'])")
+          cl=$(sed -nE 's/^## \[([0-9]+\.[0-9]+\.[0-9]+)\] - .*/\1/p' CHANGELOG.md | head -1)
+          echo "version.py=$py package.json=$js changelog=$cl"
+          [ "$py" = "$js" ] && [ "$py" = "$cl" ] || { echo "::error::version strings differ"; exit 1; }
+          grep -q "version-$py-" README.md || { echo "::error::README badge is not $py"; exit 1; }
+
       - name: No em or en dashes in the community docs
         run: |
           if grep -rnP '[\x{2014}\x{2013}]' README.md CONTRIBUTING.md SECURITY.md SUPPORT.md ARCHITECTURE.md docs/ROADMAP.md; then

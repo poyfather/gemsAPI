@@ -43,7 +43,7 @@ These were found during the audit and fixed because CI could not pass without th
 | 22 | Gem import and export | Product | M | Later |
 | 23 | Backend packaging, lock file, one-command dev | DX | M | Later |
 | 24 | Frontend tests | Tests | M | Later |
-| 25 | One version source and a tidy release process | Release | S | Later |
+| 25 | One version source and a tidy release process | Release | S | Later, done |
 | 26 | Screenshots, API reference, resolution guide | Docs | S to M | Later |
 | 27 | Split-deploy guide | Docs | S | Later |
 | 28 | Evals per gem, runnable from the UI | Product, quality | M | Next |
@@ -250,6 +250,8 @@ Worth doing once the foundations above are in.
 - **Depends on**: 8 so lint is strict first.
 
 ### 25. One version source and a tidy release process
+
+**Status: done** with 0.3.0: `backend/app/version.py` feeds the API, `frontend/package.json` and the README badge carry the same string, CI fails when they or the changelog's top section disagree, and the version sequence restarts above the out-of-order 0.1.0 and 0.2.0 entries.
 
 - **Why**: `CHANGELOG.md` lists 0.1.0 and 0.2.0 before 0.0.2, the only tag is `v0.0.2`, `backend/app/main.py` says `1.0.0`, and `frontend/package.json` says `1.0.0`. Pick a single source (a `VERSION` file or `pyproject.toml`), read it in the API root response and the README badge, and make the next tag `v0.3.0` or `v0.1.0` after deciding what 0.x means for this project. The release workflow added in the hygiene PR already builds release notes from the changelog section for the tag.
 - **Size**: S.

@@ -58,7 +58,7 @@ CI also runs CodeQL and checks that every `prompts/*.md` has a matching seed row
 
 ## Releases
 
-Releases are tagged `vX.Y.Z` and follow [semantic versioning](https://semver.org). To cut one: move the Unreleased items in `CHANGELOG.md` into a new dated `## [X.Y.Z]` section, update the version badge in the README and the `version` strings in `backend/app/main.py` and `frontend/package.json`, commit, then push the tag. The release workflow turns that changelog section into the GitHub release notes.
+Releases are tagged `vX.Y.Z` and follow [semantic versioning](https://semver.org). To cut one: move the Unreleased items in `CHANGELOG.md` into a new dated `## [X.Y.Z]` section (one block per heading, Keep a Changelog order), set the same version in `backend/app/version.py`, `frontend/package.json` and the README badge, open a PR (CI fails if the four disagree), merge it, then push the tag from `main`. The release workflow turns that changelog section into the GitHub release notes.
 
 ## License
 
