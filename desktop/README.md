@@ -8,7 +8,7 @@ Simple and retro, on purpose. One typeface (Cascadia Mono, which Windows ships, 
 
 ## Who it is for
 
-Someone who does not know much about AI, installs this, and gets something genuinely useful on day one (ADR-012). So: plain words on the surface, nothing that needs a file edited, a path that works without a cloud key, outcomes offered as one-click recipes, every component explaining itself in a sentence, and anything that changes the machine asking first. The power-user surfaces stay one click away.
+Two people (ADR-012). A marketing person who does not know much about AI, installs this, and gets something genuinely useful on day one through the Basic setup: recipes, defaults, plain words. A system administrator in IT who takes the Advanced setup: every choice walked through, every file the console writes shown first, and an Advanced toggle that reveals the details on every screen. So: plain words on the surface, nothing that needs a file edited, a path that works without a cloud key, outcomes offered as one-click recipes, every component explaining itself in a sentence, and anything that changes the machine asking first. The power-user surfaces stay one click away.
 
 ## Layout
 
