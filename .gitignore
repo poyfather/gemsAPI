@@ -33,3 +33,6 @@ yarn-error.log*
 *.swo
 .DS_Store
 Thumbs.db
+
+# MCP server config may hold auth headers; keep the example, not the real file
+configs/mcp_servers.json

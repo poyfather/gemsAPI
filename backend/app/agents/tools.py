@@ -34,8 +34,14 @@ class Tool:
             "function": {"name": self.name, "description": self.description, "parameters": self.parameters},
         }
 
+    @property
+    def source(self) -> str:
+        """'builtin' for Python tools, else the MCP server name (the part before the dot)."""
+        return self.name.split(".", 1)[0] if "." in self.name else "builtin"
+
     def info(self) -> dict:
-        return {"name": self.name, "description": self.description, "parameters": self.parameters, "risky": self.risky}
+        return {"name": self.name, "description": self.description, "parameters": self.parameters,
+                "risky": self.risky, "source": self.source}
 
 
 _REGISTRY: dict[str, Tool] = {}
@@ -71,20 +77,48 @@ def tool(name: str | None = None, *, risky: bool = False) -> Callable[[Handler],
     return decorate
 
 
+def _combined() -> dict[str, Tool]:
+    """Built-in tools plus the remote registry as last refreshed (see mcp_sources.refresh_remote_tools)."""
+    from app.agents.mcp_sources import remote_tools  # local import: mcp_sources imports Tool from here
+
+    return {**_REGISTRY, **remote_tools()}
+
+
 def all_tools() -> list[Tool]:
-    return [_REGISTRY[k] for k in sorted(_REGISTRY)]
+    combined = _combined()
+    return [combined[k] for k in sorted(combined)]
 
 
 def get_tool(name: str) -> Tool | None:
-    return _REGISTRY.get(name)
+    return _combined().get(name)
 
 
 def resolve_tools(names: list[str]) -> tuple[list[Tool], list[str]]:
-    """Split a gem's tool names into registered tools and unknown names."""
-    found, unknown = [], []
+    """
+    Split a gem's tool names into tools and unknown names. "<server>.*" expands
+    to every tool of that server; a wildcard that matches nothing is unknown.
+    """
+    combined = _combined()
+    found: list[Tool] = []
+    unknown: list[str] = []
+    seen: set[str] = set()
     for n in names:
-        t = _REGISTRY.get(n)
-        (found if t else unknown).append(t or n)
+        if n.endswith(".*"):
+            prefix = n[:-1]
+            matches = [combined[k] for k in sorted(combined) if k.startswith(prefix)]
+            if not matches:
+                unknown.append(n)
+            for t in matches:
+                if t.name not in seen:
+                    seen.add(t.name)
+                    found.append(t)
+            continue
+        t = combined.get(n)
+        if t is None:
+            unknown.append(n)
+        elif t.name not in seen:
+            seen.add(t.name)
+            found.append(t)
     return found, unknown
 
 

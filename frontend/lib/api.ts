@@ -69,6 +69,7 @@ export interface ToolInfo {
   description: string;
   parameters: Record<string, unknown>;
   risky: boolean;
+  source: string;
 }
 
 export type RunStatus = "running" | "waiting_approval" | "finished" | "failed" | "max_steps";

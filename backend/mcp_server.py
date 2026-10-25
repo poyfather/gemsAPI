@@ -56,6 +56,7 @@ from app.services.llm_service import available_models, complete
 import app.agents.builtin  # noqa: F401
 from app.agents import run_service
 from app.agents.runner import resume_run as _resume_run, run_agent as _run_agent
+from app.agents.mcp_sources import refresh_remote_tools
 from app.agents.tools import all_tools
 from app.models import GemCreate
 
@@ -335,7 +336,8 @@ async def approve_run(run_id: str, approve: bool = True) -> dict:
 
 @mcp.tool()
 async def list_agent_tools() -> list[dict]:
-    """List the tools an agent gem may be given, with their argument schemas."""
+    """List the tools an agent gem may be given, built in and from configured MCP servers, with their argument schemas."""
+    await refresh_remote_tools()
     return [t.info() for t in all_tools()]
 
 

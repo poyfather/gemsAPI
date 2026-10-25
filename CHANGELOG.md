@@ -104,8 +104,8 @@ The first tagged release since v0.0.2 and the first one cut with the release wor
 - Docker Compose for local all-in-one deployment.
 - `.env.example` with all required environment variables documented.
 
-[Unreleased]: https://github.com/poyfather/gemsAPI/compare/v0.3.0...HEAD
-[0.3.0]: https://github.com/poyfather/gemsAPI/compare/v0.0.2...v0.3.0
-[0.0.2]: https://github.com/poyfather/gemsAPI/releases/tag/v0.0.2
-[0.2.0]: https://github.com/poyfather/gemsAPI/commit/8f4d13a
-[0.1.0]: https://github.com/poyfather/gemsAPI/commit/9869354
+[Unreleased]: https://github.com/poyfather/lapidary/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/poyfather/lapidary/compare/v0.0.2...v0.3.0
+[0.0.2]: https://github.com/poyfather/lapidary/releases/tag/v0.0.2
+[0.2.0]: https://github.com/poyfather/lapidary/commit/8f4d13a
+[0.1.0]: https://github.com/poyfather/lapidary/commit/9869354

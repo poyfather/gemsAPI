@@ -2,7 +2,7 @@
 
 ## Something is broken
 
-Open a **Bug report** issue: https://github.com/poyfather/gemsAPI/issues/new/choose. Say which part failed (backend, MCP server, UI, resolution, schema), the version or commit, and paste the error with any keys redacted.
+Open a **Bug report** issue: https://github.com/poyfather/lapidary/issues/new/choose. Say which part failed (backend, MCP server, UI, resolution, schema), the version or commit, and paste the error with any keys redacted.
 
 ## How do I set it up
 

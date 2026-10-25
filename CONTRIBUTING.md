@@ -5,7 +5,7 @@ Thanks for helping. The most useful contributions right now are tests around the
 ## Development setup
 
 ```sh
-git clone https://github.com/poyfather/gemsAPI.git && cd gemsAPI
+git clone https://github.com/poyfather/lapidary.git && cd lapidary
 python -m venv backend/.venv && source backend/.venv/bin/activate   # Windows: backend\.venv\Scripts\Activate.ps1
 pip install -r backend/requirements.txt -r requirements.txt           # runtime deps, plus pytest and ruff
 cd frontend && npm install && cd ..

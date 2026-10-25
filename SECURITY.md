@@ -13,7 +13,7 @@ Lapidary is pre-1.0. Fixes ship as a new tagged release with a note in `CHANGELO
 
 Please do **not** open a public issue for security problems.
 
-Use GitHub's private vulnerability reporting: **Security, then Report a vulnerability** on this repository (https://github.com/poyfather/gemsAPI/security/advisories/new). If that is unavailable, contact the maintainer through the [poyfather](https://github.com/poyfather) profile with "Lapidary security" in the subject.
+Use GitHub's private vulnerability reporting: **Security, then Report a vulnerability** on this repository (https://github.com/poyfather/lapidary/security/advisories/new). If that is unavailable, contact the maintainer through the [poyfather](https://github.com/poyfather) profile with "Lapidary security" in the subject.
 
 Include what you found, how to reproduce it, which component is affected (FastAPI backend, MCP server, Next.js frontend, Supabase schema, Docker Compose), and the version or commit. Do not include real API keys or Supabase keys in the report.
 
@@ -54,6 +54,7 @@ The rest of this file is the operating policy for running Lapidary. The short ve
 - The `chat_with_gem` MCP tool and the `/chat` endpoint send real LLM requests and incur API costs. Do not expose either on a public network without authentication and a rate limit.
 - Human review is recommended before deploying a gem that will be used in automated or production pipelines.
 - Validate gem output before using it in high-impact actions (sending emails, writing to databases, and so on).
+- Tools from other MCP servers (`configs/mcp_servers.json`) run with that server's privileges on the machine that runs the backend. They are risky by default, which pauses a run for approval; mark a server `"risky": false` only when its tools cannot change anything. The config file may hold auth headers and is git-ignored.
 
 ## Environment and deployment controls
 

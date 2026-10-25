@@ -50,10 +50,15 @@ These were found during the audit and fixed because CI could not pass without th
 | 29 | Typed variables with descriptions and defaults | Product, MCP | M | Next |
 | 30 | Side-by-side runs | Product | M | Later |
 | 31 | Few-shot examples as first-class data | Product | M | Later |
-| 32 | Agent tools from remote MCP servers and HTTP endpoints | Agents | M | Next |
+| 32 | Agent tools from remote MCP servers and HTTP endpoints | Agents | M | Next, MCP done |
 | 33 | Approval gates with pause and resume | Agents, security | M | Next, done |
 | 34 | Run viewer in the UI | Agents, product | M | Next, done |
 | 35 | Managed Agents as an execution backend | Agents | M | Later |
+| 36 | Storage layer with a SQLite backend | Desktop, data | L | Next |
+| 37 | Electron shell, sidecars, Windows installer, CI build | Desktop | L | Next |
+| 38 | Settings screen: provider keys and MCP servers | Desktop | M | Next |
+| 39 | Lapidary's MCP server over HTTP for Claude Desktop and ChatGPT | Desktop, MCP | M | Next |
+| 40 | Bundle REA and first-run setup | Desktop | S | Next |
 
 ## Now
 
@@ -277,6 +282,8 @@ Worth doing once the foundations above are in.
 
 ### 32. Agent tools from remote MCP servers and HTTP endpoints
 
+**Status: MCP servers done.** `backend/app/agents/mcp_sources.py` reads `configs/mcp_servers.json` (Claude Desktop's shape, stdio or streamable HTTP), lists each server's tools as `<server>.<tool>` with `<server>.*` wildcards, calls them through a fastmcp client, and marks them risky unless the entry says otherwise; the tool picker groups by server. The seed agent `rea_analyst` uses it. Plain HTTP endpoints as tools are still open.
+
 - **Why**: ADR-007 shipped the loop with three built-in tools about the library itself. The useful agents need the user's own tools. FastMCP can act as a client, so a gem could list a remote MCP server (the same config a user pastes into Claude Desktop) and get its tools; a plain HTTP tool described by a JSON schema covers the rest. Both plug into `backend/app/agents/tools.py` as more sources behind the same registry, and both need an allowlist of hosts and a timeout.
 - **Size**: M.
 - **Depends on**: 33 (done), so remote tools that write can be marked risky from day one.
@@ -314,6 +321,40 @@ Worth doing once the foundations above are in.
 - **Why**: most strong prompts carry examples, and in this library they live inline in `system_prompt`, so adding or swapping one means editing the whole body and `prompts/<name>.md` by hand. Store examples as a list on the gem (input, output, optional note), render them into the resolved prompt at a marker such as `{{examples}}` inside `<examples>` tags, and let the UI add, reorder and remove them. Examples then version with 14, can be reused by 28 as eval cases, and stop colliding with the variable syntax.
 - **Size**: M.
 - **Depends on**: 4 (syntax decisions), 15 (migration), 29 (the same spec mechanism).
+
+## Lapidary Desktop (ADR-009)
+
+A Windows 11 application that runs all of Lapidary with Claude and ChatGPT connected. The items are in dependency order.
+
+### 36. Storage layer with a SQLite backend
+
+- **Why**: `gem_service.py` and `run_service.py` call the supabase-py table API directly, so the app cannot run without a Supabase project. A desktop app needs a local database that works offline. Put the dozen table calls behind one repository interface with two implementations: SQLite (stdlib `sqlite3`, file in the app data folder, schema from one migration file) and Supabase (today's code). Pick by `GEMS_STORAGE=sqlite|supabase`. The fake store in `tests/conftest.py` already shows the shape of the interface.
+- **Size**: L.
+- **Depends on**: nothing; it also unlocks real integration tests (item 5) against SQLite in CI.
+
+### 37. Electron shell, sidecars, Windows installer, CI build
+
+- **Why**: one window, one installer. `desktop/` holds an Electron app that starts the FastAPI backend (a PyInstaller single-file exe built on `windows-latest`) and the Next.js standalone server (run with Electron's bundled Node), waits for `/health`, and loads `http://localhost:3000`. electron-builder produces an NSIS installer; a CI workflow builds both and smoke-tests a launch. Logs and the SQLite file live under `%APPDATA%\Lapidary`.
+- **Size**: L.
+- **Depends on**: 36.
+
+### 38. Settings screen: provider keys and MCP servers
+
+- **Why**: nobody should edit `.env` files in a desktop app. A Settings page in the UI (desktop only) takes the Anthropic and OpenAI keys, stores them with Electron safeStorage, and restarts the backend with them in its environment; the same page edits the MCP server list (name, command and args or URL, risky) and writes `mcp_servers.json`. A connection test per provider and per server.
+- **Size**: M.
+- **Depends on**: 37.
+
+### 39. Lapidary's MCP server over HTTP for Claude Desktop and ChatGPT
+
+- **Why**: `backend/mcp_server.py` speaks stdio only, which Claude Desktop can start but ChatGPT cannot. FastMCP also serves streamable HTTP; run it inside the desktop app on localhost behind the `X-API-Key` check (item 10's per-client keys fit here), and show the two client configs on the Settings page with a copy button. Then both assistants can fetch gems and start runs in Lapidary.
+- **Size**: M.
+- **Depends on**: 37, and item 10 for keys that can be revoked.
+
+### 40. Bundle REA and first-run setup
+
+- **Why**: the `rea_analyst` gem needs the REA MCP server. Ship `rea-agents` as an npm dependency of the desktop app and register it in `mcp_servers.json` on first run, with a first-run screen that asks for the provider keys, creates the SQLite database with the seed gems, and opens the chat on `rea_analyst`.
+- **Size**: S.
+- **Depends on**: 37, 38.
 
 ## For the prompt practitioner
 

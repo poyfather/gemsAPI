@@ -19,6 +19,7 @@ from typing import Awaitable, Callable
 
 from app import settings
 from app.agents import run_service
+from app.agents.mcp_sources import refresh_remote_tools
 from app.agents.tools import Tool, call_tool, resolve_tools
 from app.models import RunEvent, RunResult
 from app.services import gem_service
@@ -205,6 +206,8 @@ async def run_agent(
         raise ValueError(f"Gem '{gem_name}' not found or is inactive.")
     model = model_override or gem.model
     provider = provider_override or gem.provider
+    if any("." in n or n.endswith("*") for n in gem.tools):
+        await refresh_remote_tools()
     tools, unknown = resolve_tools(gem.tools)
 
     run = await run_service.create_run(gem.id, gem.name, model, provider, message)
@@ -237,6 +240,8 @@ async def resume_run(run_id: str, approve: bool, *, on_event: OnEvent | None = N
     if not raw or not raw.get("pending"):
         raise ValueError(f"Run '{run_id}' has no pending tool call to decide on.")
     state = LoopState.from_dict(raw)
+    if any("." in n for n in state.tool_names):
+        await refresh_remote_tools()
     pending_call_id = state.pending[0]["id"]
     rec = _Recorder(run_id, state.seq, on_event)
     await run_service.update_run(run_id, status="running")
