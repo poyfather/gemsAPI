@@ -13,6 +13,7 @@ import { backendEnv, lapidaryMcpEntries, lapidaryMcpServersFile, mergeMcpServers
 import { Sidecar, waitForHealth } from "./lib/sidecars.js";
 import { capOutput, pwshInvocation } from "./lib/pwsh.js";
 import { TOOLBOX, detectToolbox, toolboxInstallCommand, toolboxSourceLabel } from "./lib/toolbox.js";
+import { AI_CHOICES, DEFAULT_LOCAL_MODEL, advancedPlan, plan, planAll, summarise } from "./lib/recipes.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
@@ -84,6 +85,7 @@ const io = {
     let out = ""; p.stdout.on("data", (d) => (out += d)); p.on("close", () => resolve(out.trim().split(/\r?\n/)[0] || null)); p.on("error", () => resolve(null));
   }),
   fetchOk: async (url) => { try { const r = await fetch(url, { signal: AbortSignal.timeout(1500) }); return r.ok; } catch { return false; } },
+  fetchJson: async (url) => { try { const r = await fetch(url, { signal: AbortSignal.timeout(1500) }); return r.ok ? await r.json() : null; } catch { return null; } },
 };
 
 function runCommand(program, args) {
@@ -104,7 +106,7 @@ ipcMain.handle("console:install", async (_e, id) => {
   const code = await runCommand(cmd.program, cmd.args);
   return { ok: code === 0, message: code === 0 ? "installed" : `exit code ${code}` };
 });
-ipcMain.handle("console:settings:get", async () => { const s = loadSettings(); return { modelPolicy: "auto", ...s, anthropicKey: s.anthropicKey ? "set" : "", openaiKey: s.openaiKey ? "set" : "", supabaseKey: s.supabaseKey ? "set" : "" }; });
+ipcMain.handle("console:settings:get", async () => { const s = loadSettings(); return { modelPolicy: "auto", localModel: DEFAULT_LOCAL_MODEL, ...s, anthropicKey: s.anthropicKey ? "set" : "", openaiKey: s.openaiKey ? "set" : "", supabaseKey: s.supabaseKey ? "set" : "" }; });
 ipcMain.handle("console:settings:set", async (_e, patch) => {
   const s = loadSettings();
   for (const [k, v] of Object.entries(patch)) if (typeof v === "string" && v !== "set") s[k] = v;
@@ -113,14 +115,7 @@ ipcMain.handle("console:settings:set", async (_e, patch) => {
 });
 ipcMain.handle("console:connect:claude", async () => writeMcp(P.claudeConfig));
 ipcMain.handle("console:connect:chatgpt", async () => writeMcp(P.chatgptConfig));
-ipcMain.handle("console:connect:openwebui", async () => {
-  const s = loadSettings();
-  const file = join(dataDir, "open-webui.compose.yml");
-  mkdirSync(dataDir, { recursive: true });
-  writeFileSync(file, openWebUICompose({ lapidaryKey: s.gemsApiKey || "", openaiKey: s.openaiKey || "" }));
-  const code = await runCommand("docker", ["compose", "-f", file, "up", "-d"]);
-  return { ok: code === 0, message: code === 0 ? "Open WebUI is starting on http://localhost:3080" : `docker compose exited with ${code}; the file is at ${file}` };
-});
+ipcMain.handle("console:connect:openwebui", async () => startOpenWebUI());
 ipcMain.handle("console:lapidary:restart", async () => { backend?.stop(); frontend?.stop(); await startSidecars(); return { ok: true }; });
 ipcMain.handle("console:logs", async () => logLines.slice(-400));
 ipcMain.handle("console:pwsh", async (_e, script) => {
@@ -137,6 +132,104 @@ ipcMain.handle("console:pwsh", async (_e, script) => {
   });
 });
 ipcMain.handle("console:open", async (_e, url) => { await shell.openExternal(url); return { ok: true }; });
+
+// ---- first run and recipes (ADR-012, roadmap 47)
+function planContext(choice) {
+  const settings = loadSettings();
+  return { settings, choice: choice || settings.modelPolicy || "mix", localModel: settings.localModel || DEFAULT_LOCAL_MODEL };
+}
+ipcMain.handle("console:recipes", async (_e, choice) => {
+  const ctx = { ...planContext(choice), status: await detectAll(io) };
+  const plans = planAll(ctx).map((p) => ({ ...p, summary: summarise(p) }));
+  return { choices: AI_CHOICES, plans, choice: ctx.choice, firstRunDone: Boolean(ctx.settings.firstRunDone), localModel: ctx.localModel };
+});
+ipcMain.handle("console:advanced:plan", async (_e, answers) => advancedPlan(answers, { status: await detectAll(io), settings: loadSettings(), paths: P }));
+ipcMain.handle("console:recipe:run", async (_e, recipeId, choice, keys) => {
+  if (keys && (keys.anthropicKey || keys.openaiKey)) { const s = loadSettings(); for (const k of ["anthropicKey", "openaiKey"]) if (keys[k]) s[k] = keys[k]; saveSettings(s); }
+  const ctx = { ...planContext(choice), status: await detectAll(io) };
+  const p = plan(recipeId, ctx);
+  return runSteps(p.steps, { patch: { modelPolicy: ctx.choice, localModel: ctx.localModel } });
+});
+ipcMain.handle("console:advanced:run", async (_e, answers) => {
+  const p = advancedPlan(answers, { status: await detectAll(io), settings: loadSettings(), paths: P });
+  const policy = p.steps.find((s) => s.kind === "policy");
+  return runSteps(p.steps, { patch: policy?.patch || {} });
+});
+ipcMain.handle("console:firstrun:done", async () => { const s = loadSettings(); s.firstRunDone = "yes"; saveSettings(s); return { ok: true }; });
+
+const progress = (ev) => { win?.webContents.send("console:progress", ev); if (ev.message) log(`[recipe] ${ev.step}: ${ev.message}`); };
+
+/** Run a plan's steps in order, reporting each one. Stops at the first required failure. */
+async function runSteps(steps, { patch }) {
+  const results = [];
+  for (const step of steps) {
+    if (step.done || step.skipWhen) { progress({ step: step.id, state: "skipped", message: step.done ? "already here" : step.skipWhen }); continue; }
+    progress({ step: step.id, state: "running" });
+    let r;
+    try { r = await runStep(step, patch); } catch (e) { r = { ok: false, message: e.message }; }
+    results.push({ id: step.id, ...r });
+    progress({ step: step.id, state: r.ok ? "done" : "failed", message: r.message });
+    if (!r.ok && !step.optional) return { ok: false, failed: step.id, message: r.message, results };
+  }
+  const s = loadSettings(); s.firstRunDone = "yes"; saveSettings(s);
+  return { ok: true, results };
+}
+
+async function runStep(step, patch) {
+  const arg = step.id.slice(step.id.indexOf(":") + 1);   // model names carry a colon (qwen3:4b)
+  switch (step.kind) {
+    case "install": {
+      const cmd = installCommand(arg);
+      if (!cmd) return { ok: false, message: `nothing to install for ${arg}` };
+      const code = await runCommand(cmd.program, cmd.args);
+      return { ok: code === 0, message: code === 0 ? "installed" : `the installer exited with ${code}; see Logs` };
+    }
+    case "start": {
+      const ollama = (await io.which("ollama")) || "ollama";
+      try { const child = spawn(ollama, ["serve"], { detached: true, stdio: "ignore", windowsHide: true }); child.unref(); } catch (e) { return { ok: false, message: e.message }; }
+      const up = await waitForHealth("http://127.0.0.1:11434/api/tags", { timeoutMs: 20000 });
+      return { ok: up, message: up ? "running" : "Ollama did not answer on port 11434; open the Ollama app and try again" };
+    }
+    case "pull": {
+      const code = await runCommand((await io.which("ollama")) || "ollama", ["pull", arg]);
+      return { ok: code === 0, message: code === 0 ? "downloaded" : `the download stopped with ${code}; check the internet connection and Logs` };
+    }
+    case "key": {
+      const s = loadSettings();
+      return s.anthropicKey || s.openaiKey ? { ok: true, message: "key saved" } : { ok: false, message: "no key yet; add one in the box above or in Settings" };
+    }
+    case "policy": {
+      const s = loadSettings();
+      Object.assign(s, patch);
+      saveSettings(s);
+      backend?.stop(); frontend?.stop(); await startSidecars();
+      return { ok: true, message: "saved and Lapidary restarted" };
+    }
+    case "connect": {
+      if (arg === "openwebui") return startOpenWebUI();
+      return writeMcp(arg === "claude" ? P.claudeConfig : P.chatgptConfig);
+    }
+    case "open": {
+      await shell.openExternal(step.detail);
+      return { ok: true, message: "opened" };
+    }
+    case "note":
+      return { ok: true, message: "" };
+    default:
+      return { ok: false, message: `unknown step ${step.kind}` };
+  }
+}
+
+async function startOpenWebUI() {
+  const s = loadSettings();
+  const file = join(dataDir, "open-webui.compose.yml");
+  mkdirSync(dataDir, { recursive: true });
+  writeFileSync(file, openWebUICompose({ lapidaryKey: s.gemsApiKey || "", openaiKey: s.openaiKey || "" }));
+  const code = await runCommand("docker", ["compose", "-f", file, "up", "-d"]);
+  if (code !== 0) return { ok: false, message: `docker compose exited with ${code}; is Docker Desktop running? The file is at ${file}` };
+  const up = await waitForHealth("http://127.0.0.1:3080/health", { timeoutMs: 90000 });
+  return { ok: true, message: up ? "Open WebUI is running on http://localhost:3080" : "Open WebUI is starting on http://localhost:3080 (first start takes a minute)" };
+}
 
 function writeMcp(file) {
   const r = resources();

@@ -1,6 +1,6 @@
 // Console page logic: tiny, no framework. Everything privileged goes through window.lapidary.
 const $ = (s) => document.querySelector(s);
-const views = ["dashboard", "components", "connections", "settings", "logs", "powershell", "lapidary"];
+const views = ["start", "dashboard", "components", "connections", "settings", "logs", "powershell", "lapidary"];
 const LAMP = { on: "lamp on", warn: "lamp warn", off: "lamp off" };
 
 function show(view) {
@@ -10,6 +10,7 @@ function show(view) {
   if (view === "logs") refreshLogs();
   if (view === "components") refreshToolbox();
   if (view === "settings") loadSettings();
+  if (view === "start" || view === "dashboard") loadRecipes();
 }
 document.querySelectorAll("nav button").forEach((b) => b.addEventListener("click", () => show(b.dataset.view)));
 document.addEventListener("keydown", (e) => {
@@ -80,7 +81,7 @@ async function refreshLogs() {
 
 async function loadSettings() {
   const s = await window.lapidary.settings.get();
-  for (const [k, v] of Object.entries(s)) { const f = document.querySelector(`[name="${k}"]`); if (f) f.placeholder = v === "set" ? "set (leave blank to keep)" : f.placeholder; if (f && ["gemsApiKey", "supabaseUrl", "localBaseUrl", "modelPolicy"].includes(k) && v) f.value = v; }
+  for (const [k, v] of Object.entries(s)) { const f = document.querySelector(`#settings-form [name="${k}"]`); if (f) f.placeholder = v === "set" ? "set (leave blank to keep)" : f.placeholder; if (f && ["gemsApiKey", "supabaseUrl", "localBaseUrl", "localModel", "modelPolicy"].includes(k) && v) f.value = v; }
 }
 $("#settings-form").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -122,6 +123,130 @@ document.querySelectorAll("[data-act]").forEach((b) => b.addEventListener("click
   b.disabled = false;
 }));
 
+// ---- Advanced toggle: one switch that reveals the details on every screen
+const advToggle = $("#adv-toggle");
+advToggle.checked = localStorage.getItem("advanced") === "yes";
+document.body.classList.toggle("adv", advToggle.checked);
+advToggle.addEventListener("change", () => { localStorage.setItem("advanced", advToggle.checked ? "yes" : "no"); document.body.classList.toggle("adv", advToggle.checked); });
+
+// ---- first run: Basic (two questions) and Advanced (every choice), then recipes
+const first = { choice: null, recipe: null, plans: [], choices: [], stepEls: {} };
+const esc = (t) => String(t ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function showStartPanel(id) {
+  for (const p of ["start-paths", "start-basic", "start-plan", "start-advanced"]) $(`#${p}`).classList.toggle("hidden", p !== id);
+}
+document.querySelectorAll("[data-path]").forEach((b) => b.addEventListener("click", () => {
+  const path = b.dataset.path;
+  if (path === "basic") showStartPanel("start-basic");
+  else if (path === "advanced") { showStartPanel("start-advanced"); loadAdvanced(); }
+  else showStartPanel("start-paths");
+}));
+document.querySelectorAll("[data-view-go]").forEach((b) => b.addEventListener("click", () => show(b.dataset.viewGo)));
+
+async function loadRecipes() {
+  const r = await window.lapidary.firstRun.recipes(first.choice);
+  first.choice = r.choice; first.plans = r.plans; first.choices = r.choices;
+  $("#ai-choices").innerHTML = r.choices.map((c) => `<button class="choice ${c.id === r.choice ? "picked" : ""}" data-choice="${c.id}"><b>${esc(c.title)}</b><span>${esc(c.blurb)}</span><span class="tag">${esc(c.privacy)} / ${esc(c.cost)}</span></button>`).join("");
+  document.querySelectorAll("[data-choice]").forEach((b) => b.addEventListener("click", async () => { first.choice = b.dataset.choice; await loadRecipes(); }));
+  const card = (p) => `<button class="choice" data-recipe="${p.recipe.id}"><b>${esc(p.recipe.title)}</b><span>${esc(p.recipe.blurb)}</span><span class="tag">${esc(p.summary)}</span></button>`;
+  $("#recipe-choices").innerHTML = r.plans.map(card).join("");
+  $("#dash-recipes").innerHTML = r.plans.map(card).join("");
+  document.querySelectorAll("[data-recipe]").forEach((b) => b.addEventListener("click", () => showPlan(b.dataset.recipe)));
+}
+
+function stepItem(s) {
+  const li = document.createElement("li");
+  li.className = s.done ? "done" : (s.skipWhen ? "skipped" : "");
+  li.innerHTML = `<span class="lamp ${s.done ? "on" : ""}"></span><div><div class="text">${esc(s.text)}${s.optional ? " <span class=\"dim\">(optional)</span>" : ""}</div><div class="detail">${esc(s.detail)}</div><div class="msg">${s.done ? "already here" : esc(s.skipWhen || "")}</div></div>`;
+  return li;
+}
+function renderSteps(list, steps) {
+  list.innerHTML = ""; first.stepEls = {};
+  for (const s of steps) { const li = stepItem(s); first.stepEls[s.id] = li; list.appendChild(li); }
+}
+window.lapidary.firstRun.onProgress((ev) => {
+  const li = first.stepEls[ev.step]; if (!li) return;
+  li.className = ev.state;
+  const lamp = li.querySelector(".lamp"); lamp.className = `lamp ${ev.state === "done" || ev.state === "skipped" ? "on" : ev.state === "failed" ? "off" : ""}`;
+  li.querySelector(".msg").textContent = ev.message || (ev.state === "running" ? "working..." : "");
+});
+
+function showPlan(recipeId) {
+  const p = first.plans.find((x) => x.recipe.id === recipeId); if (!p) return;
+  first.recipe = recipeId;
+  show("start"); showStartPanel("start-plan");
+  $("#plan-title").textContent = p.recipe.title.toUpperCase();
+  renderSteps($("#plan-steps"), p.steps);
+  $("#plan-key").classList.toggle("hidden", !p.steps.some((s) => s.kind === "key" && !s.done));
+  $("#plan-out").classList.add("hidden"); $("#plan-now").classList.add("hidden"); $("#plan-go").disabled = false;
+}
+$("#plan-back").addEventListener("click", () => showStartPanel("start-basic"));
+$("#plan-another").addEventListener("click", async () => { await loadRecipes(); showStartPanel("start-basic"); });
+$("#plan-go").addEventListener("click", async () => {
+  const p = first.plans.find((x) => x.recipe.id === first.recipe); if (!p) return;
+  $("#plan-go").disabled = true;
+  const keys = { anthropicKey: $("#plan-anthropic").value.trim(), openaiKey: $("#plan-openai").value.trim() };
+  $("#plan-anthropic").value = ""; $("#plan-openai").value = ""; $("#plan-key").classList.add("hidden");
+  const out = $("#plan-out"); out.classList.remove("hidden"); out.textContent = "working, this can take a few minutes (downloads and installers)...";
+  const r = await window.lapidary.firstRun.run(first.recipe, first.choice, keys);
+  if (r.ok) {
+    out.textContent = "done";
+    $("#plan-now-list").innerHTML = p.now.map((t) => `<li>${esc(t)}</li>`).join("");
+    $("#plan-now").classList.remove("hidden");
+  } else {
+    out.textContent = `stopped at "${r.failed}": ${r.message}\nFix that and press Do it again; finished steps are skipped.`;
+    $("#plan-go").disabled = false;
+  }
+  refresh();
+});
+
+async function loadAdvanced() {
+  const { components, status } = await window.lapidary.components();
+  $("#adv-components").innerHTML = components.filter((c) => !["winget", "lapidary", "rea"].includes(c.id)).map((c) => {
+    const s = status[c.id] || {};
+    return `<label class="row"><input type="checkbox" name="components" value="${c.id}" ${s.installed ? "checked disabled" : ""}> ${esc(c.name)} <span class="dim">${s.installed ? "installed" : esc(c.blurb || "")}</span></label>`;
+  }).join("");
+  const r = await window.lapidary.firstRun.recipes(first.choice);
+  $("#adv-ai").innerHTML = r.choices.map((c) => `<label class="row"><input type="radio" name="choice" value="${c.id}" ${c.id === r.choice ? "checked" : ""}> ${esc(c.title)} <span class="dim">${esc(c.blurb)}</span></label>`).join("");
+  const plan = await window.lapidary.firstRun.advancedPlan({});
+  $("#adv-ports").textContent = `Lapidary API  127.0.0.1:${plan.ports.lapidary}\nLapidary UI   127.0.0.1:${plan.ports.ui}\nOpen WebUI    localhost:${plan.ports.openwebui}\nOllama        127.0.0.1:${plan.ports.ollama}\nData folder   ${plan.dataDir}\nPorts are fixed in this version; the data folder follows the Windows AppData rules.`;
+  $("#adv-summary").classList.add("hidden");
+}
+function advancedAnswers() {
+  const f = $("#adv-form");
+  const fd = new FormData(f);
+  const all = (name) => Array.from(f.querySelectorAll(`[name="${name}"]:checked`)).map((i) => i.value);
+  return {
+    components: all("components").filter((id) => !f.querySelector(`[name="components"][value="${id}"]`).disabled),
+    choice: fd.get("choice") || "auto",
+    keys: { anthropicKey: fd.get("anthropicKey") || "", openaiKey: fd.get("openaiKey") || "" },
+    localBaseUrl: fd.get("localBaseUrl") || "", localModel: fd.get("localModel") || "",
+    storage: fd.get("storage") || "sqlite", supabaseUrl: fd.get("supabaseUrl") || "", supabaseKey: fd.get("supabaseKey") || "",
+    connect: all("connect"),
+  };
+}
+$("#adv-review").addEventListener("click", async () => {
+  const plan = await window.lapidary.firstRun.advancedPlan(advancedAnswers());
+  $("#adv-writes").innerHTML = plan.writes.map((w) => `<li>${esc(w)}</li>`).join("") || "<li>nothing</li>";
+  $("#adv-commands").innerHTML = plan.commands.map((c) => `<li class="mono">${esc(c)}</li>`).join("") || "<li>nothing</li>";
+  renderSteps($("#adv-steps"), plan.steps);
+  $("#adv-summary").classList.remove("hidden"); $("#adv-out").classList.add("hidden"); $("#adv-go").disabled = false;
+  $("#adv-summary").scrollIntoView({ behavior: "smooth" });
+});
+$("#adv-edit").addEventListener("click", () => $("#adv-summary").classList.add("hidden"));
+$("#adv-go").addEventListener("click", async () => {
+  $("#adv-go").disabled = true;
+  const answers = advancedAnswers();
+  for (const i of $("#adv-form").querySelectorAll("input[type=password]")) i.value = "";
+  const out = $("#adv-out"); out.classList.remove("hidden"); out.textContent = "applying...";
+  const r = await window.lapidary.firstRun.advancedRun(answers);
+  out.textContent = r.ok ? "done; the dashboard shows the result" : `stopped at "${r.failed}": ${r.message}`;
+  if (!r.ok) $("#adv-go").disabled = false;
+  refresh();
+});
+
 setInterval(() => { $("#clock").textContent = new Date().toLocaleTimeString(); }, 1000);
 window.lapidary.onReady(() => refresh());
 refresh();
+window.lapidary.firstRun.recipes(null).then((r) => { if (r.firstRunDone) show("dashboard"); else show("start"); });

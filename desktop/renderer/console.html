@@ -11,22 +11,102 @@
     <header class="bar">
       <span class="brand">LAPIDARY<span class="dim"> CONSOLE</span></span>
       <nav>
-        <button data-view="dashboard" class="active">1 Dashboard</button>
-        <button data-view="components">2 Components</button>
-        <button data-view="connections">3 Connections</button>
-        <button data-view="settings">4 Settings</button>
-        <button data-view="logs">5 Logs</button>
-        <button data-view="powershell">6 PowerShell</button>
-        <button data-view="lapidary">7 Lapidary</button>
+        <button data-view="start" class="active">1 Start</button>
+        <button data-view="dashboard">2 Dashboard</button>
+        <button data-view="components">3 Components</button>
+        <button data-view="connections">4 Connections</button>
+        <button data-view="settings">5 Settings</button>
+        <button data-view="logs">6 Logs</button>
+        <button data-view="powershell">7 PowerShell</button>
+        <button data-view="lapidary">8 Lapidary</button>
       </nav>
+      <label class="toggle" title="Show the details the Basic path hides: commands, files, paths and the hosted options"><input type="checkbox" id="adv-toggle"> Advanced</label>
       <span class="clock" id="clock"></span>
     </header>
 
     <main>
-      <section id="view-dashboard" class="view">
+      <section id="view-start" class="view">
+        <div class="panel" id="start-paths">
+          <h2>WELCOME</h2>
+          <p class="lead">Lapidary sets up AI on this PC and makes it useful on day one. Nothing happens until you say so, and every step says what it does.</p>
+          <div class="choices two">
+            <button class="choice" data-path="basic"><b>Basic</b><span>Two questions, then one click. For anyone: a student, a parent, someone at home or at work.</span></button>
+            <button class="choice" data-path="advanced"><b>Advanced</b><span>Every choice walked through: components, keys or local models, storage, connections, ports and folders. Shows every file before it is written.</span></button>
+          </div>
+          <p class="hint">You can come back here any time from 1 Start. The Advanced switch in the top bar shows the details on every screen.</p>
+        </div>
+
+        <div class="panel hidden" id="start-basic">
+          <h2>WHICH AI SHOULD WE USE?</h2>
+          <p class="lead">There is a free one that runs on this PC, there are online ones that cost money per use, and you can mix them.</p>
+          <div class="choices" id="ai-choices"></div>
+          <h2 class="later">WHAT WOULD YOU LIKE?</h2>
+          <p class="lead">Pick one. Each one installs and connects only what it needs, and tells you what it did. You can pick another afterwards.</p>
+          <div class="choices" id="recipe-choices"></div>
+        </div>
+
+        <div class="panel hidden" id="start-plan">
+          <h2 id="plan-title">HERE IS WHAT I WILL DO</h2>
+          <ol class="steps" id="plan-steps"></ol>
+          <div id="plan-key" class="hidden keybox">
+            <p class="hint">Keys come from your own Anthropic or OpenAI account and are paid by use. They are stored with the operating system's credential encryption and never shown again.</p>
+            <label>Anthropic API key <input id="plan-anthropic" type="password" placeholder="sk-ant-..."></label>
+            <label>OpenAI API key <input id="plan-openai" type="password" placeholder="sk-..."></label>
+          </div>
+          <div class="actions"><button id="plan-go">Do it</button><button id="plan-back">Back</button></div>
+          <pre id="plan-out" class="out hidden"></pre>
+          <div id="plan-now" class="hidden">
+            <h2>HERE IS WHAT YOU CAN DO NOW</h2>
+            <ul id="plan-now-list"></ul>
+            <div class="actions"><button id="plan-another">Pick another</button><button data-view-go="dashboard">Go to the dashboard</button></div>
+          </div>
+        </div>
+
+        <div class="panel hidden" id="start-advanced">
+          <h2>ADVANCED SETUP</h2>
+          <form id="adv-form">
+            <fieldset><legend>1. Components to install</legend><div id="adv-components" class="checks"></div><p class="hint">Each one installs from its publisher through winget, Docker or npm. Already installed ones are ticked and skipped.</p></fieldset>
+            <fieldset><legend>2. Which AI</legend><div id="adv-ai" class="checks"></div>
+              <label>Anthropic API key <input name="anthropicKey" type="password" placeholder="sk-ant-..."></label>
+              <label>OpenAI API key <input name="openaiKey" type="password" placeholder="sk-..."></label>
+              <label>Local model server (OpenAI-compatible; Ollama, LM Studio, vLLM) <input name="localBaseUrl" type="text" placeholder="http://127.0.0.1:11434/v1"></label>
+              <label>Local model to download and prefer <input name="localModel" type="text" placeholder="qwen3:4b"></label>
+            </fieldset>
+            <fieldset><legend>3. Storage</legend>
+              <label class="row"><input type="radio" name="storage" value="sqlite" checked> SQLite on this PC (a single file in the Lapidary data folder; no account)</label>
+              <label class="row"><input type="radio" name="storage" value="supabase"> Supabase (hosted Postgres; service role key only, see ADR-006)</label>
+              <label>Supabase URL <input name="supabaseUrl" type="text" placeholder="https://xyz.supabase.co"></label>
+              <label>Supabase service role key <input name="supabaseKey" type="password"></label>
+            </fieldset>
+            <fieldset><legend>4. Connect</legend><div id="adv-connect" class="checks">
+              <label class="row"><input type="checkbox" name="connect" value="claude"> Claude Desktop (adds lapidary and rea to its MCP config)</label>
+              <label class="row"><input type="checkbox" name="connect" value="chatgpt"> ChatGPT (same, where the app supports local MCP)</label>
+              <label class="row"><input type="checkbox" name="connect" value="openwebui"> Open WebUI (compose file with Lapidary, OpenAI and Ollama as providers, port 3080)</label>
+            </div></fieldset>
+            <fieldset><legend>5. Ports and folders</legend><pre id="adv-ports" class="out"></pre></fieldset>
+            <fieldset><legend>6. What assistants may do without asking</legend><p class="hint">Nothing that changes the machine. Every risky tool call (PowerShell, tools from other MCP servers) pauses the run and waits for Approve or Deny. This is the only setting today; finer gates are roadmap item 45.</p></fieldset>
+            <fieldset><legend>7. Logging and updates</legend><p class="hint">Everything the console and the sidecars print stays in the Logs view on this PC; nothing is sent anywhere. Each component updates from its publisher through the Components view; the console itself updates through its installer.</p></fieldset>
+            <div class="actions"><button type="button" id="adv-review">Review what will be written</button><button type="button" data-path="none">Back</button></div>
+          </form>
+          <div id="adv-summary" class="hidden">
+            <h2>BEFORE ANYTHING IS WRITTEN</h2>
+            <p class="hint">Files the console will write or change:</p><ul id="adv-writes"></ul>
+            <p class="hint">Commands it will run:</p><ul id="adv-commands"></ul>
+            <p class="hint">Steps, in order:</p><ol class="steps" id="adv-steps"></ol>
+            <div class="actions"><button id="adv-go">Apply</button><button id="adv-edit">Change something</button></div>
+            <pre id="adv-out" class="out hidden"></pre>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-dashboard" class="view hidden">
+        <div class="panel">
+          <h2>WHAT WOULD YOU LIKE? <span class="dim small-text">one click each; the Start view explains them</span></h2>
+          <div class="choices compact" id="dash-recipes"></div>
+        </div>
         <div class="panel">
           <h2>STATUS</h2>
-          <table id="status-table"><thead><tr><th></th><th>Component</th><th>Kind</th><th>State</th><th></th></tr></thead><tbody></tbody></table>
+          <table id="status-table"><thead><tr><th></th><th>Component</th><th class="adv-only">Kind</th><th>State</th><th></th></tr></thead><tbody></tbody></table>
           <p class="hint">Lamps: <span class="lamp on"></span> running or installed, <span class="lamp warn"></span> installed but not running, <span class="lamp off"></span> missing. Press R to refresh.</p>
         </div>
         <div class="panel">
@@ -80,12 +160,13 @@
                 <option value="manual">I'll choose each time</option>
               </select>
             </label>
-            <label>Local model server (Ollama by default) <input name="localBaseUrl" type="text" placeholder="http://127.0.0.1:11434/v1"></label>
+            <label class="adv-only">Local model server (Ollama by default) <input name="localBaseUrl" type="text" placeholder="http://127.0.0.1:11434/v1"></label>
+            <label>Local model (downloaded by the first run; change it here) <input name="localModel" type="text" placeholder="qwen3:4b"></label>
             <label>Anthropic API key <input name="anthropicKey" type="password" placeholder="sk-ant-..."></label>
             <label>OpenAI API key <input name="openaiKey" type="password" placeholder="sk-..."></label>
-            <label>Lapidary API key <input name="gemsApiKey" type="text" placeholder="generated on first run"></label>
-            <label>Supabase URL (hosted mode, optional) <input name="supabaseUrl" type="text" placeholder="https://xyz.supabase.co"></label>
-            <label>Supabase service role key (optional) <input name="supabaseKey" type="password"></label>
+            <label class="adv-only">Lapidary API key <input name="gemsApiKey" type="text" placeholder="generated on first run"></label>
+            <label class="adv-only">Supabase URL (hosted mode, optional) <input name="supabaseUrl" type="text" placeholder="https://xyz.supabase.co"></label>
+            <label class="adv-only">Supabase service role key (optional) <input name="supabaseKey" type="password"></label>
             <button type="submit">Save</button>
           </form>
           <pre id="settings-out" class="out"></pre>
@@ -114,7 +195,7 @@
       </section>
     </main>
 
-    <footer class="bar foot"><span id="foot-msg">ready</span><span class="dim">keys 1 to 7 switch views</span></footer>
+    <footer class="bar foot"><span id="foot-msg">ready</span><span class="dim">keys 1 to 8 switch views</span></footer>
   </div>
   <script src="console.js"></script>
 </body>

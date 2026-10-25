@@ -16,4 +16,12 @@ contextBridge.exposeInMainWorld("lapidary", {
   pwsh: (script) => ipcRenderer.invoke("console:pwsh", script),
   open: (url) => ipcRenderer.invoke("console:open", url),
   onReady: (cb) => ipcRenderer.on("console:ready", cb),
+  firstRun: {
+    recipes: (choice) => ipcRenderer.invoke("console:recipes", choice),
+    run: (recipeId, choice, keys) => ipcRenderer.invoke("console:recipe:run", recipeId, choice, keys),
+    advancedPlan: (answers) => ipcRenderer.invoke("console:advanced:plan", answers),
+    advancedRun: (answers) => ipcRenderer.invoke("console:advanced:run", answers),
+    done: () => ipcRenderer.invoke("console:firstrun:done"),
+    onProgress: (cb) => ipcRenderer.on("console:progress", (_e, ev) => cb(ev)),
+  },
 });
