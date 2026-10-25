@@ -1,17 +1,7 @@
 """REST routes through FastAPI's TestClient, with the database faked."""
-import pytest
-from fastapi.testclient import TestClient
-
-from app.main import app
 from conftest import TEST_API_KEY, make_gem
 
 KEY = {"X-API-Key": TEST_API_KEY}
-
-
-@pytest.fixture
-def client():
-    with TestClient(app) as c:
-        yield c
 
 
 def test_health_and_root_need_no_key(client) -> None:

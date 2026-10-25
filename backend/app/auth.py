@@ -3,6 +3,8 @@ API Key authentication for Lapidary.
 
 All protected endpoints require the header:
     X-API-Key: <your-key>
+or, for OpenAI-compatible clients:
+    Authorization: Bearer <your-key>
 
 Set GEMS_API_KEY in your .env file. If the variable is not set,
 the server will refuse to start rather than silently run unprotected.
@@ -11,9 +13,10 @@ import os
 import secrets
 
 from fastapi import Security, HTTPException, status
-from fastapi.security import APIKeyHeader
+from fastapi.security import APIKeyHeader, HTTPAuthorizationCredentials, HTTPBearer
 
 _API_KEY_HEADER = APIKeyHeader(name="X-API-Key", auto_error=False)
+_BEARER = HTTPBearer(auto_error=False)
 
 
 def _get_configured_key() -> str:
@@ -27,7 +30,10 @@ def _get_configured_key() -> str:
     return key
 
 
-def require_api_key(x_api_key: str | None = Security(_API_KEY_HEADER)) -> str:
+def require_api_key(
+    x_api_key: str | None = Security(_API_KEY_HEADER),
+    bearer: HTTPAuthorizationCredentials | None = Security(_BEARER),
+) -> str:
     """
     FastAPI dependency — call this on any route that should be protected.
 
@@ -35,10 +41,13 @@ def require_api_key(x_api_key: str | None = Security(_API_KEY_HEADER)) -> str:
     Returns the validated key on success.
     """
     expected = _get_configured_key()
+    # OpenAI-compatible clients (Open WebUI and others) send the key as a bearer token.
+    if not x_api_key and bearer is not None:
+        x_api_key = bearer.credentials
     if not x_api_key or not secrets.compare_digest(x_api_key, expected):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or missing API key. Pass your key in the X-API-Key header.",
+            detail="Invalid or missing API key. Pass your key in the X-API-Key header or as a bearer token.",
             headers={"WWW-Authenticate": "ApiKey"},
         )
     return x_api_key

@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
-from app.routes import agents, chat, gems
+from app.routes import agents, chat, gems, openai_compat
 from app.version import __version__
 
 load_dotenv()
@@ -45,6 +45,7 @@ app.include_router(gems.router)
 app.include_router(chat.router)
 app.include_router(agents.router)
 app.include_router(agents.runs_router)
+app.include_router(openai_compat.router)
 
 
 @app.get("/", tags=["meta"])
@@ -66,6 +67,8 @@ def root():
             "run_agent":    "POST /agents/{name}/runs",
             "get_run":      "GET  /runs/{id}",
             "tools":        "GET  /agents/tools",
+            "openai_models": "GET  /v1/models",
+            "openai_chat":  "POST /v1/chat/completions",
             "mcp_server":   "Run: fastmcp run mcp_server.py",
         },
     }

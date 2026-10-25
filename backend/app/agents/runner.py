@@ -198,8 +198,14 @@ async def run_agent(
     provider_override: str | None = None,
     allow_risky: bool = False,
     on_event: OnEvent | None = None,
+    history: list[dict] | None = None,
+    system_addendum: str = "",
 ) -> RunResult:
-    """Run a gem as an agent. Raises ValueError if the gem cannot be resolved; provider errors fail the run."""
+    """
+    Run a gem as an agent. Raises ValueError if the gem cannot be resolved; provider errors fail the run.
+    `history` is earlier user and assistant messages to put before `message`; `system_addendum` is
+    appended to the resolved prompt (an OpenAI-compatible client's own system message).
+    """
     resolved = await gem_service.resolve_gem_detailed(gem_name, variables or {})
     gem = await gem_service.get_gem_by_name(gem_name)
     if gem is None:
@@ -217,10 +223,11 @@ async def run_agent(
         "tools": [t.name for t in tools], "unknown_tools": unknown, "allow_risky": allow_risky,
         "variables_missing": resolved.variables_missing, "max_steps": settings.AGENT_MAX_STEPS,
     })
+    system_prompt = resolved.resolved_prompt + (f"\n\n{system_addendum}" if system_addendum else "")
     state = LoopState(
-        gem_name=gem.name, system_prompt=resolved.resolved_prompt, model=model, provider=provider,
+        gem_name=gem.name, system_prompt=system_prompt, model=model, provider=provider,
         tool_names=[t.name for t in tools], allow_risky=allow_risky,
-        messages=[{"role": "user", "content": message}],
+        messages=[*(history or []), {"role": "user", "content": message}],
     )
     return await _loop(run.id, state, rec, None)
 

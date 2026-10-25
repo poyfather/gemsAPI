@@ -160,6 +160,16 @@ A second seed agent, `rea_analyst`, shows the point of remote tools. With [REA (
 
 The response is the run (status, output, steps, tokens) plus its events; `GET /runs/{id}` returns the same later, and `"stream": true` delivers the events as Server-Sent Events while the run happens. The web UI does the same: mark a gem as an agent and pick its tools in the editor, send it a message on the chat page to watch the turns, tool calls and results stream in, then open the run at `/runs/{id}`. Over MCP the same loop is the `run_agent` tool, so Claude Desktop or Cursor can hand a task to one of your agents and get the answer and the run id back. A call to a tool marked risky pauses the run (status `waiting_approval`) with the call shown in the chat bubble or on the run page; approve or deny it there, or with `POST /runs/{id}/approve`, and the loop carries on from that exact point. A run started with `allow_risky` skips the gate. None of the shipped tools are risky. [ARCHITECTURE.md](ARCHITECTURE.md) has the loop as a sequence diagram, and ADR-007 in [DECISIONS.md](DECISIONS.md) explains the design.
 
+## Use gems from Open WebUI and other OpenAI-compatible clients
+
+Lapidary speaks the OpenAI chat completions API as well: `GET /v1/models` lists every gem and agent as a model, and `POST /v1/chat/completions` answers with the gem's resolved prompt in front of the conversation, streamed in OpenAI's chunk format when asked, by whichever provider and model the gem names. Agent gems run the loop and return the final answer, with their tool calls visible in the run record. The key is the same `GEMS_API_KEY`, sent as `Authorization: Bearer`.
+
+In [Open WebUI](https://github.com/open-webui/open-webui), add a connection under Settings, Connections, OpenAI API with the URL `http://<lapidary-host>:8000/v1` and `GEMS_API_KEY` as the key, or start the container with `OPENAI_API_BASE_URLS` and `OPENAI_API_KEYS` set (several endpoints separated by semicolons; from a container the host is `host.docker.internal`). Every gem then appears in the model picker, so one Open WebUI talks to Claude and GPT through your prompts and agents. The same URL works for any client that takes an OpenAI-compatible endpoint.
+
+## Lapidary Console (Windows)
+
+[`desktop/`](desktop/) holds the Windows 11 application from ADR-009: an Electron console that installs and updates Claude Desktop, ChatGPT, Docker Desktop, Ollama and Open WebUI, registers Lapidary and REA as MCP servers in Claude Desktop and ChatGPT, points Open WebUI at Lapidary, OpenAI and Ollama, keeps the provider keys in the operating system's credential store, runs the backend and the UI as sidecars, and embeds this web UI. Simple and retro by design; the [desktop README](desktop/README.md) has the layout, the design notes and the build. The Windows installer is built by the `desktop` workflow in CI.
+
 ## Configuration
 
 Backend variables live in `backend/.env` (template: [`.env.example`](.env.example)); frontend variables in `frontend/.env.local` (template: [`frontend/.env.local.example`](frontend/.env.local.example)).
@@ -181,7 +191,8 @@ Backend variables live in `backend/.env` (template: [`.env.example`](.env.exampl
 ## Project layout
 
 ```
-backend/app/        FastAPI app: routes/ (gems, chat, agents), services/ (gem_service resolver, llm_service), agents/ (tool registry, run loop, run store), auth.py, models.py
+backend/app/        FastAPI app: routes/ (gems, chat, agents, openai_compat), services/ (gem_service resolver, llm_service), agents/ (tool registry, MCP sources, run loop, run store), auth.py, models.py
+desktop/            Lapidary Console, the Windows 11 Electron application (see desktop/README.md)
 backend/mcp_server.py   FastMCP server over the same services
 frontend/           Next.js 16 app router UI (app/ including runs/[id], components/ including RunEvents, lib/api.ts with the SSE client, proxy.ts)
 configs/            mcp_servers.json (copy the example) for tools from other MCP servers
