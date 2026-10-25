@@ -1,6 +1,6 @@
 // Console page logic: tiny, no framework. Everything privileged goes through window.lapidary.
 const $ = (s) => document.querySelector(s);
-const views = ["start", "dashboard", "components", "connections", "settings", "logs", "powershell", "lapidary"];
+const views = ["start", "dashboard", "doctor", "components", "connections", "settings", "logs", "powershell", "lapidary"];
 const LAMP = { on: "lamp on", warn: "lamp warn", off: "lamp off" };
 
 function show(view) {
@@ -11,6 +11,7 @@ function show(view) {
   if (view === "components") refreshToolbox();
   if (view === "settings") loadSettings();
   if (view === "start" || view === "dashboard") loadRecipes();
+  if (view === "doctor") runDoctor();
 }
 document.querySelectorAll("nav button").forEach((b) => b.addEventListener("click", () => show(b.dataset.view)));
 document.addEventListener("keydown", (e) => {
@@ -103,6 +104,26 @@ async function runPwsh() {
   out.scrollTop = out.scrollHeight;
 }
 
+// ---- the Doctor: every finding in plain words, with its fix button where one exists
+const DOCTOR_LAMP = { ok: "lamp on", warn: "lamp warn", fail: "lamp off", skip: "lamp" };
+async function runDoctor() {
+  $("#doctor-msg").textContent = "checking...";
+  const r = await window.lapidary.doctor.run();
+  const rows = r.findings.map((f) => {
+    const btn = f.fix ? `<button data-fix="${esc(f.fix.action)}" class="small">${esc(f.fix.label)}</button>` : "";
+    return `<tr><td><span class="${DOCTOR_LAMP[f.state] || "lamp"}"></span></td><td>${esc(f.title)}</td><td class="means">${esc(f.detail)}</td><td class="act">${btn}</td></tr>`;
+  });
+  $("#doctor-table tbody").innerHTML = rows.join("");
+  $("#doctor-msg").textContent = `${r.summary}, ${new Date(r.checkedAt).toLocaleTimeString()}`;
+  document.querySelectorAll("[data-fix]").forEach((b) => b.addEventListener("click", async () => {
+    b.disabled = true; $("#doctor-out").textContent = `${b.textContent}...`;
+    const res = await window.lapidary.doctor.fix(b.dataset.fix);
+    if (res.view) { show(res.view); return; }
+    $("#doctor-out").textContent = res.message || (res.ok ? "done" : "that did not work; see Logs");
+    await runDoctor();
+  }));
+}
+
 const actions = {
   "toolbox-install-checked": async () => { for (const c of document.querySelectorAll("[data-pick]:checked")) await installTool(c.dataset.pick); return ""; },
   "pwsh-run": async () => (await runPwsh(), ""),
@@ -111,13 +132,14 @@ const actions = {
   "open-ui": async () => (await window.lapidary.open("http://127.0.0.1:3000"), "opened Lapidary UI"),
   "open-webui": async () => (await window.lapidary.open("http://localhost:3080"), "opened Open WebUI"),
   "refresh": async () => (await refresh(), "refreshed"),
+  "doctor-run": async () => (await runDoctor(), ""),
   "refresh-logs": async () => (await refreshLogs(), "logs refreshed"),
   "connect-claude": async () => (await window.lapidary.connect.claude()).message,
   "connect-chatgpt": async () => (await window.lapidary.connect.chatgpt()).message,
   "connect-openwebui": async () => (await window.lapidary.connect.openwebui()).message,
 };
 document.querySelectorAll("[data-act]").forEach((b) => b.addEventListener("click", async () => {
-  const out = b.closest("#view-connections") ? $("#conn-out") : $("#action-out");
+  const out = b.closest("#view-connections") ? $("#conn-out") : b.closest("#view-doctor") ? $("#doctor-out") : $("#action-out");
   b.disabled = true;
   try { const msg = await actions[b.dataset.act](); if (msg) out.textContent = msg; } catch (err) { out.textContent = `error: ${err.message}`; }
   b.disabled = false;
