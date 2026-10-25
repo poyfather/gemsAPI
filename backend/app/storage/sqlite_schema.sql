@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS gems (
   variables     TEXT NOT NULL DEFAULT '[]',
   kind          TEXT NOT NULL DEFAULT 'prompt' CHECK (kind IN ('prompt', 'agent')),
   tools         TEXT NOT NULL DEFAULT '[]',
+  memory        INTEGER NOT NULL DEFAULT 0,
   is_active     INTEGER NOT NULL DEFAULT 1,
   created_at    TEXT NOT NULL,
   updated_at    TEXT NOT NULL
@@ -47,3 +48,24 @@ CREATE TABLE IF NOT EXISTS run_events (
   created_at TEXT NOT NULL,
   UNIQUE (run_id, seq)
 );
+
+-- Lapidary Memory (ADR-010): observations and notes with full-text search.
+CREATE TABLE IF NOT EXISTS memories (
+  id         TEXT PRIMARY KEY,
+  kind       TEXT NOT NULL DEFAULT 'note' CHECK (kind IN ('observation', 'summary', 'decision', 'preference', 'lesson', 'handoff', 'note')),
+  text       TEXT NOT NULL,
+  source     TEXT NOT NULL DEFAULT 'user' CHECK (source IN ('run', 'chat', 'mcp', 'console', 'user')),
+  gem_name   TEXT,
+  run_id     TEXT,
+  tags       TEXT NOT NULL DEFAULT '[]',
+  scope      TEXT NOT NULL DEFAULT 'default',
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS memories_scope_idx ON memories (scope, created_at DESC);
+CREATE VIRTUAL TABLE IF NOT EXISTS memories_fts USING fts5 (text, tags, content='memories', content_rowid='rowid');
+CREATE TRIGGER IF NOT EXISTS memories_ai AFTER INSERT ON memories BEGIN
+  INSERT INTO memories_fts (rowid, text, tags) VALUES (new.rowid, new.text, new.tags);
+END;
+CREATE TRIGGER IF NOT EXISTS memories_ad AFTER DELETE ON memories BEGIN
+  INSERT INTO memories_fts (memories_fts, rowid, text, tags) VALUES ('delete', old.rowid, old.text, old.tags);
+END;

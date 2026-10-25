@@ -61,7 +61,7 @@ These were found during the audit and fixed because CI could not pass without th
 | 40 | Settings and connections: keys, MCP servers, client configs | Console | M | Next |
 | 41 | Lapidary's MCP server over HTTP for Claude Desktop and ChatGPT | Console, MCP | M | Next |
 | 42 | Windows installer, CI build and smoke test, REA bundling, first run | Console | M | Next |
-| 43 | Lapidary Memory: observations across runs, chats and clients | Memory, product | L | Next |
+| 43 | Lapidary Memory: observations across runs, chats and clients | Memory, product | L | Now, done |
 | 44 | Local models as a provider, and the model policy (local, online, mix, auto, hand pick) | Providers, hybrid | M | Now, done |
 | 45 | Gates: builder, tests, visual review, adversarial review, acceptance | Agents, quality | L | Next |
 | 46 | Workbench: parallel runs on worktrees; Codex and OpenCode as clients | Console, agents | L | Later |
@@ -381,6 +381,8 @@ A Windows 11 application that installs, connects and manages the AI tools on a m
 - **Depends on**: 37, 38, 40.
 
 ### 43. Lapidary Memory: observations across runs, chats and clients
+
+**Status: done** (`memories` table with full-text search in both stores; `memory_service` with capture on every finished run, the `memory_summarizer` seed gem with the plain digest as the fallback, `<private>` stripping, three-step recall and the `<memory>` block for gems with `memory: true`; the four tools as built-in agent tools, MCP tools and `/memory` routes; the Memory page and the "remembers earlier work" checkbox in the web UI; `supabase/add_memory.sql` for existing installs; 13 tests). Later: embeddings behind the same interface, chats storing on request, the console showing memory on the Dashboard.
 
 - **Why**: ADR-010. Every run and chat starts from nothing, and the console's whole point is that Claude Desktop, ChatGPT, Open WebUI and the agents share one place. Modelled on claude-mem: capture a compressed observation when a run finishes, keep it with full-text search in the storage layer, bring it back by search then fetch (`search_memory`, `get_memories`, `remember`, `forget`) as agent tools, MCP tools and REST, inject the top matches into gems marked `memory: true`, and show it all in a Memory view with delete. `<private>` text is never stored.
 - **Size**: L.

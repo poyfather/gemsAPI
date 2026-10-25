@@ -98,7 +98,7 @@ def test_remote_tools_are_prefixed_typed_and_risky_by_config(servers) -> None:
     assert tools["ops.explode"].description == "explode"      # empty description falls back to the name
     assert get_tool("rea.list_strings").source == "rea" and get_tool("get_gem").source == "builtin"
     names = [t.name for t in all_tools()]
-    assert names[:3] == ["get_gem", "ops.explode", "ops.read"]
+    assert names[:4] == ["forget", "get_gem", "get_memories", "ops.explode"]
 
 
 def test_default_risky_when_the_server_does_not_say(tmp_path, monkeypatch, servers) -> None:

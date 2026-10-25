@@ -22,7 +22,7 @@ from app.agents import run_service
 from app.agents.mcp_sources import refresh_remote_tools
 from app.agents.tools import Tool, call_tool, resolve_tools
 from app.models import RunEvent, RunResult
-from app.services import gem_service
+from app.services import gem_service, memory_service
 from app.services import router as model_router
 from app.services.llm_service import ToolCall, complete_turn, tool_result_messages
 
@@ -49,6 +49,7 @@ class LoopState:
     # Mid-turn: calls not executed yet, and results already collected for this turn.
     pending: list[dict] = field(default_factory=list)          # [{"id", "name", "input"}]
     results: list[dict] = field(default_factory=list)          # [{"id", "name", "input", "output", "is_error"}]
+    memory_scope: str = "default"
 
     @classmethod
     def from_dict(cls, data: dict) -> "LoopState":
@@ -187,6 +188,7 @@ async def _loop(run_id: str, state: LoopState, rec: _Recorder, decided: tuple[st
         run_id, status=status, steps=state.steps, input_tokens=state.input_tokens,
         output_tokens=state.output_tokens, output=state.last_text, state=None,
     )
+    await memory_service.observe_run(run, rec.events, scope=state.memory_scope)
     return RunResult(run=run, events=rec.events)
 
 
@@ -201,6 +203,7 @@ async def run_agent(
     on_event: OnEvent | None = None,
     history: list[dict] | None = None,
     system_addendum: str = "",
+    memory_scope: str = "default",
 ) -> RunResult:
     """
     Run a gem as an agent. Raises ValueError if the gem cannot be resolved; provider errors fail the run.
@@ -225,10 +228,15 @@ async def run_agent(
         "variables_missing": resolved.variables_missing, "max_steps": settings.AGENT_MAX_STEPS,
     })
     system_prompt = resolved.resolved_prompt + (f"\n\n{system_addendum}" if system_addendum else "")
+    if gem.memory:
+        block = await memory_service.recall_block(message, scope=memory_scope)
+        if block:
+            system_prompt += "\n\n" + block
+            await rec.emit("memory_recalled", {"count": block.count("\n- ["), "scope": memory_scope})
     state = LoopState(
         gem_name=gem.name, system_prompt=system_prompt, model=model, provider=provider,
         tool_names=[t.name for t in tools], allow_risky=allow_risky,
-        messages=[*(history or []), {"role": "user", "content": message}],
+        messages=[*(history or []), {"role": "user", "content": message}], memory_scope=memory_scope,
     )
     return await _loop(run.id, state, rec, None)
 

@@ -11,7 +11,7 @@ import sys
 
 from app import settings
 from app.agents.tools import tool
-from app.services import gem_service
+from app.services import gem_service, memory_service
 
 
 @tool()
@@ -60,6 +60,36 @@ async def resolve_gem(name: str, variables: dict[str, str] | None = None) -> dic
         "referenced_gems": r.referenced_gems,
         "variables_missing": r.variables_missing,
     }
+
+
+# ─── Memory (ADR-010): search, then fetch, then remember ───────────────────────
+
+@tool()
+async def search_memory(query: str, scope: str = "default", limit: int = 10) -> list[dict]:
+    """Search what was remembered from earlier runs, chats and notes. Returns a compact index (id, kind, date, one line each); call get_memories with the ids that matter to read them in full."""
+    return [e.model_dump(mode="json") for e in await memory_service.search_index(query, scope=scope, limit=limit)]
+
+
+@tool()
+async def get_memories(ids: list[str]) -> list[dict]:
+    """Read memories in full by id (from search_memory). Returns kind, text, tags, source, date."""
+    return [m.model_dump(mode="json") for m in await memory_service.get(ids)]
+
+
+@tool()
+async def remember(text: str, kind: str = "note", tags: list[str] | None = None, scope: str = "default") -> dict:
+    """Store something worth keeping for later runs: a decision, a preference the user stated, a lesson from a failure, a handoff for the next session, or a plain note. Kind is one of observation, summary, decision, preference, lesson, handoff, note. Anything inside <private>...</private> is dropped."""
+    try:
+        m = await memory_service.remember(text, kind=kind, tags=tags or [], scope=scope, source="run")
+    except ValueError as exc:
+        return {"error": str(exc)}
+    return m.model_dump(mode="json") if m else {"error": "nothing to remember once <private> text is removed"}
+
+
+@tool(risky=True)
+async def forget(memory_id: str) -> dict:
+    """Delete one memory by id. This cannot be undone, so it waits for the user's approval."""
+    return {"deleted": await memory_service.forget(memory_id), "id": memory_id}
 
 
 # ─── PowerShell 7 ──────────────────────────────────────────────────────────────

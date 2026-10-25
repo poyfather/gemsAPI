@@ -66,6 +66,16 @@ LLM_TIMEOUT_SECONDS: float = float(_env("LLM_TIMEOUT_SECONDS", "60"))
 LLM_MAX_RETRIES: int = int(_env("LLM_MAX_RETRIES", "2"))
 LLM_MAX_TOKENS: int = int(_env("LLM_MAX_TOKENS", "4096"))
 
+# Lapidary Memory (ADR-010). Capture stores an observation when a run finishes;
+# summarize asks the memory_summarizer gem to write it (the plain digest is the
+# fallback and the only option without a model). Recall is what a gem with
+# memory on gets before its prompt.
+MEMORY_CAPTURE: bool = _env("GEMS_MEMORY_CAPTURE", "on").lower() not in ("off", "0", "false", "no")
+MEMORY_SUMMARIZE: bool = _env("GEMS_MEMORY_SUMMARIZE", "on").lower() not in ("off", "0", "false", "no")
+MEMORY_MAX_CHARS: int = int(_env("GEMS_MEMORY_MAX_CHARS", "4000"))
+MEMORY_RECALL_LIMIT: int = int(_env("GEMS_MEMORY_RECALL_LIMIT", "6"))
+MEMORY_RECALL_MAX_CHARS: int = int(_env("GEMS_MEMORY_RECALL_MAX_CHARS", "2500"))
+
 # Agent runs (ADR-007): the loop stops after this many model turns, and a
 # tool result longer than this many characters is truncated before it is
 # sent back to the model.

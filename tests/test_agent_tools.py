@@ -11,7 +11,7 @@ from conftest import make_gem
 
 def test_builtin_tools_are_registered_with_schemas() -> None:
     names = [t.name for t in all_tools()]
-    assert names == ["get_gem", "resolve_gem", "run_powershell", "search_gems"]
+    assert names == ["forget", "get_gem", "get_memories", "remember", "resolve_gem", "run_powershell", "search_gems", "search_memory"]
     search = get_tool("search_gems")
     assert search.parameters["type"] == "object"
     assert set(search.parameters["properties"]) == {"query", "tag"}

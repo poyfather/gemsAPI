@@ -53,6 +53,7 @@ from app.services.gem_service import (
 )
 from app import settings
 from app.services.llm_service import available_models, complete
+from app.services import memory_service
 import app.agents.builtin  # noqa: F401
 from app.agents import run_service
 from app.agents.runner import resume_run as _resume_run, run_agent as _run_agent
@@ -334,6 +335,43 @@ async def approve_run(run_id: str, approve: bool = True) -> dict:
         "run_id": run.id, "status": run.status, "waiting_on": waiting, "output": run.output,
         "steps": run.steps, "tool_calls": [e.data for e in result.events if e.type == "tool_result"], "error": run.error,
     }
+
+
+@mcp.tool()
+async def search_memory(query: str, scope: str = "default", limit: int = 10) -> list[dict]:
+    """
+    Search Lapidary Memory (ADR-010): what was remembered from earlier runs, chats
+    and notes, shared by every client on this machine. Returns a compact index
+    (id, kind, date, one line each); call get_memories with the ids that matter.
+    """
+    return [e.model_dump(mode="json") for e in await memory_service.search_index(query, scope=scope, limit=limit)]
+
+
+@mcp.tool()
+async def get_memories(ids: list[str]) -> list[dict]:
+    """Read memories in full by id (from search_memory): kind, text, tags, source, date."""
+    return [m.model_dump(mode="json") for m in await memory_service.get(ids)]
+
+
+@mcp.tool()
+async def remember(text: str, kind: str = "note", tags: list[str] | None = None, scope: str = "default") -> dict:
+    """
+    Store something for later: a decision, a preference the user stated, a lesson
+    from a failure, a handoff for the next session, or a note. Kind is one of
+    observation, summary, decision, preference, lesson, handoff, note. Anything
+    inside <private>...</private> is dropped before storing.
+    """
+    try:
+        m = await memory_service.remember(text, kind=kind, tags=tags or [], scope=scope, source="mcp")
+    except ValueError as exc:
+        return {"error": str(exc)}
+    return m.model_dump(mode="json") if m else {"error": "nothing to remember once <private> text is removed"}
+
+
+@mcp.tool()
+async def forget(memory_id: str) -> dict:
+    """Delete one memory by id. Cannot be undone."""
+    return {"deleted": await memory_service.forget(memory_id), "id": memory_id}
 
 
 @mcp.tool()

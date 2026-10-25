@@ -13,6 +13,7 @@ export interface Gem {
   variables: string[];
   kind?: "prompt" | "agent";
   tools?: string[];
+  memory?: boolean;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -27,9 +28,34 @@ export interface GemCreate {
   tags: string[];
   kind?: "prompt" | "agent";
   tools?: string[];
+  memory?: boolean;
 }
 
 export type GemUpdate = Partial<GemCreate>;
+
+// ─── Memory (ADR-010) ──────────────────────────────────────────────────────────
+
+export type MemoryKind = "observation" | "summary" | "decision" | "preference" | "lesson" | "handoff" | "note";
+export const MEMORY_KINDS: MemoryKind[] = ["observation", "summary", "decision", "preference", "lesson", "handoff", "note"];
+
+export interface Memory {
+  id: string;
+  kind: MemoryKind | string;
+  text: string;
+  source: string;
+  gem_name?: string | null;
+  run_id?: string | null;
+  tags: string[];
+  scope: string;
+  created_at: string;
+}
+
+export interface MemoryCreate {
+  text: string;
+  kind?: MemoryKind;
+  tags?: string[];
+  scope?: string;
+}
 
 export interface ResolveResponse {
   gem_name: string;
@@ -221,6 +247,22 @@ export const gems = {
       method: "POST",
       body: JSON.stringify({ gem_name: name, variables }),
     }),
+};
+
+// ─── Memory API ────────────────────────────────────────────────────────────────
+
+export const memory = {
+  list: (q = "", scope = "default", kinds: string[] = [], limit = 100): Promise<Memory[]> => {
+    const params = new URLSearchParams({ q, scope, limit: String(limit) });
+    for (const k of kinds) params.append("kind", k);
+    return request<Memory[]>(`/memory/?${params.toString()}`);
+  },
+  remember: (data: MemoryCreate): Promise<Memory> =>
+    request<Memory>("/memory/", { method: "POST", body: JSON.stringify(data) }),
+  forget: async (id: string): Promise<void> => {
+    const res = await fetch(`/api/memory/${encodeURIComponent(id)}`, { method: "DELETE" });
+    if (!res.ok) throw new ApiError(res.status, `HTTP ${res.status}`);
+  },
 };
 
 // ─── Chat API ──────────────────────────────────────────────────────────────────

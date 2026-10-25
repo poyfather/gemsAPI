@@ -20,6 +20,7 @@ class GemBase(BaseModel):
     tags: list[str] = Field(default=[], description="Tags for searching and filtering")
     kind: str = Field(default="prompt", description="'prompt' (one model call) or 'agent' (may call its tools in a loop)")
     tools: list[str] = Field(default=[], description="Registered tool names an agent gem may call; see GET /agents/tools")
+    memory: bool = Field(default=False, description="Recall: prepend the top memory matches for the message inside a <memory> block (ADR-010)")
 
 
 class GemCreate(GemBase):
@@ -35,6 +36,7 @@ class GemUpdate(BaseModel):
     tags: Optional[list[str]] = None
     kind: Optional[str] = None
     tools: Optional[list[str]] = None
+    memory: Optional[bool] = None
 
 
 class Gem(GemBase):
@@ -77,6 +79,7 @@ class ChatRequest(BaseModel):
     model_override: Optional[str] = Field(default=None, description="Override the gem's default model")
     provider_override: Optional[str] = Field(default=None, description="Override provider: 'anthropic' or 'openai'")
     stream: bool = Field(default=False, description="Stream the response via SSE")
+    memory_scope: str = Field(default="default", description="Which memory scope a gem with memory on recalls from")
 
 
 class ChatResponse(BaseModel):
@@ -96,6 +99,7 @@ class RunRequest(BaseModel):
     provider_override: Optional[str] = None
     allow_risky: bool = Field(default=False, description="Let the run call tools marked risky")
     stream: bool = Field(default=False, description="Stream run events as Server-Sent Events")
+    memory_scope: str = Field(default="default", description="Which memory scope the run recalls from and records to")
 
 
 class RunEvent(BaseModel):
@@ -137,3 +141,34 @@ class ToolInfo(BaseModel):
     parameters: dict
     risky: bool
     source: str = Field(default="builtin", description="'builtin' or the MCP server the tool comes from")
+
+
+# ─── Memory (ADR-010) ──────────────────────────────────────────────────────────
+
+MEMORY_KINDS = ("observation", "summary", "decision", "preference", "lesson", "handoff", "note")
+MEMORY_SOURCES = ("run", "chat", "mcp", "console", "user")
+
+
+class MemoryCreate(BaseModel):
+    text: str = Field(..., description="What to remember. Anything inside <private>...</private> is dropped before storing.")
+    kind: str = Field(default="note", description="observation, summary, decision, preference, lesson, handoff or note")
+    tags: list[str] = Field(default=[])
+    scope: str = Field(default="default", description="Keeps projects apart; 'default' unless you say otherwise")
+    source: str = Field(default="user", description="run, chat, mcp, console or user")
+    gem_name: Optional[str] = None
+    run_id: Optional[str] = None
+
+
+class Memory(MemoryCreate):
+    id: str
+    created_at: datetime
+
+
+class MemoryIndexEntry(BaseModel):
+    """The compact form search returns: enough to decide which ones to fetch in full."""
+    id: str
+    kind: str
+    scope: str
+    created_at: datetime
+    line: str = Field(..., description="The first line of the text, at most 160 characters")
+    tags: list[str] = []

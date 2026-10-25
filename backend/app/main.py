@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
-from app.routes import agents, chat, gems, openai_compat
+from app.routes import agents, chat, gems, memory, openai_compat
 from app.version import __version__
 
 load_dotenv()
@@ -46,6 +46,7 @@ app.include_router(chat.router)
 app.include_router(agents.router)
 app.include_router(agents.runs_router)
 app.include_router(openai_compat.router)
+app.include_router(memory.router)
 
 
 @app.get("/", tags=["meta"])
