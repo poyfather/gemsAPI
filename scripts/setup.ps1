@@ -1,7 +1,7 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-Write-Host "Setting up gemsAPI backend..."
+Write-Host "Setting up Lapidary backend..."
 
 if (-not (Test-Path backend\.venv)) {
     python -m venv backend\.venv

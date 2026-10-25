@@ -1,4 +1,4 @@
--- Run this in your Supabase SQL editor on an existing gemsAPI installation
+-- Run this in your Supabase SQL editor on an existing Lapidary installation
 -- created before ADR-006 (October 2026). Safe to run more than once.
 --
 -- It removes the open "allow_all" policy. Row level security stays enabled

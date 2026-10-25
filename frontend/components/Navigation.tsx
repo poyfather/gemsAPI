@@ -24,7 +24,7 @@ export default function Navigation() {
               <Gem className="w-4 h-4 text-white" />
             </div>
             <span className="font-semibold text-white">
-              gems<span className="text-violet-400">API</span>
+              Lapid<span className="text-violet-400">ary</span>
             </span>
           </Link>
 

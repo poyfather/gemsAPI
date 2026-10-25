@@ -1,4 +1,4 @@
--- Run this in your Supabase SQL editor on an existing gemsAPI installation
+-- Run this in your Supabase SQL editor on an existing Lapidary installation
 -- to add agent gems and run records (DECISIONS.md, ADR-007). Safe to rerun.
 
 ALTER TABLE gems ADD COLUMN IF NOT EXISTS kind TEXT NOT NULL DEFAULT 'prompt';

@@ -20,10 +20,11 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     lifespan=lifespan,
-    title="gemsAPI",
+    title="Lapidary",
     description=(
-        "Manage and serve reusable LLM prompts (gems) with variable substitution "
-        "and recursive {{gem:name}} composition. Accessible via REST and MCP."
+        "Prompt library and agent harness. Gems are reusable system prompts with "
+        "{variable} placeholders and recursive {{gem:name}} composition; agent gems "
+        "may call tools in a loop. Served over REST, a web UI and MCP."
     ),
     version=__version__,
     docs_url="/docs",
@@ -49,9 +50,9 @@ app.include_router(agents.runs_router)
 @app.get("/", tags=["meta"])
 def root():
     return {
-        "name": "gemsAPI",
+        "name": "Lapidary",
         "version": __version__,
-        "description": "Prompt library with recursive composition, REST + MCP access",
+        "description": "Prompt library and agent harness: gems compose, run as agents, served over REST, UI and MCP",
         "docs": "/docs",
         "endpoints": {
             "list_gems":    "GET  /gems",

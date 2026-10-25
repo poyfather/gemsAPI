@@ -1,5 +1,5 @@
 """
-API Key authentication for gemsAPI.
+API Key authentication for Lapidary.
 
 All protected endpoints require the header:
     X-API-Key: <your-key>

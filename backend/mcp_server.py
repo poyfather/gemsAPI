@@ -1,5 +1,5 @@
 """
-gemsAPI MCP Server
+Lapidary MCP Server
 
 Exposes your prompt library to any MCP client (Claude Desktop, Cursor, etc.)
 via the Model Context Protocol.
@@ -15,7 +15,7 @@ USAGE
   # Add to Claude Desktop (~/.claude_desktop_config.json)
   {
     "mcpServers": {
-      "gemsAPI": {
+      "Lapidary": {
         "command": "python",
         "args": ["/absolute/path/to/backend/mcp_server.py"]
       }
@@ -59,7 +59,7 @@ from app.agents.tools import all_tools
 from app.models import GemCreate
 
 mcp = FastMCP(
-    name="gemsAPI",
+    name="lapidary",
     instructions=(
         "Access and manage your prompt library (gems). "
         "Gems support {variable} placeholders and {{gem:name}} recursive composition — "

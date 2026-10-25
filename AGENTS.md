@@ -1,7 +1,7 @@
 # AI Agent Workflow Guide
 
 ## Purpose
-`AGENTS.md` defines AI agents used in gemsAPI development workflows, their boundaries, and handoff rules.
+`AGENTS.md` defines AI agents used in Lapidary development workflows, their boundaries, and handoff rules.
 
 ## Required Project Docs
 - `README.md`: high-level project description and quickstart.
@@ -23,7 +23,7 @@
 ## Agent Catalog
 
 ### Planner Agent
-- **Purpose**: turn requests into decision-complete implementation plans for gemsAPI changes.
+- **Purpose**: turn requests into decision-complete implementation plans for Lapidary changes.
 - **Inputs**: user request, `CONTEXT.md`, `ARCHITECTURE.md`, `ROADMAP.md`, current gem list.
 - **Outputs**: ordered implementation plan with acceptance criteria.
 - **Allowed actions**: analysis, repo inspection, non-mutating checks, reading `prompts/` and `evals/`.
@@ -41,7 +41,7 @@
 - **Update triggers**: coding workflow, tooling, or execution constraints change.
 
 ### Reviewer Agent
-- **Purpose**: detect defects, regressions, and policy violations in gemsAPI changes.
+- **Purpose**: detect defects, regressions, and policy violations in Lapidary changes.
 - **Inputs**: diffs, test evidence, eval results, `STANDARDS.md`, `SECURITY.md`.
 - **Outputs**: prioritized findings and required fixes.
 - **Allowed actions**: static review, risk analysis, validation checks, reading `evals/` output.
@@ -67,7 +67,7 @@
 - **Handoff to**: none.
 - **Update triggers**: release process or changelog policy changes.
 
-## gemsAPI-Specific Agent Notes
+## Lapidary-Specific Agent Notes
 - The **MCP server** (`mcp_server.py`) is itself an AI agent interface. Changes to MCP tool signatures require updating `ARCHITECTURE.md` and any affected prompt files in `prompts/`.
 - When a gem's `system_prompt` changes in Supabase, the **Docs Agent** must also update the corresponding `prompts/<gem_name>.md` file so the repo reflects the live state.
 - The **Implementer Agent** must never hardcode API keys or credentials in any file. All secrets flow through `.env` only.

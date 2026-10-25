@@ -1,6 +1,6 @@
 # Architecture
 
-gemsAPI is three small programs around one table. A FastAPI service and a FastMCP server share the same Python package (`backend/app`) and the same resolver; a Next.js app is the human interface; Supabase Postgres holds the gems. This page is the map: what each part does, how a request moves through them, how gem composition works, what the data looks like, and where the trust boundaries are. The diagrams are Mermaid and render on GitHub.
+Lapidary is three small programs around one table. A FastAPI service and a FastMCP server share the same Python package (`backend/app`) and the same resolver; a Next.js app is the human interface; Supabase Postgres holds the gems. This page is the map: what each part does, how a request moves through them, how gem composition works, what the data looks like, and where the trust boundaries are. The diagrams are Mermaid and render on GitHub.
 
 ## The big picture
 
@@ -12,7 +12,7 @@ flowchart LR
         MCPC["MCP clients<br/>Claude Desktop, Cursor"]
     end
 
-    subgraph core["gemsAPI"]
+    subgraph core["Lapidary"]
         API["FastAPI service<br/>/gems and /chat, port 8000"]
         MCPS["FastMCP server<br/>7 tools, 2 resources, stdio"]
         RES["Resolver<br/>expand gem references,<br/>fill variables"]

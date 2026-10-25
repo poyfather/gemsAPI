@@ -1,5 +1,5 @@
 -- Run this in your Supabase SQL editor to add the prompt_enhancer gem
--- to an existing gemsAPI installation (safe to run multiple times).
+-- to an existing Lapidary installation (safe to run multiple times).
 
 INSERT INTO gems (name, description, system_prompt, model, provider, tags, variables)
 VALUES (

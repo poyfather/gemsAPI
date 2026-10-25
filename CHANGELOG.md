@@ -1,8 +1,11 @@
 # Changelog
 
-All notable changes to gemsAPI are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [semantic versioning](https://semver.org/spec/v2.0.0.html).
+All notable changes to Lapidary are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+### Changed
+- The project is now called Lapidary (ADR-008). README, docs, the API title and root endpoint, the MCP server name (`lapidary`), the web UI branding and the frontend package name use it. The repository URL, the `GEMS_*` environment variables and the word gem are unchanged.
 
 ### Added
 - Run viewer and streaming in the web UI (roadmap items 13 and 34). `lib/api.ts` gains an SSE reader, `chat.stream`, `agents.run`, `agents.stream`, `agents.tools` and `runs.get`. The chat page streams prompt gems token by token and runs agent gems with live events (turns, tool calls, results, outcome) plus a link to the run; `app/runs/[id]` replays any stored run; `GemForm` has a kind select and a tool picker; cards and the detail page show kind and tools. Run events `run_started` and `run_finished` now carry the run id.

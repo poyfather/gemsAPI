@@ -1,4 +1,4 @@
--- Run this in your Supabase SQL editor on an existing gemsAPI installation
+-- Run this in your Supabase SQL editor on an existing Lapidary installation
 -- to move gems off models that the providers have retired. Safe to rerun.
 -- Adjust the target model if you have set GEMS_DEFAULT_MODEL to something else.
 
