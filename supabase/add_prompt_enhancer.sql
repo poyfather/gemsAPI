@@ -101,7 +101,7 @@ Brief assessment of the original prompt''s weaknesses and what it needs.
 - The enhanced prompt must be immediately usable. Do not use placeholders like `[INSERT CONTEXT HERE]` unless the user genuinely needs to fill in information that cannot be inferred.
 - Write the enhanced prompt as if addressing Claude directly (second person: "You are...", "Your task is...").
 - Match verbosity to task complexity: a simple question needs a clear, tight prompt; a complex agentic task warrants full XML structure and detailed instructions.',
-  'claude-opus-4-5',
+  'claude-opus-5-5',
   'anthropic',
   ARRAY['prompting', 'utility', 'engineering', 'ai'],
   ARRAY[]::TEXT[]

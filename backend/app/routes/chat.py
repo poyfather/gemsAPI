@@ -6,7 +6,7 @@ from fastapi.responses import StreamingResponse
 
 from app.models import ChatRequest, ChatResponse
 from app.services import gem_service
-from app.services.llm_service import complete, complete_stream, MODELS
+from app.services.llm_service import available_models, complete, complete_stream
 from app.auth import require_api_key
 
 logger = logging.getLogger(__name__)
@@ -18,8 +18,8 @@ router = APIRouter(prefix="/chat", tags=["chat"], dependencies=[Depends(require_
 
 @router.get("/models", summary="List available models")
 async def list_models():
-    """Return available models grouped by provider."""
-    return MODELS
+    """Return the models each provider currently offers (live list, cached; see llm_service.available_models)."""
+    return await available_models()
 
 
 @router.post("/", summary="Chat with a gem")

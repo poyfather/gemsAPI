@@ -3,6 +3,8 @@ from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
 
+from app import settings
+
 
 # ─── Gem models ────────────────────────────────────────────────────────────────
 
@@ -13,8 +15,8 @@ class GemBase(BaseModel):
         default="",
         description="The prompt content. Use {variable} for variables, {{gem:name}} to embed another gem."
     )
-    model: str = Field(default="claude-opus-4-5", description="Default LLM model")
-    provider: str = Field(default="anthropic", description="LLM provider: 'anthropic' or 'openai'")
+    model: str = Field(default_factory=lambda: settings.DEFAULT_MODEL, description="Default LLM model")
+    provider: str = Field(default_factory=lambda: settings.DEFAULT_PROVIDER, description="LLM provider: 'anthropic' or 'openai'")
     tags: list[str] = Field(default=[], description="Tags for searching and filtering")
 
 

@@ -1,19 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { gems as gemsApi, GemCreate, Gem, errorMessage } from "@/lib/api";
+import { gems as gemsApi, chat as chatApi, GemCreate, Gem, AvailableModels, errorMessage } from "@/lib/api";
 import { Info, Plus, X, Loader2, Eye } from "lucide-react";
 import clsx from "clsx";
 
-const ANTHROPIC_MODELS = [
-  "claude-opus-4-5",
-  "claude-sonnet-4-5",
-  "claude-haiku-4-5",
-  "claude-3-5-sonnet-20241022",
-  "claude-3-5-haiku-20241022",
-];
-const OPENAI_MODELS = ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo"];
 
 interface GemFormProps {
   initialGem?: Gem;
@@ -26,7 +18,7 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
     name:          initialGem?.name          ?? "",
     description:   initialGem?.description   ?? "",
     system_prompt: initialGem?.system_prompt ?? "",
-    model:         initialGem?.model         ?? "claude-opus-4-5",
+    model:         initialGem?.model         ?? "",
     provider:      initialGem?.provider      ?? "anthropic",
     tags:          initialGem?.tags          ?? [],
   });
@@ -36,6 +28,22 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
   const [preview, setPreview]     = useState<string | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [varValues, setVarValues] = useState<Record<string, string>>({});
+  // The backend owns the model list (GET /chat/models: live per provider, cached).
+  const [models, setModels] = useState<AvailableModels>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    chatApi
+      .models()
+      .then((list) => {
+        if (cancelled) return;
+        setModels(list);
+        // A new gem starts on the provider's first model once the list is known.
+        setForm((prev) => (prev.model ? prev : { ...prev, model: list[prev.provider]?.[0] ?? "" }));
+      })
+      .catch(() => { /* the select still shows the gem's own model */ });
+    return () => { cancelled = true; };
+  }, []);
 
   // Detect variables in the prompt
   const detectedVars: string[] = [];
@@ -105,7 +113,9 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
     }
   };
 
-  const modelOptions = form.provider === "anthropic" ? ANTHROPIC_MODELS : OPENAI_MODELS;
+  const providerModels = models[form.provider] ?? [];
+  // Keep the gem's current model selectable even if the provider no longer lists it.
+  const modelOptions = form.model && !providerModels.includes(form.model) ? [form.model, ...providerModels] : providerModels;
 
   return (
     <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -155,8 +165,8 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
             <select
               value={form.provider}
               onChange={(e) => {
-                handleChange("provider", e.target.value);
-                handleChange("model", e.target.value === "anthropic" ? ANTHROPIC_MODELS[0] : OPENAI_MODELS[0]);
+                const provider = e.target.value as GemCreate["provider"];
+                setForm((prev) => ({ ...prev, provider, model: models[provider]?.[0] ?? "" }));
               }}
               className="w-full px-3 py-2 rounded-lg bg-gem-card border border-gem-border text-slate-100 text-sm focus:outline-hidden focus:ring-2 focus:ring-violet-500 transition"
             >

@@ -91,3 +91,13 @@ def test_resolve_errors_are_400(client, fake_library) -> None:
     fake_library["a"] = make_gem("a", "{{gem:a}}")
     assert client.post("/gems/resolve", headers=KEY, json={"gem_name": "a"}).status_code == 400
     assert client.post("/gems/resolve", headers=KEY, json={"gem_name": "zzz"}).status_code == 400
+
+
+def test_chat_models_returns_the_available_models(client, monkeypatch) -> None:
+    from app.routes import chat as chat_routes
+
+    async def fake_models():
+        return {"anthropic": ["claude-x"], "openai": []}
+
+    monkeypatch.setattr(chat_routes, "available_models", fake_models)
+    assert client.get("/chat/models", headers=KEY).json() == {"anthropic": ["claude-x"], "openai": []}

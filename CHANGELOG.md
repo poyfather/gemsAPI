@@ -4,6 +4,12 @@ All notable changes to gemsAPI are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Changed
+- `backend/app/settings.py` is the one home for runtime defaults: `GEMS_DEFAULT_PROVIDER` and `GEMS_DEFAULT_MODEL` (now `claude-opus-5-5`) for new gems over REST, UI and MCP; `LLM_TIMEOUT_SECONDS`, `LLM_MAX_RETRIES` and `LLM_MAX_TOKENS` for provider calls (roadmap items 17 and 18).
+- `GET /chat/models` and the MCP `list_available_models` tool return each provider's live model list (OpenAI's filtered to chat models), cached for `GEMS_MODEL_LIST_TTL_SECONDS`, with `GEMS_MODELS_ANTHROPIC` and `GEMS_MODELS_OPENAI` as pins and a static fallback. The static list with retired `claude-3-5-*` and `gpt-3.5-turbo` entries is gone, and so are the hard-coded lists in `GemForm.tsx`.
+- Both SDK clients are built with an explicit timeout and retry count; any SDK failure becomes one `ProviderError`, logged server side.
+- Seed gems and the eval use the new default model; `supabase/update_default_models.sql` moves existing gems off retired models.
+
 ### Security
 - ADR-006: single-tenant access model. The `allow_all` row level security policy is dropped from `supabase/schema.sql` and RLS has no policies for the `anon` or `authenticated` roles, so only the service role key used by the backend and the MCP server can read or write gems. `backend/app/database.py` accepts the service role key only; the anon key option is removed from `.env.example`. Existing installs run `supabase/lock_down_rls.sql` once (roadmap item 9).
 
