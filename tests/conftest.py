@@ -11,6 +11,9 @@ import pytest
 TEST_API_KEY = "test-key"
 os.environ["GEMS_API_KEY"] = TEST_API_KEY
 
+from fastapi.testclient import TestClient  # noqa: E402
+
+from app.main import app  # noqa: E402
 from app.models import Gem  # noqa: E402
 from app.services import gem_service  # noqa: E402
 
@@ -32,6 +35,13 @@ def make_gem(name: str, system_prompt: str, **overrides) -> Gem:
     }
     data.update(overrides)
     return Gem(**data)
+
+
+@pytest.fixture
+def client():
+    """A TestClient with the lifespan run (it checks GEMS_API_KEY)."""
+    with TestClient(app) as c:
+        yield c
 
 
 @pytest.fixture

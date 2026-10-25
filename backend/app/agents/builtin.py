@@ -5,7 +5,11 @@ Importing this module registers them. They are deliberately boring: the
 first agent shipped with Lapidary is a librarian for its own prompts.
 """
 from __future__ import annotations
+import asyncio
+import shutil
+import sys
 
+from app import settings
 from app.agents.tools import tool
 from app.services import gem_service
 
@@ -56,3 +60,40 @@ async def resolve_gem(name: str, variables: dict[str, str] | None = None) -> dic
         "referenced_gems": r.referenced_gems,
         "variables_missing": r.variables_missing,
     }
+
+
+# ─── PowerShell 7 ──────────────────────────────────────────────────────────────
+
+def _powershell_program() -> str | None:
+    """pwsh (PowerShell 7) wherever it is installed; Windows PowerShell 5 as the fallback on Windows."""
+    return shutil.which("pwsh") or (shutil.which("powershell") if sys.platform == "win32" else None)
+
+
+async def _run_process(program: str, args: list[str], timeout: float) -> tuple[int, str, str]:
+    proc = await asyncio.create_subprocess_exec(program, *args, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+    try:
+        out, err = await asyncio.wait_for(proc.communicate(), timeout=timeout)
+    except asyncio.TimeoutError:
+        proc.kill()
+        await proc.wait()
+        return -1, "", f"stopped after {timeout:.0f} seconds"
+    return proc.returncode or 0, out.decode(errors="replace"), err.decode(errors="replace")
+
+
+def _cap(text: str) -> str:
+    limit = settings.POWERSHELL_MAX_OUTPUT_CHARS
+    return text if len(text) <= limit else f"[{len(text) - limit} characters dropped]\n" + text[-limit:]
+
+
+@tool(risky=True)
+async def run_powershell(script: str) -> str:
+    """Run a PowerShell script on the machine that runs Lapidary (PowerShell 7 when installed, Windows PowerShell 5 otherwise) and return its output and exit code. It runs with the backend's own user account and can change the system, so prefer read-only cmdlets, explain what a script does before calling this, and never disable security features or delete data without being told to."""
+    program = _powershell_program()
+    if not program:
+        return "PowerShell is not installed on the machine that runs Lapidary. Install PowerShell 7 (winget install Microsoft.PowerShell) or run this from Lapidary Console."
+    args = ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", script]
+    code, out, err = await _run_process(program, args, settings.POWERSHELL_TIMEOUT_SECONDS)
+    text = _cap(out.rstrip())
+    if err.strip():
+        text += ("\n" if text else "") + "[stderr]\n" + _cap(err.rstrip())
+    return f"{text}\n[exit {code}]" if text else f"[exit {code}]"

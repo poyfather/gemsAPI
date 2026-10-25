@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; frame-src http://127.0.0.1:3000 http://localhost:3000 http://localhost:3080">
+  <title>Lapidary Console</title>
+  <link rel="stylesheet" href="console.css">
+</head>
+<body>
+  <div class="crt">
+    <header class="bar">
+      <span class="brand">LAPIDARY<span class="dim"> CONSOLE</span></span>
+      <nav>
+        <button data-view="dashboard" class="active">1 Dashboard</button>
+        <button data-view="components">2 Components</button>
+        <button data-view="connections">3 Connections</button>
+        <button data-view="settings">4 Settings</button>
+        <button data-view="logs">5 Logs</button>
+        <button data-view="powershell">6 PowerShell</button>
+        <button data-view="lapidary">7 Lapidary</button>
+      </nav>
+      <span class="clock" id="clock"></span>
+    </header>
+
+    <main>
+      <section id="view-dashboard" class="view">
+        <div class="panel">
+          <h2>STATUS</h2>
+          <table id="status-table"><thead><tr><th></th><th>Component</th><th>Kind</th><th>State</th><th></th></tr></thead><tbody></tbody></table>
+          <p class="hint">Lamps: <span class="lamp on"></span> running or installed, <span class="lamp warn"></span> installed but not running, <span class="lamp off"></span> missing. Press R to refresh.</p>
+        </div>
+        <div class="panel">
+          <h2>QUICK ACTIONS</h2>
+          <div class="actions">
+            <button data-act="restart">Restart Lapidary</button>
+            <button data-act="open-ui">Open Lapidary UI</button>
+            <button data-act="open-webui">Open Open WebUI</button>
+            <button data-act="refresh">Refresh</button>
+          </div>
+          <pre id="action-out" class="out"></pre>
+        </div>
+      </section>
+
+      <section id="view-components" class="view hidden">
+        <div class="panel">
+          <h2>INSTALL / UPDATE</h2>
+          <p class="hint">Installs go through winget, Docker and npm. Each one prints to Logs.</p>
+          <table id="install-table"><thead><tr><th></th><th>Component</th><th>Version</th><th>Path</th><th></th></tr></thead><tbody></tbody></table>
+        </div>
+        <div class="panel">
+          <h2>TOOLBOX <span class="dim small-text">optional Windows management tools, installed from the publisher through winget or the PowerShell Gallery</span></h2>
+          <div class="actions"><button data-act="toolbox-install-checked">Install checked</button><span class="dim small-text" id="toolbox-msg"></span></div>
+          <table id="toolbox-table"><thead><tr><th></th><th></th><th>Tool</th><th>Publisher</th><th>Category</th><th>Source</th><th></th></tr></thead><tbody></tbody></table>
+        </div>
+      </section>
+
+      <section id="view-connections" class="view hidden">
+        <div class="panel">
+          <h2>CONNECT THE PIECES</h2>
+          <dl class="conn">
+            <dt>Claude Desktop</dt><dd>Registers Lapidary and REA as MCP servers in claude_desktop_config.json. <button data-act="connect-claude">Connect</button></dd>
+            <dt>ChatGPT</dt><dd>Writes the same MCP entries to ChatGPT's config, where the app supports local MCP; remote MCP over HTTP is roadmap item 41. <button data-act="connect-chatgpt">Connect</button></dd>
+            <dt>Open WebUI</dt><dd>Writes a compose file with Lapidary, OpenAI and Ollama as providers and starts the container on port 3080. <button data-act="connect-openwebui">Start and connect</button></dd>
+          </dl>
+          <pre id="conn-out" class="out"></pre>
+        </div>
+      </section>
+
+      <section id="view-settings" class="view hidden">
+        <div class="panel">
+          <h2>KEYS AND STORAGE</h2>
+          <p class="hint">Stored with the operating system's credential encryption. Values are never shown again once saved.</p>
+          <form id="settings-form">
+            <label>Anthropic API key <input name="anthropicKey" type="password" placeholder="sk-ant-..."></label>
+            <label>OpenAI API key <input name="openaiKey" type="password" placeholder="sk-..."></label>
+            <label>Lapidary API key <input name="gemsApiKey" type="text" placeholder="generated on first run"></label>
+            <label>Supabase URL (hosted mode, optional) <input name="supabaseUrl" type="text" placeholder="https://xyz.supabase.co"></label>
+            <label>Supabase service role key (optional) <input name="supabaseKey" type="password"></label>
+            <button type="submit">Save</button>
+          </form>
+          <pre id="settings-out" class="out"></pre>
+        </div>
+      </section>
+
+      <section id="view-logs" class="view hidden">
+        <div class="panel grow">
+          <h2>LOGS <button data-act="refresh-logs" class="small">refresh</button></h2>
+          <pre id="logs" class="out tall"></pre>
+        </div>
+      </section>
+
+      <section id="view-powershell" class="view hidden grow">
+        <div class="panel grow">
+          <h2>POWERSHELL 7 <span class="dim small-text" id="pwsh-note"></span></h2>
+          <p class="hint">Runs as you, with -NoProfile and -NonInteractive. Ctrl+Enter runs. Everything you run also goes to Logs. The same engine is available to agents as the risky tool <span class="mono">run_powershell</span>, behind the approval gate.</p>
+          <textarea id="pwsh-in" rows="4" spellcheck="false" placeholder="Get-ComputerInfo | Select-Object OsName, OsVersion, CsName"></textarea>
+          <div class="actions"><button data-act="pwsh-run">Run</button><button data-act="pwsh-clear">Clear</button></div>
+          <pre id="pwsh-out" class="out tall"></pre>
+        </div>
+      </section>
+
+      <section id="view-lapidary" class="view hidden grow">
+        <iframe id="lapidary-frame" title="Lapidary" src="about:blank"></iframe>
+      </section>
+    </main>
+
+    <footer class="bar foot"><span id="foot-msg">ready</span><span class="dim">keys 1 to 7 switch views</span></footer>
+  </div>
+  <script src="console.js"></script>
+</body>
+</html>

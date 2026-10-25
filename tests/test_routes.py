@@ -1,17 +1,7 @@
 """REST routes through FastAPI's TestClient, with the database faked."""
-import pytest
-from fastapi.testclient import TestClient
-
-from app.main import app
 from conftest import TEST_API_KEY, make_gem
 
 KEY = {"X-API-Key": TEST_API_KEY}
-
-
-@pytest.fixture
-def client():
-    with TestClient(app) as c:
-        yield c
 
 
 def test_health_and_root_need_no_key(client) -> None:
@@ -105,7 +95,7 @@ def test_chat_models_returns_the_available_models(client, monkeypatch) -> None:
 
 def test_agent_tools_endpoint_lists_the_registry(client) -> None:
     names = [t["name"] for t in client.get("/agents/tools", headers=KEY).json()]
-    assert names == ["get_gem", "resolve_gem", "search_gems"]
+    assert names == ["get_gem", "resolve_gem", "run_powershell", "search_gems"]
 
 
 def test_run_endpoint_returns_the_run_and_events(client, fake_library, fake_runs, monkeypatch) -> None:

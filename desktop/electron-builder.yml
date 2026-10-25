@@ -1,0 +1,24 @@
+appId: dev.lapidary.console
+productName: Lapidary Console
+directories:
+  output: dist
+files:
+  - main.js
+  - preload.js
+  - lib/**
+  - renderer/**
+  - node_modules/**
+extraResources:
+  # Built by CI before packaging: the backend as a single-file exe and the UI as a standalone server.
+  - from: ../build/backend/
+    to: backend/
+  - from: ../build/frontend/
+    to: frontend/
+win:
+  target:
+    - nsis
+  artifactName: LapidaryConsole-Setup-${version}.exe
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  perMachine: false

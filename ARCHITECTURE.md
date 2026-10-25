@@ -9,6 +9,7 @@ flowchart LR
     subgraph callers["Who calls it"]
         UI["Web UI<br/>Next.js, port 3000"]
         REST["Scripts and apps<br/>REST with X-API-Key"]
+        OWUI["Open WebUI and other<br/>OpenAI-compatible clients<br/>/v1, bearer key"]
         MCPC["MCP clients<br/>Claude Desktop, Cursor"]
     end
 
@@ -29,6 +30,7 @@ flowchart LR
 
     UI -- "/api/* proxy,<br/>key added server-side" --> API
     REST --> API
+    OWUI --> API
     MCPC -- "stdio" --> MCPS
     API --> RES
     MCPS --> RES
@@ -123,6 +125,7 @@ flowchart TB
 | Auth | `backend/app/auth.py` | Router-level dependency: 401 unless `X-API-Key` matches `GEMS_API_KEY` | `/gems`, `/chat` | FastAPI `Security` |
 | Gems routes | `backend/app/routes/gems.py` | List, create, get by name or id, update, soft delete, resolve | `gem_service` | Async calls |
 | Chat routes | `backend/app/routes/chat.py` | Resolve the gem, pick model and provider, call the LLM, return JSON or an SSE stream | `gem_service`, `llm_service` | Async calls, `StreamingResponse` |
+| OpenAI-compatible routes | `backend/app/routes/openai_compat.py` | `GET /v1/models`, `POST /v1/chat/completions` (streaming): every gem and agent as a model for Open WebUI and other OpenAI-compatible clients; bearer auth with the same key | `gem_service`, `llm_service`, `agents.runner` | Async calls, `StreamingResponse` |
 | Agent routes | `backend/app/routes/agents.py` | `POST /agents/{name}/runs` (JSON or SSE), `GET /runs/{id}`, `GET /agents/tools` | `agents.runner`, `agents.run_service` | Async calls, a queue for SSE |
 | Tool registry | `backend/app/agents/tools.py`, `builtin.py`, `mcp_sources.py` | `@tool` functions with a JSON schema from the signature; the three built-ins read the library; every tool of each MCP server in `configs/mcp_servers.json` as `<server>.<tool>`, listed and called through a fastmcp client, risky by default | `gem_service`, other MCP servers | In-process; stdio or streamable HTTP to the servers |
 | Run loop | `backend/app/agents/runner.py` | Resolve the gem, call the model with its tools, execute calls, feed results back, stop on an answer or the step cap; record every event | `llm_service.complete_turn`, registry, run store | Async calls |
