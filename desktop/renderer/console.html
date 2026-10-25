@@ -13,12 +13,13 @@
       <nav>
         <button data-view="start" class="active">1 Start</button>
         <button data-view="dashboard">2 Dashboard</button>
-        <button data-view="components">3 Components</button>
-        <button data-view="connections">4 Connections</button>
-        <button data-view="settings">5 Settings</button>
-        <button data-view="logs">6 Logs</button>
-        <button data-view="powershell">7 PowerShell</button>
-        <button data-view="lapidary">8 Lapidary</button>
+        <button data-view="doctor">3 Doctor</button>
+        <button data-view="components">4 Components</button>
+        <button data-view="connections">5 Connections</button>
+        <button data-view="settings">6 Settings</button>
+        <button data-view="logs">7 Logs</button>
+        <button data-view="powershell">8 PowerShell</button>
+        <button data-view="lapidary">9 Lapidary</button>
       </nav>
       <label class="toggle" title="Show the details the Basic path hides: commands, files, paths and the hosted options"><input type="checkbox" id="adv-toggle"> Advanced</label>
       <span class="clock" id="clock"></span>
@@ -107,7 +108,7 @@
         <div class="panel">
           <h2>STATUS</h2>
           <table id="status-table"><thead><tr><th></th><th>Component</th><th class="adv-only">Kind</th><th>State</th><th></th></tr></thead><tbody></tbody></table>
-          <p class="hint">Lamps: <span class="lamp on"></span> running or installed, <span class="lamp warn"></span> installed but not running, <span class="lamp off"></span> missing. Press R to refresh.</p>
+          <p class="hint">Lamps: <span class="lamp on"></span> running or installed, <span class="lamp warn"></span> installed but not running, <span class="lamp off"></span> missing. Press R to refresh. Something not working? <button data-view-go="doctor" class="small">Ask the Doctor</button></p>
         </div>
         <div class="panel">
           <h2>QUICK ACTIONS</h2>
@@ -118,6 +119,15 @@
             <button data-act="refresh">Refresh</button>
           </div>
           <pre id="action-out" class="out"></pre>
+        </div>
+      </section>
+
+      <section id="view-doctor" class="view hidden">
+        <div class="panel">
+          <h2>DOCTOR <span class="dim small-text" id="doctor-msg">checking...</span><button data-act="doctor-run" class="small">check again</button></h2>
+          <p class="hint">Looks at everything the console can see: Lapidary, the AI you chose, your keys, the private chat, the connections, PowerShell and versions. Each problem comes with what it means and, where one click can fix it, the button to do that.</p>
+          <table id="doctor-table"><thead><tr><th></th><th>Check</th><th>What it means</th><th></th></tr></thead><tbody></tbody></table>
+          <pre id="doctor-out" class="out"></pre>
         </div>
       </section>
 
@@ -195,7 +205,7 @@
       </section>
     </main>
 
-    <footer class="bar foot"><span id="foot-msg">ready</span><span class="dim">keys 1 to 8 switch views</span></footer>
+    <footer class="bar foot"><span id="foot-msg">ready</span><span class="dim">keys 1 to 9 switch views</span></footer>
   </div>
   <script src="console.js"></script>
 </body>

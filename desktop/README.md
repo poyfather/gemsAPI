@@ -4,7 +4,7 @@ The Windows 11 application that installs, connects and manages the AI tools on a
 
 ## Design
 
-Simple and retro, on purpose. One typeface (Cascadia Mono, which Windows ships, then Consolas), one amber for headings and the active item, one green for "running" lamps, one red for "missing", near-black panels with a single bright corner tick, faint scanlines and nothing that flickers or animates. Eight views, reachable by the number keys: Start, Dashboard, Components, Connections, Settings, Logs, PowerShell, Lapidary. Every action prints what it did in a monospace box under the button, and everything the console runs is in Logs. The look is a terminal from a better decade; the rules are the ones a console for operators needs: dense, legible, keyboard-first, no surprises.
+Simple and retro, on purpose. One typeface (Cascadia Mono, which Windows ships, then Consolas), one amber for headings and the active item, one green for "running" lamps, one red for "missing", near-black panels with a single bright corner tick, faint scanlines and nothing that flickers or animates. Nine views, reachable by the number keys: Start, Dashboard, Doctor, Components, Connections, Settings, Logs, PowerShell, Lapidary. Every action prints what it did in a monospace box under the button, and everything the console runs is in Logs. The look is a terminal from a better decade; the rules are the ones a console for operators needs: dense, legible, keyboard-first, no surprises.
 
 ## Who it is for
 
@@ -17,6 +17,7 @@ main.js            Electron main: settings (safeStorage), sidecars, detection, i
 preload.js         the only bridge to the page (window.lapidary)
 renderer/          console.html, console.css, console.js (no framework)
 lib/components.js  what the console manages, platform paths, detection over an injected io
+lib/doctor.js      the Doctor: facts about the machine in, findings in plain words with their fixes out
 lib/recipes.js     the first run: the five AI choices, the eight recipes, and the planners that turn them into steps for this machine
 lib/configs.js     pure config writers: Claude Desktop and ChatGPT MCP entries, Open WebUI compose, backend env
 lib/sidecars.js    child processes and health polling
@@ -51,6 +52,7 @@ cd ../desktop; npm ci; npm run dist:win
 ## What each view does
 
 - **Start**: the first run (roadmap item 47). **Basic** asks "Which AI should we use?" (the free one on this PC, the online ones, a mix, decide for me, I'll choose each time, each saying what is private and what costs money) and "What would you like?" (eight recipes), shows the steps for this machine, runs them with a lamp per step, and ends with "here is what you can do now". **Advanced** walks through components, AI and keys, SQLite or Supabase, connections, ports and folders, what assistants may do without asking, logging and updates, then lists every file and command before applying. The **Advanced** switch in the top bar reveals the details (commands, paths, hosted options) on every screen and is remembered. Recipes are also on the Dashboard.
+- **Doctor**: the self-check (roadmap item 49). Lapidary and the web UI, the AI choice against what is there (Ollama running with a model, a key saved and accepted), the private chat and Docker, the connections to Claude Desktop and ChatGPT, PowerShell 7, and a newer release. Every finding says what it means; where one click fixes it, the button is next to it.
 - **Dashboard**: the recipes, then a lamp per component (winget, PowerShell 7, Node, Docker Desktop, Claude Desktop, ChatGPT, Ollama, Open WebUI, REA, Lapidary) with state, plus restart and open buttons.
 - **Components**: install or update through winget (PowerShell 7, Claude, ChatGPT, Docker Desktop, Ollama, Node), Docker (Open WebUI) and npm (REA). Below it, the **Toolbox**: optional Windows management tools installed from the publisher's own package through winget or the PowerShell Gallery, never bundled or redistributed: Windows Terminal, PowerToys, Sysinternals Suite, Windows Admin Center, Git, Python, Visual Studio Code, 7-Zip, Notepad++, Everything, PuTTY, Wireshark, Nmap, Azure CLI, the Microsoft Graph PowerShell SDK, PSWindowsUpdate, and WSL. Tick several and install them in one go.
 - **Connections**: one button each to register Lapidary and REA as MCP servers in Claude Desktop and ChatGPT, and to write and start an Open WebUI compose file with Lapidary, OpenAI and Ollama as its providers (Lapidary's gems then appear as models in Open WebUI through the OpenAI-compatible API).
@@ -59,4 +61,4 @@ cd ../desktop; npm ci; npm run dist:win
 - **PowerShell**: run PowerShell 7 commands as yourself (Windows PowerShell 5 until 7 is installed; the Components view installs it through winget). The same engine is the agents' `run_powershell` tool, risky, so every agent call waits for approval.
 - **Lapidary**: the web UI, embedded.
 
-Not built yet: the HTTP transport for Lapidary's MCP server (41), the installer and its smoke test on a real Windows machine (42), the Doctor (49).
+Not built yet: the HTTP transport for Lapidary's MCP server (41), the installer and its smoke test on a real Windows machine (42).

@@ -67,7 +67,7 @@ These were found during the audit and fixed because CI could not pass without th
 | 46 | Workbench: parallel runs on worktrees; Codex and OpenCode as clients | Console, agents | L | Later |
 | 47 | Guided first run and recipes: outcomes in one click | Console, newcomers | L | Now, done |
 | 48 | Plain-language pass over the console and the web UI | Console, newcomers | M | Now, done |
-| 49 | Doctor: self-check with offered fixes | Console, newcomers | M | Next |
+| 49 | Doctor: self-check with offered fixes | Console, newcomers | M | Now, done |
 | 50 | Explainers: every screen says what it is for and why | Console, newcomers | S | Now |
 
 ## Now
@@ -427,6 +427,8 @@ The person this is for does not know much about AI, installs the console, and sh
 - **Depends on**: nothing.
 
 ### 49. Doctor: self-check with offered fixes
+
+**Status: done** (a Doctor view, key 3, and an "Ask the Doctor" button on the Dashboard. `desktop/lib/doctor.js` turns the facts the console gathers into findings in plain words, each with its fix where one click can do it: Lapidary and the web UI up or their ports taken by another program; the AI choice against what is there, so Ollama missing, stopped or without a model, or a cloud key missing or refused by the service; the private chat with Docker missing, stopped or the port taken; Claude Desktop and ChatGPT installed but not connected, or a damaged config; PowerShell 7; and a newer console release. Fixes reuse the recipe runner: restart, install, start, download, connect, open, or jump to Settings. 7 tests.)
 
 - **Why**: when something does not work, a newcomer cannot read logs. A Doctor view runs the checks (services up, keys valid, Docker running, ports free, Ollama has a model, connections written, versions current) and offers the fix for each failure in one click, with a plain explanation.
 - **Size**: M.

@@ -14,6 +14,8 @@ import { Sidecar, waitForHealth } from "./lib/sidecars.js";
 import { capOutput, pwshInvocation } from "./lib/pwsh.js";
 import { TOOLBOX, detectToolbox, toolboxInstallCommand, toolboxSourceLabel } from "./lib/toolbox.js";
 import { AI_CHOICES, DEFAULT_LOCAL_MODEL, advancedPlan, plan, planAll, summarise } from "./lib/recipes.js";
+import { PORTS, diagnose, readClientConfig, summarise as doctorSummary } from "./lib/doctor.js";
+import { connect as netConnect } from "node:net";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
@@ -156,6 +158,80 @@ ipcMain.handle("console:advanced:run", async (_e, answers) => {
   return runSteps(p.steps, { patch: policy?.patch || {} });
 });
 ipcMain.handle("console:firstrun:done", async () => { const s = loadSettings(); s.firstRunDone = "yes"; saveSettings(s); return { ok: true }; });
+
+// ---- the Doctor (roadmap 49): gather the facts, let lib/doctor.js judge them, run the fix it offers
+async function portState(port, healthUrl) {
+  if (healthUrl && await io.fetchOk(healthUrl)) return "lapidary";
+  return new Promise((resolve) => {
+    const sock = netConnect({ host: "127.0.0.1", port, timeout: 800 });
+    sock.once("connect", () => { sock.destroy(); resolve("other"); });
+    sock.once("error", () => resolve("free"));
+    sock.once("timeout", () => { sock.destroy(); resolve("free"); });
+  });
+}
+async function probeKey(provider, key) {
+  if (!key) return null;
+  const url = provider === "anthropic" ? "https://api.anthropic.com/v1/models" : "https://api.openai.com/v1/models";
+  const headers = provider === "anthropic" ? { "x-api-key": key, "anthropic-version": "2023-06-01" } : { authorization: `Bearer ${key}` };
+  try {
+    const r = await fetch(url, { headers, signal: AbortSignal.timeout(6000) });
+    if (r.ok) return "ok";
+    if (r.status === 401 || r.status === 403) return "invalid";
+    return "offline";
+  } catch { return "offline"; }
+}
+async function latestRelease() {
+  try {
+    const r = await fetch("https://api.github.com/repos/poyfather/lapidary/releases/latest", { headers: { accept: "application/vnd.github+json" }, signal: AbortSignal.timeout(5000) });
+    if (!r.ok) return null;
+    const tag = (await r.json()).tag_name || "";
+    return tag.replace(/^v/, "") || null;
+  } catch { return null; }
+}
+const readText = (file) => { try { return readFileSync(file, "utf8"); } catch { return null; } };
+
+ipcMain.handle("console:doctor", async () => {
+  const s = loadSettings();
+  const [status, ports, anthropic, openai, latest] = await Promise.all([
+    detectAll(io),
+    (async () => ({
+      [PORTS.lapidary]: await portState(PORTS.lapidary, "http://127.0.0.1:8000/health"),
+      [PORTS.ui]: await portState(PORTS.ui, "http://127.0.0.1:3000"),
+      [PORTS.openwebui]: await portState(PORTS.openwebui, "http://127.0.0.1:3080/health"),
+      [PORTS.ollama]: await portState(PORTS.ollama, "http://127.0.0.1:11434/api/tags"),
+    }))(),
+    probeKey("anthropic", s.anthropicKey),
+    probeKey("openai", s.openaiKey),
+    latestRelease(),
+  ]);
+  const findings = diagnose({
+    status,
+    settings: { ...s, anthropicKey: s.anthropicKey ? "set" : "", openaiKey: s.openaiKey ? "set" : "" },
+    keys: { anthropic, openai },
+    ports,
+    clients: { claude: readClientConfig(readText(P.claudeConfig)), chatgpt: readClientConfig(readText(P.chatgptConfig)) },
+    composeExists: existsSync(join(dataDir, "open-webui.compose.yml")),
+    version: app.getVersion(),
+    latest,
+  });
+  log(`[doctor] ${doctorSummary(findings)}`);
+  return { findings, summary: doctorSummary(findings), checkedAt: new Date().toISOString() };
+});
+ipcMain.handle("console:doctor:fix", async (_e, action) => {
+  const [kind, arg] = [action.slice(0, action.indexOf(":") === -1 ? action.length : action.indexOf(":")), action.slice(action.indexOf(":") + 1)];
+  if (kind === "restart") { backend?.stop(); frontend?.stop(); await startSidecars(); return { ok: true, message: "Lapidary restarted" }; }
+  if (kind === "open" && arg === "docker") {
+    const code = process.platform === "win32" ? await runCommand("cmd", ["/c", "start", "", "Docker Desktop"]) : await runCommand("open", ["-a", "Docker"]);
+    return { ok: code === 0, message: code === 0 ? "Docker Desktop is opening; wait for it to say running, then check again" : "could not open Docker Desktop; start it from the Start menu" };
+  }
+  if (kind === "open") { await shell.openExternal(arg); return { ok: true, message: "opened" }; }
+  if (kind === "view") return { ok: true, message: "", view: arg };
+  if (["install", "start", "pull", "connect", "policy"].includes(kind)) {
+    const r = await runStep({ id: action, kind, detail: "" }, kind === "policy" ? { modelPolicy: arg } : {});
+    return r;
+  }
+  return { ok: false, message: `no fix called ${action}` };
+});
 
 const progress = (ev) => { win?.webContents.send("console:progress", ev); if (ev.message) log(`[recipe] ${ev.step}: ${ev.message}`); };
 
