@@ -26,6 +26,8 @@ def run(coro):
 def test_private_text_is_never_stored() -> None:
     assert memory_service.strip_private("Keep this. <private>not this</private> And this.") == "Keep this. And this."
     assert memory_service.strip_private("<PRIVATE>only\nsecrets</PRIVATE>") == ""
+    assert memory_service.strip_private("Keep. <private>unclosed and the rest goes too") == "Keep."
+    assert memory_service.strip_private("<private>" * 5000 + "x") == "", "many tags cannot make it slow (CodeQL py/polynomial-redos)"
     assert run(memory_service.remember("<private>x</private>")) is None
 
 

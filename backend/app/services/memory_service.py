@@ -21,8 +21,8 @@ from app.storage import get_store
 
 logger = logging.getLogger(__name__)
 
-_PRIVATE = re.compile(r"<private>.*?</private>", re.DOTALL | re.IGNORECASE)
 _WS = re.compile(r"[ \t]+")
+_OPEN, _CLOSE = "<private>", "</private>"
 SUMMARIZER_GEM = "memory_summarizer"
 
 
@@ -32,9 +32,25 @@ def _store():
 
 
 def strip_private(text: str) -> str:
-    """Drop everything inside <private>...</private>, then tidy whitespace."""
-    out = _PRIVATE.sub("", text or "")
-    out = _WS.sub(" ", out)
+    """
+    Drop everything inside <private>...</private> (any case), then tidy whitespace.
+    A plain scan, not a regular expression, so a string full of tags cannot make it slow;
+    an opening tag without a closing one drops the rest of the text.
+    """
+    text = text or ""
+    lower = text.lower()
+    kept, pos = [], 0
+    while True:
+        i = lower.find(_OPEN, pos)
+        if i == -1:
+            kept.append(text[pos:])
+            break
+        kept.append(text[pos:i])
+        j = lower.find(_CLOSE, i + len(_OPEN))
+        if j == -1:
+            break
+        pos = j + len(_CLOSE)
+    out = _WS.sub(" ", "".join(kept))
     return re.sub(r"\n{3,}", "\n\n", out).strip()
 
 
