@@ -45,16 +45,17 @@ CREATE TRIGGER gems_updated_at
   FOR EACH ROW EXECUTE FUNCTION _gems_set_updated_at();
 
 -- ============================================================
--- ROW LEVEL SECURITY
--- Adjust these policies to match your auth requirements.
--- For a private tool, "allow all" is fine.
--- For multi-tenant, add user_id column and scope policies.
+-- ROW LEVEL SECURITY (see DECISIONS.md, ADR-006)
+-- The backend and the MCP server connect with the service role key,
+-- which bypasses RLS. No policy is defined for the anon or authenticated
+-- roles on purpose: with RLS enabled and no policies, every other
+-- Supabase client gets zero rows, so a leaked anon key reads nothing.
+-- Access control for callers is the GEMS_API_KEY check in the API.
+-- For a multi-user deployment, add an owner_id column and policies for
+-- the authenticated role; see docs/ROADMAP.md items 9 and 21.
 -- ============================================================
 ALTER TABLE gems ENABLE ROW LEVEL SECURITY;
-
--- Allow all operations (open policy — tighten for production)
 DROP POLICY IF EXISTS "allow_all" ON gems;
-CREATE POLICY "allow_all" ON gems FOR ALL USING (true) WITH CHECK (true);
 
 -- ============================================================
 -- SEED DATA — sample gems to demonstrate all features

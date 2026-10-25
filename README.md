@@ -148,7 +148,7 @@ Backend variables live in `backend/.env` (template: [`.env.example`](.env.exampl
 | Variable | Where | What it does |
 |---|---|---|
 | `SUPABASE_URL` | backend | Your project URL |
-| `SUPABASE_SERVICE_ROLE_KEY` | backend | Server-side key; bypasses row level security. `SUPABASE_ANON_KEY` is accepted instead if you want RLS enforced |
+| `SUPABASE_SERVICE_ROLE_KEY` | backend | Server-side key, the only Supabase credential the backend accepts. RLS has no policies for any other role, so the anon key reads nothing |
 | `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` | backend | Providers for `/chat` and `chat_with_gem`. Set the ones you use |
 | `GEMS_API_KEY` | backend and frontend | Shared secret for the `X-API-Key` header. Required |
 | `CORS_ORIGINS` | backend | Comma-separated allowed origins, default `http://localhost:3000` |
@@ -160,7 +160,7 @@ Backend variables live in `backend/.env` (template: [`.env.example`](.env.exampl
 backend/app/        FastAPI app: routes/ (gems, chat), services/ (gem_service resolver, llm_service), auth.py, models.py
 backend/mcp_server.py   FastMCP server over the same services
 frontend/           Next.js 16 app router UI (app/, components/, lib/api.ts, proxy.ts)
-supabase/           schema.sql (table, RLS, seed gems) and one-off migrations
+supabase/           schema.sql (table, RLS, seed gems) and one-off migrations such as lock_down_rls.sql
 prompts/            the shipped gems as markdown, one file per gem
 evals/              live-API quality checks for gems (eval_prompt_enhancer.py)
 tests/              pytest unit tests, no network
