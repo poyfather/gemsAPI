@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { runs as runsApi, RunResult, errorMessage } from "@/lib/api";
+import { runs as runsApi, RunResult } from "@/lib/api";
+import { explain, providerLabel, statusLabel } from "@/lib/words";
 import RunEvents from "@/components/RunEvents";
 import { ArrowLeft, Loader2, AlertTriangle, Bot, MessageSquare } from "lucide-react";
 import clsx from "clsx";
@@ -31,7 +32,7 @@ export default function RunPage() {
       const fresh = await runsApi.get(id);
       setResult(fresh);
     } catch (e) {
-      setError(errorMessage(e, "Could not continue the run."));
+      setError(explain(e, "Could not continue."));
     } finally {
       setDeciding(false);
     }
@@ -42,7 +43,7 @@ export default function RunPage() {
     runsApi
       .get(id)
       .then((r) => { if (!cancelled) setResult(r); })
-      .catch((e) => { if (!cancelled) setError(errorMessage(e, "Run not found.")); });
+      .catch((e) => { if (!cancelled) setError(explain(e, "That run was not found.")); });
     return () => { cancelled = true; };
   }, [id]);
 
@@ -58,7 +59,7 @@ export default function RunPage() {
   if (!result) {
     return (
       <div className="flex items-center justify-center py-20 text-slate-500">
-        <Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading run...
+        <Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading...
       </div>
     );
   }
@@ -73,25 +74,25 @@ export default function RunPage() {
         <div className="flex-1 min-w-0">
           <h1 className="text-xl font-bold text-white flex items-center gap-2">
             <Bot className="w-5 h-5 text-violet-400" />
-            Run of <span className="font-mono text-violet-300">{run.gem_name}</span>
+            What <span className="font-mono text-violet-300">{run.gem_name}</span> did
           </h1>
           <p className="text-xs text-slate-500 font-mono mt-0.5 truncate">{run.id}</p>
         </div>
-        <span className={clsx("px-2 py-0.5 rounded-md text-xs border", STATUS_STYLES[run.status] ?? "")}>{run.status}</span>
+        <span className={clsx("px-2 py-0.5 rounded-md text-xs border", STATUS_STYLES[run.status] ?? "")}>{statusLabel(run.status)}</span>
         <Link
           href={`/chat?gem=${run.gem_name}`}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 text-sm transition-colors"
         >
           <MessageSquare className="w-4 h-4" />
-          Run again
+          Ask it again
         </Link>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
         {[
-          ["Model", `${run.provider} / ${run.model}`],
+          ["Which AI", `${providerLabel(run.provider)}, ${run.model}`],
           ["Steps", String(run.steps)],
-          ["Tokens", `${run.input_tokens} in, ${run.output_tokens} out`],
+          ["Tokens (in, out)", `${run.input_tokens}, ${run.output_tokens}`],
           ["Started", new Date(run.created_at).toLocaleString()],
         ].map(([label, value]) => (
           <div key={label} className="bg-gem-card border border-gem-border rounded-xl p-3">
@@ -106,17 +107,17 @@ export default function RunPage() {
       )}
 
       <section className="bg-gem-card border border-gem-border rounded-xl p-4 space-y-2">
-        <h2 className="text-xs font-medium text-slate-400">Input</h2>
+        <h2 className="text-xs font-medium text-slate-400">What you asked</h2>
         <pre className="whitespace-pre-wrap font-sans text-sm text-slate-200">{run.input}</pre>
       </section>
 
       <section className="bg-gem-card border border-gem-border rounded-xl p-4 space-y-2">
-        <h2 className="text-xs font-medium text-slate-400">Events</h2>
+        <h2 className="text-xs font-medium text-slate-400">What happened, step by step</h2>
         <RunEvents events={events} onDecide={run.status === "waiting_approval" ? decide : undefined} deciding={deciding} />
       </section>
 
       <section className="bg-gem-card border border-gem-border rounded-xl p-4 space-y-2">
-        <h2 className="text-xs font-medium text-slate-400">Output</h2>
+        <h2 className="text-xs font-medium text-slate-400">What it answered</h2>
         <pre className="whitespace-pre-wrap font-sans text-sm text-slate-200">{run.output ?? ""}</pre>
       </section>
     </div>

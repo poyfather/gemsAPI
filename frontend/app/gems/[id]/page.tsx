@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { gems as gemsApi, Gem, ResolveResponse, errorMessage } from "@/lib/api";
+import { gems as gemsApi, Gem, ResolveResponse } from "@/lib/api";
+import { explain, providerLabel } from "@/lib/words";
 import {
   ArrowLeft, Edit, Trash2, MessageSquare, Loader2,
   AlertTriangle, Variable, LinkIcon, Cpu, ChevronDown, ChevronUp, Bot
@@ -28,7 +29,7 @@ export default function GemDetailPage() {
         const data = await gemsApi.get(id);
         setGem(data);
       } catch (e) {
-        setError(errorMessage(e, "Failed to load the gem."));
+        setError(explain(e, "Could not load this prompt."));
       } finally {
         setLoading(false);
       }
@@ -37,13 +38,13 @@ export default function GemDetailPage() {
   }, [id]);
 
   const handleDelete = async () => {
-    if (!confirm(`Delete gem "${gem?.name}"? This cannot be undone.`)) return;
+    if (!confirm(`Delete "${gem?.name}"? This cannot be undone.`)) return;
     setDeleting(true);
     try {
       await gemsApi.delete(id);
       router.push("/gems");
     } catch (e) {
-      alert(errorMessage(e, "Failed to delete the gem."));
+      alert(explain(e, "Could not delete it."));
       setDeleting(false);
     }
   };
@@ -55,7 +56,7 @@ export default function GemDetailPage() {
       const res = await gemsApi.resolve(gem.name, varValues);
       setResolve(res);
     } catch (e) {
-      alert(errorMessage(e, "Failed to resolve the gem."));
+      alert(explain(e, "Could not build the prompt as sent."));
     } finally {
       setLoadingResolve(false);
     }
@@ -73,14 +74,14 @@ export default function GemDetailPage() {
     return (
       <div className="flex items-center gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400">
         <AlertTriangle className="w-5 h-5 shrink-0" />
-        <p>{error || "Gem not found."}</p>
+        <p>{error || "That prompt was not found. Go back to the library and pick it again."}</p>
         <Link href="/gems" className="ml-auto text-sm underline">Back to library</Link>
       </div>
     );
   }
 
   const gemRefs = Array.from(
-    new Set((gem.system_prompt.match(/\{\{gem:([^}]+)\}\}/g) || []).map((m) => m.slice(7, -2).trim()))
+    new Set((gem.system_prompt.match(/\{\{gem:([^}]+)\}\}/g) || []).map((m) => m.slice(6, -2).trim()))
   );
 
   return (
@@ -103,7 +104,7 @@ export default function GemDetailPage() {
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 text-sm transition-colors"
           >
             <MessageSquare className="w-4 h-4" />
-            {gem.kind === "agent" ? "Run in Chat" : "Test in Chat"}
+            {gem.kind === "agent" ? "Run it" : "Try it"}
           </Link>
           <Link
             href={`/gems/${gem.id}/edit`}
@@ -131,9 +132,9 @@ export default function GemDetailPage() {
             <div className="bg-gem-card border border-violet-500/30 rounded-xl p-4 space-y-2">
               <div className="flex items-center gap-2">
                 <Bot className="w-4 h-4 text-violet-400" />
-                <span className="text-xs text-violet-300">Agent gem</span>
+                <span className="text-xs text-violet-300">Assistant</span>
               </div>
-              <p className="text-xs text-slate-500">May call these tools in a loop:</p>
+              <p className="text-xs text-slate-500">May use these tools, step by step:</p>
               <div className="flex flex-wrap gap-1.5">
                 {(gem.tools ?? []).length === 0
                   ? <span className="text-xs text-slate-600">no tools</span>
@@ -146,7 +147,7 @@ export default function GemDetailPage() {
           <div className="bg-gem-card border border-gem-border rounded-xl p-4 space-y-3">
             <div className="flex items-center gap-2">
               <Cpu className="w-4 h-4 text-slate-500" />
-              <span className="text-xs text-slate-500">Provider / Model</span>
+              <span className="text-xs text-slate-500">Which AI</span>
             </div>
             <div className="text-sm text-slate-300">
               <span className={clsx(
@@ -155,9 +156,9 @@ export default function GemDetailPage() {
                   ? "bg-orange-500/10 text-orange-400"
                   : "bg-emerald-500/10 text-emerald-400"
               )}>
-                {gem.provider}
+                {providerLabel(gem.provider)}
               </span>
-              <code className="text-slate-400 text-xs">{gem.model}</code>
+              <code className="text-slate-400 text-xs">{gem.provider === "auto" ? "" : gem.model}</code>
             </div>
           </div>
 
@@ -175,7 +176,7 @@ export default function GemDetailPage() {
           {gem.variables.length > 0 && (
             <div className="bg-gem-card border border-gem-border rounded-xl p-4 space-y-2">
               <p className="text-xs text-slate-500 flex items-center gap-1">
-                <Variable className="w-3 h-3" /> Variables
+                <Variable className="w-3 h-3" /> Blanks to fill
               </p>
               <div className="space-y-1">
                 {gem.variables.map((v) => (
@@ -188,7 +189,7 @@ export default function GemDetailPage() {
           {gemRefs.length > 0 && (
             <div className="bg-gem-card border border-gem-border rounded-xl p-4 space-y-2">
               <p className="text-xs text-slate-500 flex items-center gap-1">
-                <LinkIcon className="w-3 h-3" /> Embeds
+                <LinkIcon className="w-3 h-3" /> Built from
               </p>
               <div className="space-y-1">
                 {gemRefs.map((r) => (
@@ -225,7 +226,7 @@ export default function GemDetailPage() {
               onClick={() => setShowRaw(!showRaw)}
               className="w-full flex items-center justify-between px-4 py-3 hover:bg-gem-hover transition-colors"
             >
-              <span className="text-sm font-medium text-slate-300">Raw System Prompt</span>
+              <span className="text-sm font-medium text-slate-300">The prompt as written</span>
               {showRaw ? <ChevronUp className="w-4 h-4 text-slate-500" /> : <ChevronDown className="w-4 h-4 text-slate-500" />}
             </button>
             {showRaw && (
@@ -240,20 +241,20 @@ export default function GemDetailPage() {
           {/* Resolve panel */}
           <div className="bg-gem-card border border-gem-border rounded-xl overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-gem-border">
-              <span className="text-sm font-medium text-slate-300">Resolved Prompt</span>
+              <span className="text-sm font-medium text-slate-300">The prompt as sent <span className="font-normal text-slate-500">(other prompts pasted in, blanks filled)</span></span>
               <button
                 onClick={handleResolve}
                 disabled={loadingResolve}
                 className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-violet-600/20 hover:bg-violet-600/30 text-violet-300 text-xs transition-colors"
               >
                 {loadingResolve && <Loader2 className="w-3 h-3 animate-spin" />}
-                Resolve
+                Build it
               </button>
             </div>
 
             {gem.variables.length > 0 && (
               <div className="px-4 py-3 border-b border-gem-border space-y-2">
-                <p className="text-xs text-slate-500">Variable values (optional):</p>
+                <p className="text-xs text-slate-500">Fill the blanks (optional):</p>
                 {gem.variables.map((v) => (
                   <div key={v} className="flex items-center gap-2">
                     <code className="text-xs text-blue-400 w-28 shrink-0">{"{" + v + "}"}</code>
@@ -272,18 +273,18 @@ export default function GemDetailPage() {
             <div className="p-4 min-h-[200px]">
               {!resolve ? (
                 <p className="text-slate-600 text-sm italic">
-                  Click &quot;Resolve&quot; to expand recursive gem references and preview the final prompt.
+                  Press &quot;Build it&quot; to see the prompt exactly as the AI will receive it.
                 </p>
               ) : (
                 <>
                   {resolve.variables_missing.length > 0 && (
                     <div className="mb-3 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-400">
-                      Missing variables: {resolve.variables_missing.map((v) => "{" + v + "}").join(", ")}
+                      Blanks not filled: {resolve.variables_missing.map((v) => "{" + v + "}").join(", ")}
                     </div>
                   )}
                   {resolve.referenced_gems.length > 0 && (
                     <div className="mb-3 flex flex-wrap gap-1.5 items-center">
-                      <span className="text-xs text-slate-500">Expanded:</span>
+                      <span className="text-xs text-slate-500">Pasted in:</span>
                       {resolve.referenced_gems.map((r) => (
                         <span key={r} className="text-xs px-1.5 py-0.5 rounded-sm bg-violet-500/10 text-violet-400 font-mono">{r}</span>
                       ))}

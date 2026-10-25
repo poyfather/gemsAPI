@@ -6,7 +6,7 @@ import { Gem, MessageSquare, Plus, Github } from "lucide-react";
 import clsx from "clsx";
 
 const navLinks = [
-  { href: "/gems",  label: "Gems",  icon: Gem },
+  { href: "/gems",  label: "Prompts",  icon: Gem },
   { href: "/chat",  label: "Chat",  icon: MessageSquare },
 ];
 
@@ -54,7 +54,7 @@ export default function Navigation() {
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium transition-colors"
             >
               <Plus className="w-4 h-4" />
-              New Gem
+              New prompt
             </Link>
             <a
               href="https://github.com"

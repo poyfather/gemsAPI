@@ -66,7 +66,7 @@ These were found during the audit and fixed because CI could not pass without th
 | 45 | Gates: builder, tests, visual review, adversarial review, acceptance | Agents, quality | L | Next |
 | 46 | Workbench: parallel runs on worktrees; Codex and OpenCode as clients | Console, agents | L | Later |
 | 47 | Guided first run and recipes: outcomes in one click | Console, newcomers | L | Now, done |
-| 48 | Plain-language pass over the console and the web UI | Console, newcomers | M | Now |
+| 48 | Plain-language pass over the console and the web UI | Console, newcomers | M | Now, done |
 | 49 | Doctor: self-check with offered fixes | Console, newcomers | M | Next |
 | 50 | Explainers: every screen says what it is for and why | Console, newcomers | S | Now |
 
@@ -419,6 +419,8 @@ The person this is for does not know much about AI, installs the console, and sh
 - **Depends on**: 37, 39, 40, 44 (local models so the default path needs no key).
 
 ### 48. Plain-language pass over the console and the web UI
+
+**Status: done** (web UI: Prompts and assistants, blanks to fill, built from others, which AI, the prompt as sent, what the assistant did, "asks first" for risky tools, and `frontend/lib/words.ts` with `explain()` so every error says what to do next; console: connect instead of MCP, keys named by the AI they unlock, the acronyms and file names behind the Advanced switch, installer and Docker failures saying what to do; the API, the URLs and the docs keep the original words).
 
 - **Why**: "MCP", "gem", "run", "provider", "RLS" are our words. The console and the web UI get a pass against ADR-012: connect instead of MCP, prompts and assistants instead of gems and agents where a newcomer reads, "what the assistant did" for runs, acronyms only in details, every error message saying what to do next. The retro look stays.
 - **Size**: M.

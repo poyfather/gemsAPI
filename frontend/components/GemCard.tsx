@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Gem } from "@/lib/api";
+import { providerLabel } from "@/lib/words";
 import { Cpu, Tag, Variable, LinkIcon, Clock, Bot } from "lucide-react";
 import clsx from "clsx";
 
@@ -31,7 +32,7 @@ export default function GemCard({ gem, onDelete }: GemCardProps) {
             {gem.name}
           </Link>
           <p className="text-slate-400 text-sm mt-1 line-clamp-2">
-            {gem.description || "No description."}
+            {gem.description || "No description yet."}
           </p>
         </div>
         <span
@@ -40,7 +41,7 @@ export default function GemCard({ gem, onDelete }: GemCardProps) {
             PROVIDER_COLORS[gem.provider] || "bg-slate-500/10 text-slate-400 border-slate-500/20"
           )}
         >
-          {gem.provider}
+          {providerLabel(gem.provider)}
         </span>
       </div>
 
@@ -49,7 +50,7 @@ export default function GemCard({ gem, onDelete }: GemCardProps) {
         {gem.kind === "agent" && (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs bg-violet-500/10 text-violet-300 border border-violet-500/20">
             <Bot className="w-3 h-3" />
-            agent{gem.tools && gem.tools.length > 0 ? `, ${gem.tools.length} tool${gem.tools.length !== 1 ? "s" : ""}` : ""}
+            assistant{gem.tools && gem.tools.length > 0 ? `, ${gem.tools.length} tool${gem.tools.length !== 1 ? "s" : ""}` : ""}
           </span>
         )}
         {gem.tags.map((tag) => (
@@ -64,13 +65,13 @@ export default function GemCard({ gem, onDelete }: GemCardProps) {
         {gem.variables.length > 0 && (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20">
             <Variable className="w-3 h-3" />
-            {gem.variables.length} var{gem.variables.length !== 1 ? "s" : ""}
+            {gem.variables.length} blank{gem.variables.length !== 1 ? "s" : ""} to fill
           </span>
         )}
         {hasRefs && (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs bg-violet-500/10 text-violet-400 border border-violet-500/20">
             <LinkIcon className="w-3 h-3" />
-            recursive
+            built from others
           </span>
         )}
       </div>

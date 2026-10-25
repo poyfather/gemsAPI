@@ -4,7 +4,7 @@ import Navigation from "@/components/Navigation";
 
 export const metadata: Metadata = {
   title: "Lapidary, prompt library and agent harness",
-  description: "Compose reusable LLM prompts as gems, run them as agents, and serve them over REST, a web UI and MCP.",
+  description: "Write a prompt once, fill in the blanks, build assistants that use tools, and use them from Claude, ChatGPT, Open WebUI or the API.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -13,13 +13,13 @@ export default function NewGemPage() {
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h1 className="text-xl font-bold text-white">New Gem</h1>
+          <h1 className="text-xl font-bold text-white">New prompt</h1>
           <p className="text-slate-400 text-sm mt-0.5">
-            Create a reusable prompt. Use{" "}
+            Write it once and use it everywhere. Put{" "}
             <code className="text-violet-400 bg-violet-500/10 px-1 rounded-sm">{"{{gem:name}}"}</code>{" "}
-            to embed other gems and{" "}
+            where another prompt should be pasted in, and{" "}
             <code className="text-blue-400 bg-blue-500/10 px-1 rounded-sm">{"{variable}"}</code>{" "}
-            for placeholders.
+            for a blank you fill in each time.
           </p>
         </div>
       </div>
