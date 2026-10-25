@@ -66,8 +66,9 @@ Every surface hands the gem to the same resolver, which expands `{{gem:name}}` r
 |---|---|
 | **Web UI** (Next.js 16, port 3000) | Browse, search and tag gems, edit them with a live resolved preview, and test any gem in a chat view against Anthropic or OpenAI models |
 | **REST API** (FastAPI, port 8000) | CRUD on `/gems`, `POST /gems/resolve` to expand a gem, `POST /chat` with optional SSE streaming, Swagger at `/docs` |
-| **MCP server** (FastMCP, stdio) | Tools `list_gems`, `search_gems`, `get_gem`, `resolve_gem_prompt`, `chat_with_gem`, `create_gem`, `list_available_models`, plus `gems://list` and `gems://{name}` resources |
-| **Seed gems** | `base_assistant`, `code_reviewer`, `creative_writer`, `summarizer`, `engineering_lead`, `prompt_enhancer`, each also kept as a reviewable file in [`prompts/`](prompts/) |
+| **MCP server** (FastMCP, stdio) | Tools `list_gems`, `search_gems`, `get_gem`, `resolve_gem_prompt`, `chat_with_gem`, `create_gem`, `run_agent`, `list_agent_tools`, `list_available_models`, plus `gems://list`, `gems://{name}` and `runs://{id}` resources |
+| **Agent runs** | A gem of kind `agent` lists tools it may call; `POST /agents/{name}/runs` runs the loop (model turn, tool calls, results, repeat) and records every step in `runs` and `run_events` |
+| **Seed gems** | `base_assistant`, `code_reviewer`, `creative_writer`, `summarizer`, `engineering_lead`, `prompt_enhancer`, and the agent `gem_librarian`, each also kept as a reviewable file in [`prompts/`](prompts/) |
 
 ## Quick start
 
@@ -141,6 +142,20 @@ curl -s http://localhost:8000/gems/resolve \
 
 The response carries `resolved_prompt`, `referenced_gems` (`["code_reviewer", "base_assistant"]`), `variables_used` and `variables_missing` for anything left unfilled. Gems can be fetched, updated and deleted by name or by id.
 
+## Agents
+
+A gem can act as well as answer. Set its `kind` to `agent` and list the tools it may call; the run loop then lets the model call those tools, feeds the results back, and repeats until the model answers or `AGENT_MAX_STEPS` is reached. Every model turn, tool call and tool result is recorded, so a run can be read back, compared and evaluated.
+
+The shipped tools are read-only and about the library itself (`search_gems`, `get_gem`, `resolve_gem`); `GET /agents/tools` lists them with their argument schemas. The seed agent `gem_librarian` uses all three:
+
+```sh
+curl -s http://localhost:8000/agents/gem_librarian/runs \
+  -H "X-API-Key: $GEMS_API_KEY" -H "Content-Type: application/json" \
+  -d '{"message": "Which gems take a language variable, and what does code_reviewer expand to for Python?"}'
+```
+
+The response is the run (status, output, steps, tokens) plus its events; `GET /runs/{id}` returns the same later, and `"stream": true` delivers the events as Server-Sent Events while the run happens. Over MCP the same loop is the `run_agent` tool, so Claude Desktop or Cursor can hand a task to one of your agents and get the answer and the run id back. Tools marked risky are refused unless a run is started with `allow_risky`; none of the shipped tools are. [ARCHITECTURE.md](ARCHITECTURE.md) has the loop as a sequence diagram, and ADR-007 in [DECISIONS.md](DECISIONS.md) explains the design.
+
 ## Configuration
 
 Backend variables live in `backend/.env` (template: [`.env.example`](.env.example)); frontend variables in `frontend/.env.local` (template: [`frontend/.env.local.example`](frontend/.env.local.example)).
@@ -156,14 +171,15 @@ Backend variables live in `backend/.env` (template: [`.env.example`](.env.exampl
 | `GEMS_DEFAULT_PROVIDER`, `GEMS_DEFAULT_MODEL` | backend | Provider and model for new gems, default `anthropic` and `claude-opus-5-5` |
 | `GEMS_MODELS_ANTHROPIC`, `GEMS_MODELS_OPENAI` | backend | Optional comma-separated model lists. When unset, `GET /chat/models` asks each configured provider for its current models and caches the answer for `GEMS_MODEL_LIST_TTL_SECONDS` (default 600) |
 | `LLM_TIMEOUT_SECONDS`, `LLM_MAX_RETRIES`, `LLM_MAX_TOKENS` | backend | Per-attempt timeout (60), SDK retries on 429 and 5xx (2), and the completion cap (4096) |
+| `AGENT_MAX_STEPS`, `AGENT_TOOL_RESULT_MAX_CHARS` | backend | Model turns per agent run (8) and the longest tool result sent back to the model (8000) |
 
 ## Project layout
 
 ```
-backend/app/        FastAPI app: routes/ (gems, chat), services/ (gem_service resolver, llm_service), auth.py, models.py
+backend/app/        FastAPI app: routes/ (gems, chat, agents), services/ (gem_service resolver, llm_service), agents/ (tool registry, run loop, run store), auth.py, models.py
 backend/mcp_server.py   FastMCP server over the same services
 frontend/           Next.js 16 app router UI (app/, components/, lib/api.ts, proxy.ts)
-supabase/           schema.sql (table, RLS, seed gems) and one-off migrations such as lock_down_rls.sql
+supabase/           schema.sql (tables, RLS, seed gems) and one-off migrations such as lock_down_rls.sql and add_agent_runs.sql
 prompts/            the shipped gems as markdown, one file per gem
 evals/              live-API quality checks for gems (eval_prompt_enhancer.py)
 tests/              pytest unit tests, no network

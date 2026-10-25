@@ -19,6 +19,9 @@ CREATE TABLE IF NOT EXISTS gems (
                           CHECK (provider IN ('anthropic', 'openai')),
   tags        TEXT[]      NOT NULL DEFAULT '{}',
   variables   TEXT[]      NOT NULL DEFAULT '{}',
+  kind        TEXT        NOT NULL DEFAULT 'prompt'
+                          CHECK (kind IN ('prompt', 'agent')),
+  tools       TEXT[]      NOT NULL DEFAULT '{}',
   is_active   BOOLEAN     NOT NULL DEFAULT true,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -45,6 +48,45 @@ CREATE TRIGGER gems_updated_at
   FOR EACH ROW EXECUTE FUNCTION _gems_set_updated_at();
 
 -- ============================================================
+-- AGENT RUNS (see DECISIONS.md, ADR-007)
+-- One row per run of an agent gem, and one row per event in it:
+-- model turns, tool calls, tool results, the finish or the failure.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS runs (
+  id            UUID        DEFAULT uuid_generate_v4() PRIMARY KEY,
+  gem_id        UUID        REFERENCES gems (id),
+  gem_name      TEXT        NOT NULL,
+  status        TEXT        NOT NULL DEFAULT 'running'
+                            CHECK (status IN ('running', 'finished', 'failed', 'max_steps')),
+  model         TEXT        NOT NULL,
+  provider      TEXT        NOT NULL,
+  input         TEXT        NOT NULL,
+  output        TEXT,
+  steps         INTEGER     NOT NULL DEFAULT 0,
+  input_tokens  INTEGER     NOT NULL DEFAULT 0,
+  output_tokens INTEGER     NOT NULL DEFAULT 0,
+  error         TEXT,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  finished_at   TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS run_events (
+  id         UUID        DEFAULT uuid_generate_v4() PRIMARY KEY,
+  run_id     UUID        NOT NULL REFERENCES runs (id) ON DELETE CASCADE,
+  seq        INTEGER     NOT NULL,
+  type       TEXT        NOT NULL,
+  data       JSONB       NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (run_id, seq)
+);
+
+CREATE INDEX IF NOT EXISTS runs_gem_name_idx   ON runs (gem_name);
+CREATE INDEX IF NOT EXISTS runs_created_at_idx ON runs (created_at DESC);
+
+ALTER TABLE runs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE run_events ENABLE ROW LEVEL SECURITY;
+
+-- ============================================================
 -- ROW LEVEL SECURITY (see DECISIONS.md, ADR-006)
 -- The backend and the MCP server connect with the service role key,
 -- which bypasses RLS. No policy is defined for the anon or authenticated
@@ -61,7 +103,27 @@ DROP POLICY IF EXISTS "allow_all" ON gems;
 -- SEED DATA — sample gems to demonstrate all features
 -- ============================================================
 
-INSERT INTO gems (name, description, system_prompt, model, provider, tags, variables) VALUES
+INSERT INTO gems (name, description, system_prompt, model, provider, tags, variables, kind, tools) VALUES
+
+-- An agent gem: it may call the three built-in gem tools in a loop.
+(
+  'gem_librarian',
+  'Agent that finds, reads and resolves gems in this library on request.',
+  '{{gem:base_assistant}}
+
+You are the librarian for this prompt library. The user asks about gems; you answer by using your tools, never from memory:
+- search_gems to find candidates by keyword or tag
+- get_gem to read a gem''s raw prompt, variables and references
+- resolve_gem to show the fully expanded prompt with variables filled
+
+Call the smallest number of tools that answers the question, then reply in plain prose. Quote gem names exactly. If nothing matches, say so and suggest the closest tags.',
+  'claude-opus-5-5',
+  'anthropic',
+  ARRAY['agent', 'library', 'utility'],
+  ARRAY[]::TEXT[],
+  'agent',
+  ARRAY['search_gems', 'get_gem', 'resolve_gem']
+),
 
 -- A base personality gem (no external refs, just a pure prompt)
 (
@@ -75,6 +137,8 @@ INSERT INTO gems (name, description, system_prompt, model, provider, tags, varia
   'claude-opus-5-5',
   'anthropic',
   ARRAY['base', 'personality'],
+  ARRAY[]::TEXT[],
+  'prompt',
   ARRAY[]::TEXT[]
 ),
 
@@ -96,7 +160,9 @@ Format your review with clear sections: **Summary**, **Issues** (severity: criti
   'claude-opus-5-5',
   'anthropic',
   ARRAY['code', 'review', 'engineering'],
-  ARRAY['language']
+  ARRAY['language'],
+  'prompt',
+  ARRAY[]::TEXT[]
 ),
 
 -- A creative writer gem
@@ -114,7 +180,9 @@ When given a creative task, craft vivid, engaging prose with strong voice. Use s
   'claude-opus-5-5',
   'anthropic',
   ARRAY['writing', 'creative'],
-  ARRAY['style', 'tone', 'genre']
+  ARRAY['style', 'tone', 'genre'],
+  'prompt',
+  ARRAY[]::TEXT[]
 ),
 
 -- A concise summarizer
@@ -132,7 +200,9 @@ Target length: {target_length}.',
   'claude-opus-5-5',
   'anthropic',
   ARRAY['utility', 'writing'],
-  ARRAY['depth', 'target_length']
+  ARRAY['depth', 'target_length'],
+  'prompt',
+  ARRAY[]::TEXT[]
 ),
 
 -- A compound gem that shows deep recursion
@@ -151,7 +221,9 @@ Always think about the team, not just the code. Assume {team_size} engineers wil
   'claude-opus-5-5',
   'anthropic',
   ARRAY['engineering', 'leadership'],
-  ARRAY['language', 'team_size']
+  ARRAY['language', 'team_size'],
+  'prompt',
+  ARRAY[]::TEXT[]
 ),
 
 -- ── Prompt Enhancer ────────────────────────────────────────────────────────────
@@ -259,6 +331,8 @@ Brief assessment of the original prompt''s weaknesses and what it needs.
   'claude-opus-5-5',
   'anthropic',
   ARRAY['prompting', 'utility', 'engineering', 'ai'],
+  ARRAY[]::TEXT[],
+  'prompt',
   ARRAY[]::TEXT[]
 )
 

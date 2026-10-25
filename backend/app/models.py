@@ -18,6 +18,8 @@ class GemBase(BaseModel):
     model: str = Field(default_factory=lambda: settings.DEFAULT_MODEL, description="Default LLM model")
     provider: str = Field(default_factory=lambda: settings.DEFAULT_PROVIDER, description="LLM provider: 'anthropic' or 'openai'")
     tags: list[str] = Field(default=[], description="Tags for searching and filtering")
+    kind: str = Field(default="prompt", description="'prompt' (one model call) or 'agent' (may call its tools in a loop)")
+    tools: list[str] = Field(default=[], description="Registered tool names an agent gem may call; see GET /agents/tools")
 
 
 class GemCreate(GemBase):
@@ -31,6 +33,8 @@ class GemUpdate(BaseModel):
     model: Optional[str] = None
     provider: Optional[str] = None
     tags: Optional[list[str]] = None
+    kind: Optional[str] = None
+    tools: Optional[list[str]] = None
 
 
 class Gem(GemBase):
@@ -80,3 +84,49 @@ class ChatResponse(BaseModel):
     model: str
     provider: str
     gem_name: str
+
+
+# ─── Agent run models (ADR-007) ────────────────────────────────────────────────
+
+class RunRequest(BaseModel):
+    message: str = Field(..., description="The user message that starts the run")
+    variables: dict[str, str] = Field(default={}, description="Values for {variable} placeholders in the gem")
+    model_override: Optional[str] = None
+    provider_override: Optional[str] = None
+    allow_risky: bool = Field(default=False, description="Let the run call tools marked risky")
+    stream: bool = Field(default=False, description="Stream run events as Server-Sent Events")
+
+
+class RunEvent(BaseModel):
+    seq: int
+    type: str = Field(..., description="run_started, model_turn, tool_call, tool_result, run_finished, run_failed")
+    data: dict = Field(default={})
+    created_at: datetime
+
+
+class Run(BaseModel):
+    id: str
+    gem_name: str
+    status: str = Field(..., description="running, finished, failed, max_steps")
+    model: str
+    provider: str
+    input: str
+    output: Optional[str] = None
+    steps: int = 0
+    input_tokens: int = 0
+    output_tokens: int = 0
+    error: Optional[str] = None
+    created_at: datetime
+    finished_at: Optional[datetime] = None
+
+
+class RunResult(BaseModel):
+    run: Run
+    events: list[RunEvent] = []
+
+
+class ToolInfo(BaseModel):
+    name: str
+    description: str
+    parameters: dict
+    risky: bool

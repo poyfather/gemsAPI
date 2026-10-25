@@ -53,3 +53,39 @@ def fake_library(monkeypatch):
     monkeypatch.setattr(gem_service, "get_gem_by_id", by_id)
     monkeypatch.setattr(gem_service, "get_all_gems", all_active)
     return library
+
+
+@pytest.fixture
+def fake_runs(monkeypatch):
+    """In-memory stand-in for the runs and run_events tables."""
+    from app.agents import run_service
+    from app.models import Run, RunEvent
+
+    store: dict[str, dict] = {"runs": {}, "events": {}}
+    counter = {"n": 0}
+
+    async def create_run(gem_id, gem_name, model, provider, input_text):
+        counter["n"] += 1
+        run = Run(id=f"run-{counter['n']}", gem_name=gem_name, status="running", model=model, provider=provider,
+                  input=input_text, created_at=datetime(2026, 1, 1, tzinfo=timezone.utc))
+        store["runs"][run.id] = run
+        store["events"][run.id] = []
+        return run
+
+    async def add_event(run_id, seq, type_, data):
+        ev = RunEvent(seq=seq, type=type_, data=data, created_at=datetime(2026, 1, 1, tzinfo=timezone.utc))
+        store["events"][run_id].append(ev)
+        return ev
+
+    async def finish_run(run_id, **fields):
+        run = store["runs"][run_id].model_copy(update={**fields, "finished_at": datetime(2026, 1, 1, tzinfo=timezone.utc)})
+        store["runs"][run_id] = run
+        return run
+
+    async def get_run(run_id):
+        run = store["runs"].get(run_id)
+        return (run, store["events"][run_id]) if run else None
+
+    for name, fn in [("create_run", create_run), ("add_event", add_event), ("finish_run", finish_run), ("get_run", get_run)]:
+        monkeypatch.setattr(run_service, name, fn)
+    return store

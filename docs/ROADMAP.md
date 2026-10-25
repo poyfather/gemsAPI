@@ -4,7 +4,7 @@ A prioritised list of improvements to the project itself, written on 2026-10-23 
 
 Sizes: **S** is under half a day, **M** is one to three days, **L** is a week or more. Items are numbered so they can be referenced from issues and from the root roadmap.
 
-Two lenses run through the list. Items 1 to 27 come from reading the code: correctness, security, developer experience. Items 14, 21, 22 and 28 to 31 come from asking what a person who writes prompts for a living needs from a prompt library, and are summarised in [For the prompt practitioner](#for-the-prompt-practitioner) at the end. If only one thread gets attention, that one is the product.
+Two lenses run through the list. Items 1 to 27 come from reading the code: correctness, security, developer experience. Items 14, 21, 22 and 28 to 31 come from asking what a person who writes prompts for a living needs from a prompt library, and are summarised in [For the prompt practitioner](#for-the-prompt-practitioner) at the end. If only one thread gets attention, that one is the product. Items 32 to 35 follow ADR-007, which turned gems into agent definitions with a thin run loop; they are what the loop needs next.
 
 ## Already done in the hygiene pull request
 
@@ -50,6 +50,10 @@ These were found during the audit and fixed because CI could not pass without th
 | 29 | Typed variables with descriptions and defaults | Product, MCP | M | Next |
 | 30 | Side-by-side runs | Product | M | Later |
 | 31 | Few-shot examples as first-class data | Product | M | Later |
+| 32 | Agent tools from remote MCP servers and HTTP endpoints | Agents | M | Next |
+| 33 | Approval gates with pause and resume | Agents, security | M | Next |
+| 34 | Run viewer in the UI | Agents, product | M | Next |
+| 35 | Managed Agents as an execution backend | Agents | M | Later |
 
 ## Now
 
@@ -268,6 +272,30 @@ Worth doing once the foundations above are in.
 - **Why**: `CONTEXT.md` and `ARCHITECTURE.md` mention Fly.io, Railway, Render and Vercel, and `next.config.mjs` and `CORS_ORIGINS` are built for it, but there is no walkthrough. One page with the env vars on each side, TLS in front of uvicorn, and the MCP server's place in that picture.
 - **Size**: S.
 - **Depends on**: 1 (working images), 27 can reuse the compose file.
+
+### 32. Agent tools from remote MCP servers and HTTP endpoints
+
+- **Why**: ADR-007 shipped the loop with three built-in tools about the library itself. The useful agents need the user's own tools. FastMCP can act as a client, so a gem could list a remote MCP server (the same config a user pastes into Claude Desktop) and get its tools; a plain HTTP tool described by a JSON schema covers the rest. Both plug into `backend/app/agents/tools.py` as more sources behind the same registry, and both need an allowlist of hosts and a timeout.
+- **Size**: M.
+- **Depends on**: nothing; 33 before anything that writes.
+
+### 33. Approval gates with pause and resume
+
+- **Why**: today a tool marked risky is simply refused unless the run opts in with `allow_risky`. Real use needs the run to pause, ask, and continue: a `waiting_approval` status, the pending call stored on the run, and `POST /runs/{id}/approve` that resumes the loop from the recorded messages. The run record already holds everything needed to rebuild the conversation.
+- **Size**: M.
+- **Depends on**: nothing. Needed before 32 adds tools that write.
+
+### 34. Run viewer in the UI
+
+- **Why**: runs are only readable over REST and MCP. The chat page is the natural run viewer: pick an agent gem, send a message, watch the events stream in (turns, tool calls and results, tokens), and open an old run by id. This is where item 13 (streaming) lands, since `POST /agents/{name}/runs` already streams. `GemForm` also needs `kind` and a tool picker from `GET /agents/tools`.
+- **Size**: M.
+- **Depends on**: nothing.
+
+### 35. Managed Agents as an execution backend
+
+- **Why**: for Anthropic, Managed Agents can run the loop and host a sandbox with bash, files and code execution, which the in-process loop will never offer. An agent gem could be marked `backend: managed` and synced as an agent object, with sessions started per run and the session id and events mirrored into `runs`. The definition and the run record stay the same, so evals and the viewer keep working.
+- **Size**: M.
+- **Depends on**: 32 (tool definitions in one shape), 15 (schema change as a migration).
 
 ### 30. Side-by-side runs
 
