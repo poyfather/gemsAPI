@@ -40,7 +40,7 @@ class _FakeClient:
 @pytest.fixture(autouse=True)
 def clean(monkeypatch):
     llm_service.clear_model_cache()
-    monkeypatch.setattr(settings, "PINNED_MODELS", {"anthropic": [], "openai": []})
+    monkeypatch.setattr(settings, "PINNED_MODELS", {"anthropic": [], "openai": [], "local": []})
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     yield
@@ -59,10 +59,10 @@ def test_without_keys_the_fallback_lists_are_returned() -> None:
 
 def test_pinned_models_from_env_win_and_skip_lookup(monkeypatch) -> None:
     import asyncio
-    monkeypatch.setattr(settings, "PINNED_MODELS", {"anthropic": ["claude-x"], "openai": ["gpt-y"]})
+    monkeypatch.setattr(settings, "PINNED_MODELS", {"anthropic": ["claude-x"], "openai": ["gpt-y"], "local": ["llama"]})
     monkeypatch.setenv("ANTHROPIC_API_KEY", "k")
     monkeypatch.setattr(llm_service, "_get_anthropic", lambda: (_ for _ in ()).throw(AssertionError("looked up")))
-    assert asyncio.run(_models()) == {"anthropic": ["claude-x"], "openai": ["gpt-y"]}
+    assert asyncio.run(_models()) == {"anthropic": ["claude-x"], "openai": ["gpt-y"], "local": ["llama"]}
 
 
 def test_live_lists_are_fetched_filtered_and_cached(monkeypatch) -> None:
@@ -81,8 +81,10 @@ def test_live_lists_are_fetched_filtered_and_cached(monkeypatch) -> None:
 
     monkeypatch.setattr(llm_service, "_get_anthropic", fake_anthropic)
     monkeypatch.setattr(llm_service, "_get_openai", fake_openai)
+    monkeypatch.setattr(llm_service, "_get_local", lambda: _FakeClient([], fail=True))
     first = asyncio.run(_models())
     assert first["anthropic"] == ["claude-b", "claude-a"]
+    assert first["local"] == []
     assert first["openai"] == ["o3", "gpt-5.5", "gpt-5.4-mini"]
     second = asyncio.run(_models())
     assert second == first
@@ -95,6 +97,7 @@ def test_a_failed_refresh_keeps_the_last_list_or_falls_back(monkeypatch) -> None
     import asyncio
     monkeypatch.setenv("ANTHROPIC_API_KEY", "k")
     monkeypatch.setattr(llm_service, "_get_anthropic", lambda: _FakeClient([], fail=True))
+    monkeypatch.setattr(llm_service, "_get_local", lambda: _FakeClient([], fail=True))
     assert asyncio.run(_models())["anthropic"] == settings.FALLBACK_MODELS["anthropic"]
     llm_service._cache["anthropic"] = (0.0, ["claude-old"])  # stale but known
     assert asyncio.run(_models())["anthropic"] == ["claude-old"]
@@ -115,6 +118,7 @@ def test_clients_get_timeout_and_retries(monkeypatch) -> None:
     monkeypatch.setattr(llm_service, "AsyncOpenAI", FakeOpenAI)
     monkeypatch.setattr(llm_service, "_anthropic", None)
     monkeypatch.setattr(llm_service, "_openai", None)
+    monkeypatch.setattr(llm_service, "_local", None)
     monkeypatch.setattr(settings, "LLM_TIMEOUT_SECONDS", 12.5)
     monkeypatch.setattr(settings, "LLM_MAX_RETRIES", 4)
     monkeypatch.setenv("ANTHROPIC_API_KEY", "a")
@@ -125,6 +129,10 @@ def test_clients_get_timeout_and_retries(monkeypatch) -> None:
     llm_service._openai = None
     assert seen["anthropic"] == {"api_key": "a", "timeout": 12.5, "max_retries": 4}
     assert seen["openai"] == {"api_key": "o", "timeout": 12.5, "max_retries": 4}
+    monkeypatch.setattr(settings, "LOCAL_OPENAI_BASE_URL", "http://127.0.0.1:1234/v1")
+    llm_service._get_local()
+    llm_service._local = None
+    assert seen["openai"] == {"api_key": "ollama", "base_url": "http://127.0.0.1:1234/v1", "timeout": 12.5, "max_retries": 4}
 
 
 def test_missing_key_is_an_environment_error_not_a_provider_error(monkeypatch) -> None:
@@ -162,3 +170,6 @@ def test_new_gems_default_to_the_configured_model_and_provider(monkeypatch) -> N
     monkeypatch.setattr(settings, "DEFAULT_PROVIDER", "anthropic")
     gem = GemCreate(name="x")
     assert (gem.model, gem.provider) == ("claude-test", "anthropic")
+    monkeypatch.setattr(settings, "DEFAULT_MODEL", "auto")
+    monkeypatch.setattr(settings, "DEFAULT_PROVIDER", "auto")
+    assert GemCreate(name="y").provider == "auto"

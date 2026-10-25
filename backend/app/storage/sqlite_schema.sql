@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS gems (
   description   TEXT NOT NULL DEFAULT '',
   system_prompt TEXT NOT NULL DEFAULT '',
   model         TEXT NOT NULL,
-  provider      TEXT NOT NULL CHECK (provider IN ('anthropic', 'openai')),
+  provider      TEXT NOT NULL CHECK (provider IN ('anthropic', 'openai', 'local', 'auto')),
   tags          TEXT NOT NULL DEFAULT '[]',
   variables     TEXT NOT NULL DEFAULT '[]',
   kind          TEXT NOT NULL DEFAULT 'prompt' CHECK (kind IN ('prompt', 'agent')),

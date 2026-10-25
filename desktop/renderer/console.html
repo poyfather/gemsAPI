@@ -71,6 +71,16 @@
           <h2>KEYS AND STORAGE</h2>
           <p class="hint">Stored with the operating system's credential encryption. Values are never shown again once saved.</p>
           <form id="settings-form">
+            <label>Which AI should we use?
+              <select name="modelPolicy">
+                <option value="auto">Decide for me (uses what is set up, says what it picked)</option>
+                <option value="local">The free one on this PC (private, works offline)</option>
+                <option value="online">The online ones (Claude and ChatGPT, paid by use with your key)</option>
+                <option value="mix">A mix (hard thinking online, everyday work on this PC)</option>
+                <option value="manual">I'll choose each time</option>
+              </select>
+            </label>
+            <label>Local model server (Ollama by default) <input name="localBaseUrl" type="text" placeholder="http://127.0.0.1:11434/v1"></label>
             <label>Anthropic API key <input name="anthropicKey" type="password" placeholder="sk-ant-..."></label>
             <label>OpenAI API key <input name="openaiKey" type="password" placeholder="sk-..."></label>
             <label>Lapidary API key <input name="gemsApiKey" type="text" placeholder="generated on first run"></label>

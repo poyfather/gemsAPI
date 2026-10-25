@@ -217,8 +217,9 @@ async def chat_with_gem(
         if not gem:
             return {"error": f"Gem '{gem_name}' not found."}
 
-        model    = model_override    or gem.model
-        provider = provider_override or gem.provider
+        from app.services import router as model_router
+        choice = await model_router.choose(gem, provider_override=provider_override, model_override=model_override)
+        model, provider = choice.model, choice.provider
 
         response = await complete(
             system_prompt=resolved,
@@ -231,6 +232,7 @@ async def chat_with_gem(
             "response": response,
             "model":    model,
             "provider": provider,
+            "reason":   choice.reason,
         }
     except Exception as exc:
         return {"error": str(exc)}
@@ -253,7 +255,7 @@ async def create_gem(
         description:   What this gem does.
         system_prompt: The prompt. Use {variable} for placeholders, {{gem:name}} to embed other gems.
         model:         LLM model; defaults to the server's GEMS_DEFAULT_MODEL.
-        provider:      'anthropic' or 'openai'; defaults to GEMS_DEFAULT_PROVIDER.
+        provider:      'anthropic', 'openai', 'local', or 'auto' (the model policy decides); defaults to GEMS_DEFAULT_PROVIDER.
         tags:          Optional list of tags.
 
     Example system_prompt with composition:

@@ -279,8 +279,9 @@ function ChatPageInner() {
                     className="w-full px-2.5 py-1.5 rounded-md bg-gem-surface border border-gem-border text-slate-300 text-xs focus:outline-hidden focus:ring-1 focus:ring-violet-500"
                   >
                     <option value="">Use gem default</option>
-                    <option value="anthropic">Anthropic</option>
-                    <option value="openai">OpenAI</option>
+                    <option value="anthropic">Anthropic (Claude)</option>
+                    <option value="openai">OpenAI (ChatGPT)</option>
+                    <option value="local">Local (Ollama, LM Studio)</option>
                   </select>
                 </div>
                 {availableModels.length > 0 && (
@@ -329,9 +330,13 @@ function ChatPageInner() {
                 "ml-auto px-2 py-0.5 rounded-md text-xs",
                 currentGem.provider === "anthropic"
                   ? "bg-orange-500/10 text-orange-400"
-                  : "bg-emerald-500/10 text-emerald-400"
+                  : currentGem.provider === "local"
+                    ? "bg-sky-500/10 text-sky-400"
+                    : currentGem.provider === "auto"
+                      ? "bg-violet-500/10 text-violet-300"
+                      : "bg-emerald-500/10 text-emerald-400"
               )}>
-                {modelOverride || currentGem.model}
+                {modelOverride || (currentGem.provider === "auto" ? "policy decides" : currentGem.model)}
               </span>
             )}
           </div>

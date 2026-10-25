@@ -62,6 +62,8 @@ export function backendEnv(settings, { dataDir, mcpServersFile }) {
     GEMS_MCP_SERVERS_FILE: mcpServersFile,
     CORS_ORIGINS: "http://localhost:3000",
   };
+  env.GEMS_MODEL_POLICY = settings.modelPolicy || "auto";
+  if (settings.localBaseUrl) env.LOCAL_OPENAI_BASE_URL = settings.localBaseUrl;
   if (settings.anthropicKey) env.ANTHROPIC_API_KEY = settings.anthropicKey;
   if (settings.openaiKey) env.OPENAI_API_KEY = settings.openaiKey;
   if (settings.supabaseUrl && settings.supabaseKey) {

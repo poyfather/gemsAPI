@@ -6,6 +6,7 @@ from fastapi.responses import StreamingResponse
 
 from app.models import ChatRequest, ChatResponse
 from app.services import gem_service
+from app.services import router as model_router
 from app.services.llm_service import available_models, complete, complete_stream
 from app.auth import require_api_key
 
@@ -14,6 +15,12 @@ logger = logging.getLogger(__name__)
 _PROVIDER_ERROR = "The LLM provider returned an error. Check the server log for details."
 
 router = APIRouter(prefix="/chat", tags=["chat"], dependencies=[Depends(require_api_key)])
+
+
+@router.get("/policy", summary="The model policy: which AI we use, and what is available")
+async def policy():
+    """Answers \"Which AI should we use?\" for the UI: the policy, which providers are usable, and the defaults it would pick."""
+    return await model_router.describe()
 
 
 @router.get("/models", summary="List available models")
@@ -37,8 +44,8 @@ async def chat(request: ChatRequest):
 
     # Get defaults from gem
     gem = await gem_service.get_gem_by_name(request.gem_name)
-    model = request.model_override or gem.model
-    provider = request.provider_override or gem.provider
+    choice = await model_router.choose(gem, provider_override=request.provider_override, model_override=request.model_override)
+    model, provider = choice.model, choice.provider
 
     messages = [{"role": m.role, "content": m.content} for m in request.messages]
 
@@ -67,4 +74,4 @@ async def chat(request: ChatRequest):
         logger.exception("Chat failed for gem %s", request.gem_name)
         raise HTTPException(status_code=502, detail=_PROVIDER_ERROR)
 
-    return ChatResponse(content=content, model=model, provider=provider, gem_name=request.gem_name)
+    return ChatResponse(content=content, model=model, provider=provider, gem_name=request.gem_name, reason=choice.reason)

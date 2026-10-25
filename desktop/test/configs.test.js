@@ -29,6 +29,8 @@ test("the Open WebUI compose file points at Lapidary through host.docker.interna
 test("the backend environment reflects the settings, sqlite by default, supabase when configured", () => {
   const base = backendEnv({ gemsApiKey: "k", anthropicKey: "a" }, { dataDir: "D:\\data", mcpServersFile: "D:\\data\\mcp.json" });
   assert.equal(base.GEMS_STORAGE, "sqlite");
+  assert.equal(base.GEMS_MODEL_POLICY, "auto");
+  assert.equal(backendEnv({ gemsApiKey: "k", modelPolicy: "local", localBaseUrl: "http://127.0.0.1:1234/v1" }, { dataDir: "d", mcpServersFile: "m" }).LOCAL_OPENAI_BASE_URL, "http://127.0.0.1:1234/v1");
   assert.equal(base.GEMS_SQLITE_PATH, "D:\\data/lapidary.db");
   assert.equal(base.ANTHROPIC_API_KEY, "a");
   assert.equal(base.OPENAI_API_KEY, undefined);

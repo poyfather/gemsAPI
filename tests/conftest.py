@@ -10,10 +10,14 @@ import pytest
 # Set, not setdefault: CI exports its own placeholder key, and the route tests must send the one the app checks.
 TEST_API_KEY = "test-key"
 os.environ["GEMS_API_KEY"] = TEST_API_KEY
+# Cloud keys so gems that pin a provider are routed as pinned; no provider is ever called in tests.
+os.environ.setdefault("ANTHROPIC_API_KEY", "test-anthropic-key")
+os.environ.setdefault("OPENAI_API_KEY", "test-openai-key")
 
 from fastapi.testclient import TestClient  # noqa: E402
 
 from app.main import app  # noqa: E402
+from app import settings  # noqa: E402
 from app.models import Gem  # noqa: E402
 from app.services import gem_service  # noqa: E402
 
@@ -35,6 +39,17 @@ def make_gem(name: str, system_prompt: str, **overrides) -> Gem:
     }
     data.update(overrides)
     return Gem(**data)
+
+
+@pytest.fixture(autouse=True)
+def no_local_probe(monkeypatch):
+    """The local model server is never contacted in tests: its listing is pinned to empty."""
+    from app.services import llm_service
+
+    monkeypatch.setitem(settings.PINNED_MODELS, "local", [])
+    llm_service.clear_model_cache()
+    yield
+    llm_service.clear_model_cache()
 
 
 @pytest.fixture
