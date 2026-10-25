@@ -5,11 +5,11 @@ All notable changes to gemsAPI are documented here. The format follows [Keep a C
 ## [Unreleased]
 
 ### Added
+- Run viewer and streaming in the web UI (roadmap items 13 and 34). `lib/api.ts` gains an SSE reader, `chat.stream`, `agents.run`, `agents.stream`, `agents.tools` and `runs.get`. The chat page streams prompt gems token by token and runs agent gems with live events (turns, tool calls, results, outcome) plus a link to the run; `app/runs/[id]` replays any stored run; `GemForm` has a kind select and a tool picker; cards and the detail page show kind and tools. Run events `run_started` and `run_finished` now carry the run id.
 - Agent harness (ADR-007). A gem has a `kind` (`prompt` or `agent`) and a list of `tools`; `backend/app/agents/` holds a tool registry (`@tool` functions with a JSON schema from the signature, risky or not), a provider-neutral run loop with a step cap and a run store (`runs`, `run_events`). `llm_service.complete_turn` and `tool_result_messages` give both providers one tool-use turn shape. Surfaces: `POST /agents/{name}/runs` (JSON or SSE), `GET /runs/{id}`, `GET /agents/tools`, and the MCP tools `run_agent` and `list_agent_tools` plus the `runs://{id}` resource. Three built-in read-only tools (`search_gems`, `get_gem`, `resolve_gem`) and a seed agent, `gem_librarian`. `supabase/add_agent_runs.sql` updates existing installs. Settings `AGENT_MAX_STEPS` and `AGENT_TOOL_RESULT_MAX_CHARS`. 17 new tests.
 
 ### Planned
 - Prompt version history (`gem_versions` Supabase table).
-- SSE streaming in the Next.js chat UI.
 
 ## [0.3.0] - 2026-10-25
 

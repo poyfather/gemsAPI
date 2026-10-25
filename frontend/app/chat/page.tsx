@@ -2,16 +2,21 @@
 
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { gems as gemsApi, chat as chatApi, Gem, ChatMessage, AvailableModels, errorMessage } from "@/lib/api";
+import { gems as gemsApi, chat as chatApi, agents as agentsApi, Gem, ChatMessage, AvailableModels, RunEvent, errorMessage } from "@/lib/api";
+import RunEvents from "@/components/RunEvents";
+import Link from "next/link";
 import {
   Send, Loader2, Gem as GemIcon, Variable, ChevronDown,
-  RotateCcw, MessageSquare, Settings
+  RotateCcw, MessageSquare, Settings, Bot
 } from "lucide-react";
 import clsx from "clsx";
 
 interface Message extends ChatMessage {
   id: string;
   loading?: boolean;
+  /** Agent runs: the events streamed so far, and the run id once known. */
+  events?: RunEvent[];
+  runId?: string;
 }
 
 function ChatPageInner() {
@@ -28,11 +33,13 @@ function ChatPageInner() {
   const [modelOverride, setModelOverride] = useState("");
   const [providerOverride, setProviderOverride] = useState("");
   const [showSettings, setShowSettings] = useState(false);
+  const [allowRisky, setAllowRisky] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef  = useRef<HTMLTextAreaElement>(null);
 
   const currentGem = allGems.find((g) => g.name === selectedGem);
+  const isAgent = currentGem?.kind === "agent";
 
   // Load gems and models on mount
   useEffect(() => {
@@ -87,28 +94,54 @@ function ChatPageInner() {
     const history: ChatMessage[] = messages.map(({ role, content }) => ({ role, content }));
     history.push({ role: "user", content: userMsg.content });
 
-    try {
-      const res = await chatApi.send({
-        gem_name:          selectedGem,
-        messages:          history,
-        variables:         varValues,
-        model_override:    modelOverride || undefined,
-        provider_override: providerOverride || undefined,
-      });
+    const patch = (update: Partial<Message> | ((m: Message) => Partial<Message>)) =>
+      setMessages((prev) =>
+        prev.map((m) => (m.id === loadingMsg.id ? { ...m, ...(typeof update === "function" ? update(m) : update) } : m))
+      );
 
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === loadingMsg.id ? { ...m, content: res.content, loading: false } : m
-        )
-      );
+    try {
+      if (isAgent) {
+        // Agent gem: one run per message, events as they happen (ADR-007).
+        await agentsApi.stream(
+          selectedGem,
+          {
+            message:           userMsg.content,
+            variables:         varValues,
+            model_override:    modelOverride || undefined,
+            provider_override: providerOverride || undefined,
+            allow_risky:       allowRisky,
+          },
+          (event) => {
+            patch((m) => {
+              const events = [...(m.events ?? []), event];
+              const next: Partial<Message> = { events, loading: false };
+              if (event.type === "run_started" && typeof event.data.run_id === "string") next.runId = event.data.run_id;
+              if (event.type === "model_turn" && typeof event.data.text === "string" && event.data.text) next.content = event.data.text;
+              if (event.type === "run_failed") next.content = `Run failed: ${String(event.data.error)}`;
+              return next;
+            });
+          }
+        );
+      } else {
+        // Prompt gem: stream the reply token by token (roadmap item 13).
+        let streamed = "";
+        await chatApi.stream(
+          {
+            gem_name:          selectedGem,
+            messages:          history,
+            variables:         varValues,
+            model_override:    modelOverride || undefined,
+            provider_override: providerOverride || undefined,
+          },
+          (chunk) => {
+            streamed += chunk;
+            patch({ content: streamed, loading: false });
+          }
+        );
+        if (!streamed) patch({ content: "", loading: false });
+      }
     } catch (err) {
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === loadingMsg.id
-            ? { ...m, content: `Error: ${errorMessage(err)}`, loading: false }
-            : m
-        )
-      );
+      patch((m) => ({ content: m.content ? `${m.content}\n\nError: ${errorMessage(err)}` : `Error: ${errorMessage(err)}`, loading: false }));
     } finally {
       setSending(false);
       setTimeout(() => inputRef.current?.focus(), 50);
@@ -163,6 +196,19 @@ function ChatPageInner() {
             </div>
             {currentGem?.description && (
               <p className="text-xs text-slate-500 leading-relaxed">{currentGem.description}</p>
+            )}
+            {isAgent && (
+              <div className="pt-2 border-t border-gem-border space-y-2">
+                <p className="text-xs text-violet-300 flex items-center gap-1.5">
+                  <Bot className="w-3.5 h-3.5" />
+                  Agent, tools: <span className="font-mono text-slate-400">{(currentGem?.tools ?? []).join(", ") || "none"}</span>
+                </p>
+                <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
+                  <input type="checkbox" checked={allowRisky} onChange={(e) => setAllowRisky(e.target.checked)} className="accent-violet-500" />
+                  Allow risky tools in this run
+                </label>
+                <p className="text-xs text-slate-600">Each message starts a fresh run; earlier messages are not sent along.</p>
+              </div>
             )}
           </div>
 
@@ -251,7 +297,7 @@ function ChatPageInner() {
             <MessageSquare className="w-4 h-4 text-violet-400" />
             <span className="text-sm font-medium text-slate-300">
               {selectedGem
-                ? <>Testing <span className="font-mono text-violet-300">{selectedGem}</span></>
+                ? <>{isAgent ? "Running" : "Testing"} <span className="font-mono text-violet-300">{selectedGem}</span></>
                 : "Select a gem to start chatting"
               }
             </span>
@@ -304,7 +350,19 @@ function ChatPageInner() {
                         Thinking…
                       </span>
                     ) : (
-                      <pre className="whitespace-pre-wrap font-sans">{msg.content}</pre>
+                      <>
+                        {msg.events && msg.events.length > 0 && (
+                          <div className="mb-3 pb-3 border-b border-gem-border">
+                            <RunEvents events={msg.events} hideFinalText />
+                          </div>
+                        )}
+                        <pre className="whitespace-pre-wrap font-sans">{msg.content}</pre>
+                        {msg.runId && (
+                          <Link href={`/runs/${msg.runId}`} className="block mt-2 text-xs text-violet-400 hover:text-violet-300 underline">
+                            Open run {msg.runId.slice(0, 8)}
+                          </Link>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>

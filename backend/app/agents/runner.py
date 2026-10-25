@@ -81,7 +81,7 @@ async def run_agent(
     run = await run_service.create_run(gem.id, gem.name, model, provider, message)
     rec = _Recorder(run.id, on_event)
     await rec.emit("run_started", {
-        "gem": gem.name, "kind": gem.kind, "model": model, "provider": provider,
+        "run_id": run.id, "gem": gem.name, "kind": gem.kind, "model": model, "provider": provider,
         "tools": [t.name for t in tools], "unknown_tools": unknown,
         "variables_missing": resolved.variables_missing, "max_steps": settings.AGENT_MAX_STEPS,
     })
@@ -120,6 +120,6 @@ async def run_agent(
                                            error=f"{type(exc).__name__}: {exc}"[:500], output=last_text or None)
         return RunResult(run=run, events=rec.events)
 
-    await rec.emit("run_finished", {"status": status, "steps": steps, "input_tokens": in_tok, "output_tokens": out_tok})
+    await rec.emit("run_finished", {"run_id": run.id, "status": status, "steps": steps, "input_tokens": in_tok, "output_tokens": out_tok})
     run = await run_service.finish_run(run.id, status=status, steps=steps, input_tokens=in_tok, output_tokens=out_tok, output=last_text)
     return RunResult(run=run, events=rec.events)

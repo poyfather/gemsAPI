@@ -6,7 +6,7 @@ import Link from "next/link";
 import { gems as gemsApi, Gem, ResolveResponse, errorMessage } from "@/lib/api";
 import {
   ArrowLeft, Edit, Trash2, MessageSquare, Loader2,
-  AlertTriangle, Variable, LinkIcon, Cpu, ChevronDown, ChevronUp
+  AlertTriangle, Variable, LinkIcon, Cpu, ChevronDown, ChevronUp, Bot
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -103,7 +103,7 @@ export default function GemDetailPage() {
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 text-sm transition-colors"
           >
             <MessageSquare className="w-4 h-4" />
-            Test in Chat
+            {gem.kind === "agent" ? "Run in Chat" : "Test in Chat"}
           </Link>
           <Link
             href={`/gems/${gem.id}/edit`}
@@ -127,6 +127,22 @@ export default function GemDetailPage() {
 
         {/* Meta sidebar */}
         <div className="space-y-4 lg:col-span-1">
+          {gem.kind === "agent" && (
+            <div className="bg-gem-card border border-violet-500/30 rounded-xl p-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <Bot className="w-4 h-4 text-violet-400" />
+                <span className="text-xs text-violet-300">Agent gem</span>
+              </div>
+              <p className="text-xs text-slate-500">May call these tools in a loop:</p>
+              <div className="flex flex-wrap gap-1.5">
+                {(gem.tools ?? []).length === 0
+                  ? <span className="text-xs text-slate-600">no tools</span>
+                  : (gem.tools ?? []).map((t) => (
+                    <span key={t} className="px-2 py-0.5 rounded-md text-xs bg-violet-500/10 text-violet-300 border border-violet-500/20 font-mono">{t}</span>
+                  ))}
+              </div>
+            </div>
+          )}
           <div className="bg-gem-card border border-gem-border rounded-xl p-4 space-y-3">
             <div className="flex items-center gap-2">
               <Cpu className="w-4 h-4 text-slate-500" />

@@ -31,7 +31,7 @@ These were found during the audit and fixed because CI could not pass without th
 | 10 | Per-client API keys, and auth for a hosted MCP server | Security | M | Next |
 | 11 | Rate limits and spend guards on chat | Security, cost | M | Next |
 | 12 | API consistency and versioning | API, MCP | M | Next |
-| 13 | Streaming in the chat UI | Product | M | Next |
+| 13 | Streaming in the chat UI | Product | M | Next, done |
 | 14 | Prompt version history | Product | L | Next |
 | 15 | Supabase CLI migrations instead of hand-run SQL | DX, data | M | Next |
 | 16 | Make `prompts/` the single source of shipped gems | DX, data | S to M | Next |
@@ -52,7 +52,7 @@ These were found during the audit and fixed because CI could not pass without th
 | 31 | Few-shot examples as first-class data | Product | M | Later |
 | 32 | Agent tools from remote MCP servers and HTTP endpoints | Agents | M | Next |
 | 33 | Approval gates with pause and resume | Agents, security | M | Next |
-| 34 | Run viewer in the UI | Agents, product | M | Next |
+| 34 | Run viewer in the UI | Agents, product | M | Next, done |
 | 35 | Managed Agents as an execution backend | Agents | M | Later |
 
 ## Now
@@ -162,6 +162,8 @@ Design and security decisions that shape everything after them.
 - **Depends on**: 5 for tests. Coordinate with 10 if scopes are added.
 
 ### 13. Streaming in the chat UI
+
+**Status: done** with the run viewer: `chat.stream` in `lib/api.ts` reads the SSE body and the chat page renders chunks as they arrive.
 
 - **Why**: `backend/app/routes/chat.py` already streams SSE when `stream=true`, but `frontend/lib/api.ts` only has a JSON `send` and `app/chat/page.tsx` shows a spinner until the whole response arrives. Already on the root roadmap; listed here for sequencing.
 - **Size**: M. A `fetch` with `ReadableStream` parsing in `lib/api.ts` and incremental state updates in the chat page.
@@ -286,6 +288,8 @@ Worth doing once the foundations above are in.
 - **Depends on**: nothing. Needed before 32 adds tools that write.
 
 ### 34. Run viewer in the UI
+
+**Status: done.** `GemForm` has a kind select and a tool picker from `GET /agents/tools`; the chat page runs agent gems with `agents.stream` and shows turns, tool calls and results as they happen, with a link to `app/runs/[id]`, which replays any stored run; cards and the detail page show the kind and tools. Not yet: a list of past runs (there is no list endpoint).
 
 - **Why**: runs are only readable over REST and MCP. The chat page is the natural run viewer: pick an agent gem, send a message, watch the events stream in (turns, tool calls and results, tokens), and open an old run by id. This is where item 13 (streaming) lands, since `POST /agents/{name}/runs` already streams. `GemForm` also needs `kind` and a tool picker from `GET /agents/tools`.
 - **Size**: M.
