@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { gems as gemsApi, chat as chatApi, agents as agentsApi, Gem, ChatMessage, AvailableModels, RunEvent, errorMessage } from "@/lib/api";
+import { gems as gemsApi, chat as chatApi, agents as agentsApi, runs as runsApi, Gem, ChatMessage, AvailableModels, RunEvent, errorMessage } from "@/lib/api";
 import RunEvents from "@/components/RunEvents";
 import Link from "next/link";
 import {
@@ -34,6 +34,28 @@ function ChatPageInner() {
   const [providerOverride, setProviderOverride] = useState("");
   const [showSettings, setShowSettings] = useState(false);
   const [allowRisky, setAllowRisky] = useState(false);
+  const [decidingId, setDecidingId] = useState<string | null>(null);
+
+  // Approve or deny the risky call a run in the conversation is waiting on, streaming the rest into its bubble.
+  const decide = async (msgId: string, runId: string, approve: boolean) => {
+    setDecidingId(msgId);
+    const patchMsg = (update: (m: Message) => Partial<Message>) =>
+      setMessages((prev) => prev.map((m) => (m.id === msgId ? { ...m, ...update(m) } : m)));
+    try {
+      await runsApi.approve(runId, approve, (event) => {
+        patchMsg((m) => {
+          const next: Partial<Message> = { events: [...(m.events ?? []), event] };
+          if (event.type === "model_turn" && typeof event.data.text === "string" && event.data.text) next.content = event.data.text;
+          if (event.type === "run_failed") next.content = `Run failed: ${String(event.data.error)}`;
+          return next;
+        });
+      });
+    } catch (err) {
+      patchMsg((m) => ({ content: `${m.content}\n\nError: ${errorMessage(err)}` }));
+    } finally {
+      setDecidingId(null);
+    }
+  };
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef  = useRef<HTMLTextAreaElement>(null);
@@ -118,6 +140,7 @@ function ChatPageInner() {
               if (event.type === "run_started" && typeof event.data.run_id === "string") next.runId = event.data.run_id;
               if (event.type === "model_turn" && typeof event.data.text === "string" && event.data.text) next.content = event.data.text;
               if (event.type === "run_failed") next.content = `Run failed: ${String(event.data.error)}`;
+              if (event.type === "approval_requested" && !m.content) next.content = "Paused: waiting for your decision on a risky tool call.";
               return next;
             });
           }
@@ -353,7 +376,12 @@ function ChatPageInner() {
                       <>
                         {msg.events && msg.events.length > 0 && (
                           <div className="mb-3 pb-3 border-b border-gem-border">
-                            <RunEvents events={msg.events} hideFinalText />
+                            <RunEvents
+                              events={msg.events}
+                              hideFinalText
+                              onDecide={msg.runId ? (approve) => decide(msg.id, msg.runId as string, approve) : undefined}
+                              deciding={decidingId === msg.id}
+                            />
                           </div>
                         )}
                         <pre className="whitespace-pre-wrap font-sans">{msg.content}</pre>

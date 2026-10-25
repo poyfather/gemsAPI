@@ -99,7 +99,7 @@ class RunRequest(BaseModel):
 
 class RunEvent(BaseModel):
     seq: int
-    type: str = Field(..., description="run_started, model_turn, tool_call, tool_result, run_finished, run_failed")
+    type: str = Field(..., description="run_started, model_turn, tool_call, tool_result, approval_requested, approval_decided, run_finished, run_failed")
     data: dict = Field(default={})
     created_at: datetime
 
@@ -107,7 +107,7 @@ class RunEvent(BaseModel):
 class Run(BaseModel):
     id: str
     gem_name: str
-    status: str = Field(..., description="running, finished, failed, max_steps")
+    status: str = Field(..., description="running, waiting_approval, finished, failed, max_steps")
     model: str
     provider: str
     input: str
@@ -123,6 +123,11 @@ class Run(BaseModel):
 class RunResult(BaseModel):
     run: Run
     events: list[RunEvent] = []
+
+
+class ApprovalRequest(BaseModel):
+    approve: bool = Field(..., description="True to let the pending risky tool call run, False to deny it")
+    stream: bool = Field(default=False, description="Stream the rest of the run as Server-Sent Events")
 
 
 class ToolInfo(BaseModel):

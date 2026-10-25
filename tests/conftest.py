@@ -77,15 +77,27 @@ def fake_runs(monkeypatch):
         store["events"][run_id].append(ev)
         return ev
 
-    async def finish_run(run_id, **fields):
-        run = store["runs"][run_id].model_copy(update={**fields, "finished_at": datetime(2026, 1, 1, tzinfo=timezone.utc)})
+    store["state"] = {}
+
+    async def update_run(run_id, **fields):
+        if "state" in fields:
+            store["state"][run_id] = fields.pop("state")
+        run = store["runs"][run_id].model_copy(update=fields)
         store["runs"][run_id] = run
         return run
+
+    async def finish_run(run_id, **fields):
+        fields.setdefault("finished_at", datetime(2026, 1, 1, tzinfo=timezone.utc))
+        return await update_run(run_id, **fields)
 
     async def get_run(run_id):
         run = store["runs"].get(run_id)
         return (run, store["events"][run_id]) if run else None
 
-    for name, fn in [("create_run", create_run), ("add_event", add_event), ("finish_run", finish_run), ("get_run", get_run)]:
+    async def get_run_state(run_id):
+        return store["state"].get(run_id)
+
+    for name, fn in [("create_run", create_run), ("add_event", add_event), ("update_run", update_run),
+                     ("finish_run", finish_run), ("get_run", get_run), ("get_run_state", get_run_state)]:
         monkeypatch.setattr(run_service, name, fn)
     return store

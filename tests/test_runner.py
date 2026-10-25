@@ -76,33 +76,117 @@ def test_anthropic_results_go_back_in_one_user_message(fake_library, fake_runs, 
     assert result.run.status == "finished"
 
 
-def test_unknown_and_risky_tools_return_errors_to_the_model(fake_library, fake_runs, monkeypatch) -> None:
+def test_unknown_tools_return_an_error_to_the_model(fake_library, fake_runs, monkeypatch) -> None:
+    fake_library["lib"] = make_gem("lib", "L", kind="agent", tools=["get_gem", "missing_tool"])
+    fn, _ = fake_turns([("", [ToolCall(id="2", name="nope", input={})]), ("ok", [])])
+    monkeypatch.setattr(runner, "complete_turn", fn)
+    result = run(runner.run_agent("lib", "go"))
+    results = [e.data for e in result.events if e.type == "tool_result"]
+    assert results[0]["is_error"] and "Unknown tool" in results[0]["output"]
+    assert result.events[0].data["tools"] == ["get_gem"] and result.events[0].data["unknown_tools"] == ["missing_tool"]
+
+
+def _risky_library(fake_library, monkeypatch):
     from app.agents import tools as registry
 
     monkeypatch.setattr(registry, "_REGISTRY", dict(registry._REGISTRY))
 
     @registry.tool("wipe", risky=True)
-    async def wipe() -> str:
+    async def wipe(target: str = "all") -> str:
         """Wipe."""
-        return "wiped"
+        return f"wiped {target}"
 
-    fake_library["lib"] = make_gem("lib", "L", kind="agent", tools=["wipe", "missing_tool"])
-    fn, _ = fake_turns([
-        ("", [ToolCall(id="1", name="wipe", input={}), ToolCall(id="2", name="nope", input={})]),
-        ("ok", []),
+    fake_library["x"] = make_gem("x", "X")
+    fake_library["lib"] = make_gem("lib", "L", kind="agent", tools=["wipe", "get_gem"])
+
+
+def test_a_risky_call_pauses_the_run_with_its_state_saved(fake_library, fake_runs, monkeypatch) -> None:
+    _risky_library(fake_library, monkeypatch)
+    fn, seen = fake_turns([
+        ("", [ToolCall(id="g", name="get_gem", input={"name": "x"}), ToolCall(id="w", name="wipe", input={"target": "db"}), ToolCall(id="g2", name="get_gem", input={"name": "x"})]),
+        ("done", []),
     ])
     monkeypatch.setattr(runner, "complete_turn", fn)
     result = run(runner.run_agent("lib", "go"))
-    results = [e.data for e in result.events if e.type == "tool_result"]
-    assert results[0]["is_error"] and "risky" in results[0]["output"]
-    assert results[1]["is_error"] and "Unknown tool" in results[1]["output"]
-    started = result.events[0].data
-    assert started["tools"] == ["wipe"] and started["unknown_tools"] == ["missing_tool"]
+    assert result.run.status == "waiting_approval" and result.run.steps == 1 and len(seen) == 1
+    types = [e.type for e in result.events]
+    assert types == ["run_started", "model_turn", "tool_call", "tool_result", "approval_requested"]
+    assert result.events[-1].data == {"step": 1, "id": "w", "name": "wipe", "input": {"target": "db"}}
+    state = fake_runs["state"][result.run.id]
+    assert [c["id"] for c in state["pending"]] == ["w", "g2"]          # the safe call before it already ran
+    assert [r["id"] for r in state["results"]] == ["g"]
+    assert state["messages"][-1]["role"] == "assistant" and state["seq"] == 5
 
-    fn2, _ = fake_turns([("", [ToolCall(id="1", name="wipe", input={})]), ("ok", [])])
-    monkeypatch.setattr(runner, "complete_turn", fn2)
+
+def test_approving_continues_the_turn_and_the_run(fake_library, fake_runs, monkeypatch) -> None:
+    _risky_library(fake_library, monkeypatch)
+    fn, seen = fake_turns([
+        ("", [ToolCall(id="w", name="wipe", input={"target": "db"}), ToolCall(id="g", name="get_gem", input={"name": "x"})]),
+        ("all done", []),
+    ])
+    monkeypatch.setattr(runner, "complete_turn", fn)
+    paused = run(runner.run_agent("lib", "go"))
+    resumed = run(runner.resume_run(paused.run.id, True))
+    assert resumed.run.status == "finished" and resumed.run.output == "all done" and resumed.run.steps == 2
+    types = [e.type for e in resumed.events]
+    assert types == ["approval_decided", "tool_call", "tool_result", "tool_call", "tool_result", "model_turn", "run_finished"]
+    assert resumed.events[0].data["approved"] is True
+    assert [e.data["output"] for e in resumed.events if e.type == "tool_result"][0] == "wiped db"
+    # Event numbering continues from the paused run, and the second turn saw both results.
+    assert resumed.events[0].seq == 4  # run_started, model_turn, approval_requested came before
+    second = seen[1]["messages"]
+    assert second[-1]["role"] == "tool" or second[-1]["role"] == "user"
+    assert fake_runs["state"][paused.run.id] is None
+
+
+def test_denying_sends_the_model_an_error_and_continues(fake_library, fake_runs, monkeypatch) -> None:
+    _risky_library(fake_library, monkeypatch)
+    fn, _ = fake_turns([("", [ToolCall(id="w", name="wipe", input={})]), ("ok, not wiping", [])])
+    monkeypatch.setattr(runner, "complete_turn", fn)
+    paused = run(runner.run_agent("lib", "go"))
+    resumed = run(runner.resume_run(paused.run.id, False))
+    assert resumed.run.status == "finished" and resumed.run.output == "ok, not wiping"
+    types = [e.type for e in resumed.events]
+    assert types == ["approval_decided", "tool_result", "model_turn", "run_finished"]
+    assert resumed.events[0].data["approved"] is False
+    assert resumed.events[1].data["is_error"] and "denied" in resumed.events[1].data["output"]
+
+
+def test_a_second_risky_call_pauses_again(fake_library, fake_runs, monkeypatch) -> None:
+    _risky_library(fake_library, monkeypatch)
+    fn, _ = fake_turns([
+        ("", [ToolCall(id="w1", name="wipe", input={"target": "a"})]),
+        ("", [ToolCall(id="w2", name="wipe", input={"target": "b"})]),
+        ("done", []),
+    ])
+    monkeypatch.setattr(runner, "complete_turn", fn)
+    paused = run(runner.run_agent("lib", "go"))
+    again = run(runner.resume_run(paused.run.id, True))
+    assert again.run.status == "waiting_approval"
+    assert again.events[-1].type == "approval_requested" and again.events[-1].data["id"] == "w2"
+    final = run(runner.resume_run(paused.run.id, True))
+    assert final.run.status == "finished" and final.run.steps == 3
+
+
+def test_allow_risky_skips_the_gate(fake_library, fake_runs, monkeypatch) -> None:
+    _risky_library(fake_library, monkeypatch)
+    fn, _ = fake_turns([("", [ToolCall(id="w", name="wipe", input={})]), ("ok", [])])
+    monkeypatch.setattr(runner, "complete_turn", fn)
     result = run(runner.run_agent("lib", "go", allow_risky=True))
-    assert [e.data["output"] for e in result.events if e.type == "tool_result"] == ["wiped"]
+    assert result.run.status == "finished"
+    assert [e.data["output"] for e in result.events if e.type == "tool_result"] == ["wiped all"]
+    assert "approval_requested" not in [e.type for e in result.events]
+
+
+def test_resume_refuses_runs_that_are_not_waiting(fake_library, fake_runs, monkeypatch) -> None:
+    fake_library["lib"] = make_gem("lib", "L", kind="agent", tools=[])
+    fn, _ = fake_turns([("hi", [])])
+    monkeypatch.setattr(runner, "complete_turn", fn)
+    finished = run(runner.run_agent("lib", "go"))
+    with pytest.raises(ValueError, match="not waiting"):
+        run(runner.resume_run(finished.run.id, True))
+    with pytest.raises(LookupError):
+        run(runner.resume_run("no-such-run", True))
 
 
 def test_step_cap_ends_the_run(fake_library, fake_runs, monkeypatch) -> None:

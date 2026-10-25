@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS runs (
   gem_id        UUID        REFERENCES gems (id),
   gem_name      TEXT        NOT NULL,
   status        TEXT        NOT NULL DEFAULT 'running'
-                            CHECK (status IN ('running', 'finished', 'failed', 'max_steps')),
+                            CHECK (status IN ('running', 'waiting_approval', 'finished', 'failed', 'max_steps')),
   model         TEXT        NOT NULL,
   provider      TEXT        NOT NULL,
   input         TEXT        NOT NULL,
@@ -66,6 +66,7 @@ CREATE TABLE IF NOT EXISTS runs (
   input_tokens  INTEGER     NOT NULL DEFAULT 0,
   output_tokens INTEGER     NOT NULL DEFAULT 0,
   error         TEXT,
+  state         JSONB,      -- loop state while waiting for an approval (ADR-007, roadmap 33)
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   finished_at   TIMESTAMPTZ
 );

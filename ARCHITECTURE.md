@@ -229,7 +229,8 @@ sequenceDiagram
         L-->>R: ToolTurn (neutral shape)
         R->>S: event model_turn
         alt tool calls present
-            R->>T: execute each call (unknown or risky: an error string)
+            R->>S: on a risky call without allow_risky: status waiting_approval, state saved, event approval_requested; stop here until POST /runs/{id}/approve resumes
+            R->>T: execute each call (unknown: an error string; denied: an error string)
             T-->>R: result text, truncated at AGENT_TOOL_RESULT_MAX_CHARS
             R->>S: events tool_call, tool_result
             R->>R: append results in the provider's shape (one user message for Anthropic, one tool message per call for OpenAI)
@@ -239,7 +240,7 @@ sequenceDiagram
     R-->>C: RunResult (run + events), or the events as SSE while it happens
 ```
 
-What the loop promises: a tool error never escapes the run (unknown tool, refused risky tool, bad arguments and tool exceptions all go back to the model as text); a provider failure ends the run as `failed` with a record; every run has at most `AGENT_MAX_STEPS` model turns; nothing is held in memory between runs. What it does not do yet: approval gates with resume, remote MCP or HTTP tool sources, a token budget per run, or a list of past runs (roadmap items 32, 33 and 35; the viewer itself is `app/runs/[id]` and the chat page).
+What the loop promises: a tool error never escapes the run (unknown tool, denied tool, bad arguments and tool exceptions all go back to the model as text); a provider failure ends the run as `failed` with a record; every run has at most `AGENT_MAX_STEPS` model turns; nothing is held in memory between requests. A risky tool call pauses the run instead of running: the loop state (conversation, calls still to execute, results so far) is saved in the `runs.state` column, `approval_requested` is the last event, and `resume_run()` picks up from that call once `POST /runs/{id}/approve` arrives, approving (the call runs) or denying (the model gets an error result), then continues the turn and the loop, pausing again at the next risky call. What it does not do yet: remote MCP or HTTP tool sources, a token budget per run, or a list of past runs (roadmap items 32 and 35; the viewer itself is `app/runs/[id]` and the chat page).
 
 ## Gem composition and resolution
 
@@ -305,7 +306,7 @@ erDiagram
 - Row level security is enabled with no policies, so only the service role key, used by the backend and the MCP server, can read or write rows; the anon key gets nothing. The API key on the REST edge is the access control for callers (ADR-006).
 - Deletes are soft (`is_active = false`); listing and name lookups filter on `is_active`, lookups by id do not.
 - `prompts/<name>.md` mirrors each shipped gem for review; CI checks that every file has a seed row of the same name in `supabase/schema.sql`.
-- `kind` (`prompt` or `agent`) and `tools` (registered tool names) make a gem runnable by the agent loop. `runs` holds one row per run (status, model, tokens, output) and `run_events` one row per model turn, tool call, tool result or failure, in order. Both tables have RLS enabled with no policies, like `gems`.
+- `kind` (`prompt` or `agent`) and `tools` (registered tool names) make a gem runnable by the agent loop. `runs` holds one row per run (status, model, tokens, output, and `state` while it waits for an approval) and `run_events` one row per model turn, tool call, tool result, approval request or decision, or failure, in order. Both tables have RLS enabled with no policies, like `gems`.
 
 ## Model and provider integration
 

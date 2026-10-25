@@ -31,6 +31,7 @@ TOOLS
   create_gem           — add a new gem to the library
   search_gems          — filter gems by tag or keyword
   run_agent            — run an agent gem: a tool-using loop, with the run record
+  approve_run          — continue a run that paused at a risky tool call
 """
 from __future__ import annotations
 import os
@@ -54,7 +55,7 @@ from app import settings
 from app.services.llm_service import available_models, complete
 import app.agents.builtin  # noqa: F401
 from app.agents import run_service
-from app.agents.runner import run_agent as _run_agent
+from app.agents.runner import resume_run as _resume_run, run_agent as _run_agent
 from app.agents.tools import all_tools
 from app.models import GemCreate
 
@@ -297,15 +298,38 @@ async def run_agent(
     except ValueError as exc:
         return {"error": str(exc)}
     run = result.run
+    waiting = next((e.data for e in result.events if e.type == "approval_requested"), None)
     return {
         "run_id": run.id,
         "status": run.status,
+        "waiting_on": waiting,
         "output": run.output,
         "steps": run.steps,
         "model": run.model,
         "provider": run.provider,
         "tool_calls": [e.data for e in result.events if e.type == "tool_result"],
         "error": run.error,
+    }
+
+
+@mcp.tool()
+async def approve_run(run_id: str, approve: bool = True) -> dict:
+    """
+    Continue a run that is waiting for approval of a risky tool call.
+
+    Args:
+        run_id:  The run id returned by run_agent (status waiting_approval).
+        approve: True to let the pending call run, False to deny it; the loop continues either way.
+    """
+    try:
+        result = await _resume_run(run_id, approve)
+    except (LookupError, ValueError) as exc:
+        return {"error": str(exc)}
+    run = result.run
+    waiting = next((e.data for e in result.events if e.type == "approval_requested"), None)
+    return {
+        "run_id": run.id, "status": run.status, "waiting_on": waiting, "output": run.output,
+        "steps": run.steps, "tool_calls": [e.data for e in result.events if e.type == "tool_result"], "error": run.error,
     }
 
 

@@ -24,11 +24,23 @@ async def add_event(run_id: str, seq: int, type_: str, data: dict) -> RunEvent:
     return RunEvent(**result.data[0])
 
 
-async def finish_run(run_id: str, **fields) -> Run:
+async def update_run(run_id: str, **fields) -> Run:
+    """Update columns on a run without marking it finished (used when a run pauses or resumes)."""
     db = get_supabase()
-    fields.setdefault("finished_at", _now().isoformat())
     result = db.table("runs").update(fields).eq("id", run_id).execute()
     return Run(**result.data[0])
+
+
+async def finish_run(run_id: str, **fields) -> Run:
+    fields.setdefault("finished_at", _now().isoformat())
+    return await update_run(run_id, **fields)
+
+
+async def get_run_state(run_id: str) -> dict | None:
+    """The saved loop state of a waiting run (not part of the public Run shape)."""
+    db = get_supabase()
+    result = db.table("runs").select("state").eq("id", run_id).limit(1).execute()
+    return result.data[0].get("state") if result.data else None
 
 
 async def get_run(run_id: str) -> tuple[Run, list[RunEvent]] | None:

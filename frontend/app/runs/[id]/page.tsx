@@ -10,6 +10,7 @@ import clsx from "clsx";
 
 const STATUS_STYLES: Record<string, string> = {
   finished:  "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+  waiting_approval: "bg-amber-500/10 text-amber-400 border-amber-500/20",
   failed:    "bg-red-500/10 text-red-400 border-red-500/20",
   max_steps: "bg-amber-500/10 text-amber-400 border-amber-500/20",
   running:   "bg-blue-500/10 text-blue-400 border-blue-500/20",
@@ -19,6 +20,22 @@ export default function RunPage() {
   const { id } = useParams<{ id: string }>();
   const [result, setResult] = useState<RunResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [deciding, setDeciding] = useState(false);
+
+  const decide = async (approve: boolean) => {
+    setDeciding(true);
+    try {
+      await runsApi.approve(id, approve, (event) => {
+        setResult((r) => (r ? { ...r, events: [...r.events, event] } : r));
+      });
+      const fresh = await runsApi.get(id);
+      setResult(fresh);
+    } catch (e) {
+      setError(errorMessage(e, "Could not continue the run."));
+    } finally {
+      setDeciding(false);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -95,7 +112,7 @@ export default function RunPage() {
 
       <section className="bg-gem-card border border-gem-border rounded-xl p-4 space-y-2">
         <h2 className="text-xs font-medium text-slate-400">Events</h2>
-        <RunEvents events={events} />
+        <RunEvents events={events} onDecide={run.status === "waiting_approval" ? decide : undefined} deciding={deciding} />
       </section>
 
       <section className="bg-gem-card border border-gem-border rounded-xl p-4 space-y-2">

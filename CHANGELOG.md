@@ -4,6 +4,9 @@ All notable changes to Lapidary are documented here. The format follows [Keep a 
 
 ## [Unreleased]
 
+### Added
+- Approval gates with pause and resume (roadmap item 33). A risky tool call pauses the run with status `waiting_approval`, its loop state saved in the new `runs.state` column and an `approval_requested` event; `POST /runs/{id}/approve` (JSON or SSE) and the MCP `approve_run` tool continue it, approving or denying the call, with `approval_decided` events. The chat bubble and the run page show Approve and Deny. `supabase/add_agent_runs.sql` adds the column and widens the status check on existing installs.
+
 ### Changed
 - The project is now called Lapidary (ADR-008). README, docs, the API title and root endpoint, the MCP server name (`lapidary`), the web UI branding and the frontend package name use it. The repository URL, the `GEMS_*` environment variables and the word gem are unchanged.
 

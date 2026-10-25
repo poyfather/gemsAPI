@@ -151,3 +151,38 @@ def test_run_endpoint_streams_events(client, fake_library, fake_runs, monkeypatc
     events = [line.split("event: ", 1)[1] for line in text.splitlines() if line.startswith("event: ")]
     assert events == ["run_started", "model_turn", "tool_call", "tool_result", "model_turn", "run_finished"]
     assert text.rstrip().endswith("data: [DONE]")
+
+
+def test_approve_endpoint_resumes_a_waiting_run(client, fake_library, fake_runs, monkeypatch) -> None:
+    from app.agents import runner
+    from app.agents import tools as registry
+    from app.services.llm_service import ToolCall, ToolTurn
+
+    monkeypatch.setattr(registry, "_REGISTRY", dict(registry._REGISTRY))
+
+    @registry.tool("wipe", risky=True)
+    async def wipe() -> str:
+        """Wipe."""
+        return "wiped"
+
+    fake_library["lib"] = make_gem("lib", "L", kind="agent", tools=["wipe"])
+    script = iter([
+        ToolTurn(text="", tool_calls=[ToolCall(id="w", name="wipe", input={})], assistant_message={"role": "assistant", "content": None}, stop_reason="tool_use"),
+        ToolTurn(text="done", tool_calls=[], assistant_message={"role": "assistant", "content": "done"}, stop_reason="end_turn"),
+    ])
+
+    async def turns(*a, **k):
+        return next(script)
+
+    monkeypatch.setattr(runner, "complete_turn", turns)
+    started = client.post("/agents/lib/runs", headers=KEY, json={"message": "go"}).json()
+    assert started["run"]["status"] == "waiting_approval"
+    run_id = started["run"]["id"]
+    assert client.post("/runs/nope/approve", headers=KEY, json={"approve": True}).status_code == 404
+    with client.stream("POST", f"/runs/{run_id}/approve", headers=KEY, json={"approve": True, "stream": True}) as r:
+        text = "".join(r.iter_text())
+    events = [line.split("event: ", 1)[1] for line in text.splitlines() if line.startswith("event: ")]
+    assert events == ["approval_decided", "tool_call", "tool_result", "model_turn", "run_finished"]
+    assert client.get(f"/runs/{run_id}", headers=KEY).json()["run"]["status"] == "finished"
+    # A finished run cannot be approved again.
+    assert client.post(f"/runs/{run_id}/approve", headers=KEY, json={"approve": True}).status_code == 409
