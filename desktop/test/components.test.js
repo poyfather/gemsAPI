@@ -37,6 +37,10 @@ test("detection reports installed, running and missing from the injected io", as
   assert.equal(Object.keys(s).length, COMPONENTS.length);
 });
 
+test("every component has a plain-language blurb", () => {
+  for (const c of COMPONENTS) assert.ok(c.blurb && c.blurb.length > 20, c.id);
+});
+
 test("install commands are winget, docker or npm, and nothing for winget itself", () => {
   assert.deepEqual(installCommand("claude").program, "winget");
   assert.ok(installCommand("claude").args.includes("Anthropic.Claude"));

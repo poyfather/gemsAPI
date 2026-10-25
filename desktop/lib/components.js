@@ -9,16 +9,16 @@
 import { join } from "node:path";
 
 export const COMPONENTS = [
-  { id: "winget",   name: "winget (Windows Package Manager)", kind: "tooling",  install: null },
-  { id: "pwsh",     name: "PowerShell 7",                     kind: "tooling",  install: { winget: "Microsoft.PowerShell" } },
-  { id: "node",     name: "Node.js",                          kind: "tooling",  install: { winget: "OpenJS.NodeJS.LTS" } },
-  { id: "docker",   name: "Docker Desktop",                   kind: "tooling",  install: { winget: "Docker.DockerDesktop" } },
-  { id: "claude",   name: "Claude Desktop",                   kind: "client",   install: { winget: "Anthropic.Claude" } },
-  { id: "chatgpt",  name: "ChatGPT",                          kind: "client",   install: { winget: "OpenAI.ChatGPT" } },
-  { id: "ollama",   name: "Ollama (local models)",            kind: "service",  install: { winget: "Ollama.Ollama" }, health: "http://127.0.0.1:11434/api/tags" },
-  { id: "openwebui", name: "Open WebUI",                      kind: "service",  install: { docker: "ghcr.io/open-webui/open-webui:main", pip: "open-webui" }, health: "http://127.0.0.1:3080/health" },
-  { id: "rea",      name: "REA (Reverse Engineer Anything) MCP server", kind: "mcp", install: { npm: "rea-agents" } },
-  { id: "lapidary", name: "Lapidary (backend and UI)",        kind: "hub",      install: null, health: "http://127.0.0.1:8000/health" },
+  { id: "winget",   name: "winget (Windows Package Manager)", kind: "tooling",  install: null, blurb: "Built into Windows. The console uses it to install the other pieces from their publishers." },
+  { id: "pwsh",     name: "PowerShell 7",                     kind: "tooling",  install: { winget: "Microsoft.PowerShell" }, blurb: "The modern command line for Windows. The console and your assistants use it to look at and fix things on this PC, always asking first." },
+  { id: "node",     name: "Node.js",                          kind: "tooling",  install: { winget: "OpenJS.NodeJS.LTS" }, blurb: "Needed by some of the tools below. Nothing you use directly." },
+  { id: "docker",   name: "Docker Desktop",                   kind: "tooling",  install: { winget: "Docker.DockerDesktop" }, blurb: "Runs Open WebUI in a box of its own. Only needed if you want the private chat." },
+  { id: "claude",   name: "Claude Desktop",                   kind: "client",   install: { winget: "Anthropic.Claude" }, blurb: "Anthropic's assistant app. Connect it and it can use your prompts and assistants from here." },
+  { id: "chatgpt",  name: "ChatGPT",                          kind: "client",   install: { winget: "OpenAI.ChatGPT" }, blurb: "OpenAI's assistant app. Connect it the same way." },
+  { id: "ollama",   name: "Ollama (local models)",            kind: "service",  install: { winget: "Ollama.Ollama" }, health: "http://127.0.0.1:11434/api/tags", blurb: "AI models that run on this PC. Free, private, no account, works offline. Slower than the cloud, good enough for a lot." },
+  { id: "openwebui", name: "Open WebUI",                      kind: "service",  install: { docker: "ghcr.io/open-webui/open-webui:main", pip: "open-webui" }, health: "http://127.0.0.1:3080/health", blurb: "A chat website that runs on this PC, like ChatGPT but yours. Talks to local models, the cloud, and your prompts here." },
+  { id: "rea",      name: "REA (Reverse Engineer Anything) MCP server", kind: "mcp", install: { npm: "rea-agents" }, blurb: "Lets an assistant look inside an app or file you own to understand how it works. Comes with the console." },
+  { id: "lapidary", name: "Lapidary (backend and UI)",        kind: "hub",      install: null, health: "http://127.0.0.1:8000/health", blurb: "The heart of this: your prompts, your assistants, and the place every other app connects to." },
 ];
 
 /** Default file locations per platform. `env` is process.env-like; `platform` is process.platform-like. */

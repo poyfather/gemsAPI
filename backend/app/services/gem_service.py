@@ -10,8 +10,8 @@ import re
 from dataclasses import dataclass, field
 from typing import Optional
 
-from app.database import get_supabase
 from app.models import Gem, GemCreate, GemUpdate
+from app.storage import get_store
 
 # Patterns
 _VAR_RE = re.compile(r'\{([A-Za-z_][A-Za-z0-9_]*)\}')   # matches {variable}; identifier names only
@@ -34,57 +34,33 @@ def extract_gem_refs(prompt: str) -> list[str]:
     return sorted(set(ref.strip() for ref in _GEM_RE.findall(prompt)))
 
 
-def _row_to_gem(row: dict) -> Gem:
-    return Gem(**row)
-
-
-# ─── CRUD ──────────────────────────────────────────────────────────────────────
+# ─── CRUD (delegated to the storage backend) ───────────────────────────────────
 
 async def get_all_gems() -> list[Gem]:
-    db = get_supabase()
-    result = db.table("gems").select("*").eq("is_active", True).order("name").execute()
-    return [_row_to_gem(r) for r in result.data]
+    return await get_store().list_gems()
 
 
 async def get_gem_by_name(name: str) -> Optional[Gem]:
-    db = get_supabase()
-    result = (
-        db.table("gems")
-        .select("*")
-        .eq("name", name)
-        .eq("is_active", True)
-        .limit(1)
-        .execute()
-    )
-    return _row_to_gem(result.data[0]) if result.data else None
+    return await get_store().get_gem_by_name(name)
 
 
 async def get_gem_by_id(gem_id: str) -> Optional[Gem]:
-    db = get_supabase()
-    result = db.table("gems").select("*").eq("id", gem_id).limit(1).execute()
-    return _row_to_gem(result.data[0]) if result.data else None
+    return await get_store().get_gem_by_id(gem_id)
 
 
 async def create_gem(data: GemCreate) -> Gem:
-    db = get_supabase()
-    variables = extract_variables(data.system_prompt)
-    row = {**data.model_dump(), "variables": variables}
-    result = db.table("gems").insert(row).execute()
-    return _row_to_gem(result.data[0])
+    return await get_store().create_gem(data, extract_variables(data.system_prompt))
 
 
 async def update_gem(gem_id: str, data: GemUpdate) -> Gem:
-    db = get_supabase()
     updates = {k: v for k, v in data.model_dump().items() if v is not None}
     if "system_prompt" in updates:
         updates["variables"] = extract_variables(updates["system_prompt"])
-    result = db.table("gems").update(updates).eq("id", gem_id).execute()
-    return _row_to_gem(result.data[0])
+    return await get_store().update_gem(gem_id, updates)
 
 
 async def soft_delete_gem(gem_id: str) -> bool:
-    db = get_supabase()
-    db.table("gems").update({"is_active": False}).eq("id", gem_id).execute()
+    await get_store().soft_delete_gem(gem_id)
     return True
 
 

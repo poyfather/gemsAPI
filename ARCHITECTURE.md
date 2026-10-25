@@ -129,11 +129,12 @@ flowchart TB
 | Agent routes | `backend/app/routes/agents.py` | `POST /agents/{name}/runs` (JSON or SSE), `GET /runs/{id}`, `GET /agents/tools` | `agents.runner`, `agents.run_service` | Async calls, a queue for SSE |
 | Tool registry | `backend/app/agents/tools.py`, `builtin.py`, `mcp_sources.py` | `@tool` functions with a JSON schema from the signature; the three built-ins read the library; every tool of each MCP server in `configs/mcp_servers.json` as `<server>.<tool>`, listed and called through a fastmcp client, risky by default | `gem_service`, other MCP servers | In-process; stdio or streamable HTTP to the servers |
 | Run loop | `backend/app/agents/runner.py` | Resolve the gem, call the model with its tools, execute calls, feed results back, stop on an answer or the step cap; record every event | `llm_service.complete_turn`, registry, run store | Async calls |
-| Run store | `backend/app/agents/run_service.py` | `runs` and `run_events` rows | `database.py` | `supabase-py` |
+| Run store | `backend/app/agents/run_service.py` | `runs` and `run_events` through the storage layer | `storage/` | In-process |
 | Resolver and CRUD | `backend/app/services/gem_service.py` | Supabase queries; `{variable}` and `{{gem:name}}` extraction; recursive, cycle-safe resolution | `database.py` | `supabase-py` table API |
 | LLM adapter | `backend/app/services/llm_service.py` | One `complete()` and one `complete_stream()` for both providers, with timeouts and retries; `available_models()` with its cache | Anthropic, OpenAI | Official async SDKs |
 | Data shapes | `backend/app/models.py` | Pydantic models for gems, resolve and chat requests and responses | Routes, services | Import |
-| Database client | `backend/app/database.py` | Lazily built singleton from `SUPABASE_URL` and the service role key, the only credential accepted | Supabase | HTTPS |
+| Storage layer | `backend/app/storage/` | One `Store` interface; `SQLiteStore` (one file, seeded from `supabase/schema.sql` on first use; the default without a Supabase project and what the console uses) and `SupabaseStore`; chosen by `GEMS_STORAGE` | `database.py` for Supabase | sqlite3 in process, or HTTPS |
+| Database client | `backend/app/database.py` | Lazily built singleton from `SUPABASE_URL` and the service role key, the only credential accepted (hosted mode) | Supabase | HTTPS |
 | MCP server | `backend/mcp_server.py` | Expose the library to MCP clients as tools and resources; reads `backend/.env` itself | `gem_service`, `llm_service` | stdio transport, same process as the services |
 | Database | `supabase/schema.sql` | The `gems` table, indexes, `updated_at` trigger, RLS with no policies, seed gems | | SQL, run once in the Supabase editor |
 | Prompt mirror and evals | `prompts/`, `evals/` | Reviewable copies of shipped gems; live-API quality checks with recorded baselines | Supabase, Anthropic | Manual runs |
@@ -304,7 +305,8 @@ erDiagram
     }
 ```
 
-- One table. References between gems are text inside `system_prompt`, resolved by name at read time; there is no foreign key, so a referenced gem can be renamed or soft-deleted and the reference only fails at resolution.
+- The same tables exist in both backends: Postgres on Supabase (`supabase/schema.sql`) and SQLite (`backend/app/storage/sqlite_schema.sql`, lists and JSON as text). The seed gems have one source, the `INSERT` in `schema.sql`, which the SQLite backend parses on first start.
+- References between gems are text inside `system_prompt`, resolved by name at read time; there is no foreign key, so a referenced gem can be renamed or soft-deleted and the reference only fails at resolution.
 - `variables` is recomputed by `gem_service` whenever `system_prompt` is written, so the UI can render inputs without parsing the prompt.
 - Row level security is enabled with no policies, so only the service role key, used by the backend and the MCP server, can read or write rows; the anon key gets nothing. The API key on the REST edge is the access control for callers (ADR-006).
 - Deletes are soft (`is_active = false`); listing and name lookups filter on `is_active`, lookups by id do not.

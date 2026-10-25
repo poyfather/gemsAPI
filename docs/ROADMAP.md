@@ -4,7 +4,7 @@ A prioritised list of improvements to the project itself, written on 2026-10-23 
 
 Sizes: **S** is under half a day, **M** is one to three days, **L** is a week or more. Items are numbered so they can be referenced from issues and from the root roadmap.
 
-Two lenses run through the list. Items 1 to 27 come from reading the code: correctness, security, developer experience. Items 14, 21, 22 and 28 to 31 come from asking what a person who writes prompts for a living needs from a prompt library, and are summarised in [For the prompt practitioner](#for-the-prompt-practitioner) at the end. If only one thread gets attention, that one is the product. Items 32 to 35 follow ADR-007, which turned gems into agent definitions with a thin run loop. Items 36 to 42 follow ADR-009, the Windows console that installs and connects the AI tools on a machine with Lapidary as the hub.
+Two lenses run through the list. Items 1 to 27 come from reading the code: correctness, security, developer experience. Items 14, 21, 22 and 28 to 31 come from asking what a person who writes prompts for a living needs from a prompt library, and are summarised in [For the prompt practitioner](#for-the-prompt-practitioner) at the end. If only one thread gets attention, that one is the product. Items 32 to 35 follow ADR-007, which turned gems into agent definitions with a thin run loop. Items 36 to 42 follow ADR-009, the Windows console that installs and connects the AI tools on a machine with Lapidary as the hub. Items 47 to 50 follow ADR-012 and come first among the console items: the platform is for someone who does not know AI yet and should get something great out of it on day one.
 
 ## Already done in the hygiene pull request
 
@@ -56,11 +56,19 @@ These were found during the audit and fixed because CI could not pass without th
 | 35 | Managed Agents as an execution backend | Agents | M | Later |
 | 36 | OpenAI-compatible API: gems and agents as models for Open WebUI | Console, API | M | Next |
 | 37 | Console shell: Electron app, detection, config writers, sidecars | Console | L | Next |
-| 38 | Storage layer with a SQLite backend | Console, data | L | Next |
+| 38 | Storage layer with a SQLite backend | Console, data | L | Next, done |
 | 39 | Installers and updates through winget and Docker; Open WebUI management | Console | L | Next |
 | 40 | Settings and connections: keys, MCP servers, client configs | Console | M | Next |
 | 41 | Lapidary's MCP server over HTTP for Claude Desktop and ChatGPT | Console, MCP | M | Next |
 | 42 | Windows installer, CI build and smoke test, REA bundling, first run | Console | M | Next |
+| 43 | Lapidary Memory: observations across runs, chats and clients | Memory, product | L | Next |
+| 44 | Local models as a provider, and the model policy (local, online, mix, auto, hand pick) | Providers, hybrid | M | Now |
+| 45 | Gates: builder, tests, visual review, adversarial review, acceptance | Agents, quality | L | Next |
+| 46 | Workbench: parallel runs on worktrees; Codex and OpenCode as clients | Console, agents | L | Later |
+| 47 | Guided first run and recipes: outcomes in one click | Console, newcomers | L | Now |
+| 48 | Plain-language pass over the console and the web UI | Console, newcomers | M | Now |
+| 49 | Doctor: self-check with offered fixes | Console, newcomers | M | Next |
+| 50 | Explainers: every screen says what it is for and why | Console, newcomers | S | Now |
 
 ## Now
 
@@ -342,6 +350,8 @@ A Windows 11 application that installs, connects and manages the AI tools on a m
 
 ### 38. Storage layer with a SQLite backend
 
+**Status: done.** `backend/app/storage/` holds the `Store` interface, `SQLiteStore` (one file, schema from `sqlite_schema.sql`, seeded from `supabase/schema.sql` on first use) and `SupabaseStore`; `gem_service` and `run_service` delegate to `get_store()`, chosen by `GEMS_STORAGE` (sqlite unless `SUPABASE_URL` is set). The packaged backend carries the seeds. Integration tests run the real routes against SQLite.
+
 - **Why**: `gem_service.py` and `run_service.py` call supabase-py directly, so nothing runs without a Supabase project. The console needs a local database that works offline. One repository interface, two implementations (SQLite in the app data folder, Supabase as today), chosen by `GEMS_STORAGE`. `tests/conftest.py` already shows the shape.
 - **Size**: L.
 - **Depends on**: nothing; it also unlocks integration tests in CI.
@@ -369,6 +379,58 @@ A Windows 11 application that installs, connects and manages the AI tools on a m
 - **Why**: an NSIS installer from electron-builder, built on `windows-latest` with the backend as a PyInstaller single file, smoke-tested by launching and hitting `/health`; `rea-agents` bundled; a first-run screen that takes the keys, creates the database with the seed gems and opens the console.
 - **Size**: M.
 - **Depends on**: 37, 38, 40.
+
+### 43. Lapidary Memory: observations across runs, chats and clients
+
+- **Why**: ADR-010. Every run and chat starts from nothing, and the console's whole point is that Claude Desktop, ChatGPT, Open WebUI and the agents share one place. Modelled on claude-mem: capture a compressed observation when a run finishes, keep it with full-text search in the storage layer, bring it back by search then fetch (`search_memory`, `get_memories`, `remember`, `forget`) as agent tools, MCP tools and REST, inject the top matches into gems marked `memory: true`, and show it all in a Memory view with delete. `<private>` text is never stored.
+- **Size**: L.
+- **Depends on**: 38 (done). Embeddings later, behind the same interface.
+
+### 44. Local models as a provider, and the model policy
+
+- **Why**: ADR-011 and ADR-012 together. The console manages Ollama already, and the reference stack shows what local models are for: the high-volume build and review work, with a frontier model kept for planning. A third provider, `local`, is any OpenAI-compatible server at `LOCAL_OPENAI_BASE_URL` (default Ollama's `http://127.0.0.1:11434/v1`), key optional; `available_models()` asks the server; the gem editor offers it; the console's Ollama entry fills the base URL. Above the providers, one setting, `GEMS_MODEL_POLICY`, with five modes a person picks in plain words: Local only (free, private), Online only (paid, by choice), Mix (planning and hard reasoning online, high-volume building and reviewing local, by rules), Let the system decide (the router chooses per task from what is installed, what has a key, the task's role and size, with fallback either way), and Hand pick (per gem and per run, as today). A gem may pin its provider; the policy decides for gems that do not; every run records which model answered and why. In the Basic first run this is the first question, worded for the person: "Which AI should we use?"
+- **Size**: M.
+- **Depends on**: 17 (done). Unlocks 47's no-key default path.
+
+### 45. Gates: builder, tests, visual review, adversarial review, acceptance
+
+- **Why**: ADR-011, modelled on Ratchet Loop. A pipeline is an ordered list of gems with roles. The builder runs first; then each gate gem (a tester with `run_powershell` or a test tool, a visual reviewer with a vision model and screenshots from Playwright, an adversarial reviewer on a different model or provider) returns pass or fail with findings; a failure goes back to the builder with the findings and the pipeline retries up to a cap; acceptance is the existing approval gate. Every attempt is a run, and a failed gate's findings become a memory `lesson` (43). Surfaces: `POST /pipelines/{name}/runs`, a pipeline view in the UI, an MCP tool.
+- **Size**: L.
+- **Depends on**: 43, 44; 32 for a test or screenshot tool from an MCP server.
+
+### 46. Workbench: parallel runs on worktrees; Codex and OpenCode as clients
+
+- **Why**: ADR-011, modelled on Paseo. The console starts several runs or pipelines at once, each on its own git worktree when a repository is involved, and shows them side by side with their gates; Codex and OpenCode appear in Connections as MCP clients of Lapidary so they share its memory and gems.
+- **Size**: L.
+- **Depends on**: 45, 41.
+
+## For the newcomer (ADR-012)
+
+The person this is for does not know much about AI, installs the console, and should get something genuinely useful on day one. These items come before the rest of the console work.
+
+### 47. Guided first run and recipes: outcomes in one click
+
+- **Why**: two kinds of people arrive at the first run. The Basic path is for anyone, a student, a parent, a marketing person: it asks two questions in plain words. First, "Which AI should we use?", with five answers: "The free one on this PC" (private, nothing leaves the computer, works offline), "The online ones" (Claude and ChatGPT, smarter, paid by use with your own key), "A mix" (recommended: online for the hard thinking, the free one for the rest), "Decide for me" (the system picks per task from what is set up and says what it picked), and "I'll choose each time". Then, "What would you like?", and it offers recipes: a private chat on this PC (Ollama, a small model, Open WebUI, connected, done; free, nothing leaves the PC), help with homework, writing and everyday questions (the same chat with a few ready-made prompts), summarise or ask questions about my own documents privately (Open WebUI's document chat on local models), let Claude and ChatGPT use my prompts (keys form with a test button, the apps connected; explained as paid by use), an assistant that can run safe PowerShell for me (the `windows_operator` gem, with the approval gate explained), understand how an app works (REA and the `rea_analyst` gem). Each recipe installs and connects what it needs, shows progress in plain words, and ends with "here is what you can do now". Cloud keys are offered as an upgrade, never required. The Advanced path is for the system administrator: a walk through each choice (components, cloud keys or local models or both, SQLite or Supabase, which apps to connect, ports and data folders, what assistants may do without asking, logging and updates), with the same forms the Settings screens use and a summary of everything the console will write before it writes it. An Advanced toggle, available later on every screen, shows the details the Basic path hides.
+- **Size**: L.
+- **Depends on**: 37, 39, 40, 44 (local models so the default path needs no key).
+
+### 48. Plain-language pass over the console and the web UI
+
+- **Why**: "MCP", "gem", "run", "provider", "RLS" are our words. The console and the web UI get a pass against ADR-012: connect instead of MCP, prompts and assistants instead of gems and agents where a newcomer reads, "what the assistant did" for runs, acronyms only in details, every error message saying what to do next. The retro look stays.
+- **Size**: M.
+- **Depends on**: nothing.
+
+### 49. Doctor: self-check with offered fixes
+
+- **Why**: when something does not work, a newcomer cannot read logs. A Doctor view runs the checks (services up, keys valid, Docker running, ports free, Ollama has a model, connections written, versions current) and offers the fix for each failure in one click, with a plain explanation.
+- **Size**: M.
+- **Depends on**: 37, 39.
+
+### 50. Explainers: every screen says what it is for and why
+
+- **Why**: one sentence per component and per screen, in the person's language: what it is, what you get from it, what it costs or needs. Started in this PR with a blurb on every component and toolbox entry.
+- **Size**: S.
+- **Depends on**: nothing.
 
 ## For the prompt practitioner
 

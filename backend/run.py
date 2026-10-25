@@ -12,6 +12,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 
 def main() -> None:
+    bundled = getattr(sys, "_MEIPASS", None)
+    if bundled and not os.environ.get("GEMS_SEED_SQL_FILE"):
+        os.environ["GEMS_SEED_SQL_FILE"] = os.path.join(bundled, "supabase", "schema.sql")
     if "--mcp" in sys.argv:
         import mcp_server
         mcp_server.mcp.run()
