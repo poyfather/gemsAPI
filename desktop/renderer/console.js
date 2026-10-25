@@ -40,7 +40,7 @@ async function refresh() {
   const inst = components.map((c) => {
     const s = status[c.id] || {};
     const btn = s.installed ? `<button data-install="${c.id}" class="small">update</button>` : `<button data-install="${c.id}" class="small">install</button>`;
-    return `<tr><td><span class="${lampFor(s)}"></span></td><td>${c.name}</td><td class="dim">${s.version || ""}</td><td class="dim">${s.path || ""}</td><td>${c.id === "winget" || c.id === "lapidary" ? "" : btn}</td></tr>`;
+    return `<tr><td><span class="${lampFor(s)}"></span></td><td>${c.name}</td><td class="dim">${s.version || ""}</td><td class="path">${s.path || ""}</td><td class="act">${c.id === "winget" || c.id === "lapidary" ? "" : btn}</td></tr>`;
   });
   $("#install-table tbody").innerHTML = inst.join("");
   document.querySelectorAll("[data-install]").forEach((b) => b.addEventListener("click", async () => {
