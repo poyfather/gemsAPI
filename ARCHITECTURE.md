@@ -84,7 +84,7 @@ flowchart TB
 
     subgraph services["Shared service layer (backend/app)"]
         GS["services/gem_service.py<br/>CRUD, extract_variables,<br/>extract_gem_refs, resolve_gem"]
-        LS["services/llm_service.py<br/>complete, complete_stream, MODELS"]
+        LS["services/llm_service.py<br/>complete, complete_stream,<br/>available_models"]
         MODELS["models.py<br/>Pydantic request and response shapes"]
         DBPY["database.py<br/>Supabase client singleton"]
         GS --> DBPY
@@ -118,7 +118,7 @@ flowchart TB
 | Gems routes | `backend/app/routes/gems.py` | List, create, get by name or id, update, soft delete, resolve | `gem_service` | Async calls |
 | Chat routes | `backend/app/routes/chat.py` | Resolve the gem, pick model and provider, call the LLM, return JSON or an SSE stream | `gem_service`, `llm_service` | Async calls, `StreamingResponse` |
 | Resolver and CRUD | `backend/app/services/gem_service.py` | Supabase queries; `{variable}` and `{{gem:name}}` extraction; recursive, cycle-safe resolution | `database.py` | `supabase-py` table API |
-| LLM adapter | `backend/app/services/llm_service.py` | One `complete()` and one `complete_stream()` for both providers; the `MODELS` list | Anthropic, OpenAI | Official async SDKs |
+| LLM adapter | `backend/app/services/llm_service.py` | One `complete()` and one `complete_stream()` for both providers, with timeouts and retries; `available_models()` with its cache | Anthropic, OpenAI | Official async SDKs |
 | Data shapes | `backend/app/models.py` | Pydantic models for gems, resolve and chat requests and responses | Routes, services | Import |
 | Database client | `backend/app/database.py` | Lazily built singleton from `SUPABASE_URL` and the service role key, the only credential accepted | Supabase | HTTPS |
 | MCP server | `backend/mcp_server.py` | Expose the library to MCP clients as tools and resources; reads `backend/.env` itself | `gem_service`, `llm_service` | stdio transport, same process as the services |
@@ -242,7 +242,7 @@ erDiagram
         text name UK "snake_case, unique"
         text description
         text system_prompt "may contain {variable} and {{gem:name}}"
-        text model "default claude-opus-4-5"
+        text model "default from GEMS_DEFAULT_MODEL"
         text provider "anthropic or openai (CHECK)"
         text_array tags "GIN indexed"
         text_array variables "derived from system_prompt on save"
@@ -261,8 +261,8 @@ erDiagram
 ## Model and provider integration
 
 - **Adapter.** `llm_service.complete(system, messages, model, provider)` and `complete_stream(...)` are the whole interface. `provider` selects an `AsyncAnthropic` or `AsyncOpenAI` client, built lazily from `ANTHROPIC_API_KEY` or `OPENAI_API_KEY`.
-- **Model choice.** Each gem stores a default `model` and `provider`; a chat request can override both. `GET /chat/models` and the `list_available_models` tool return the static `MODELS` dict from `llm_service.py`.
-- **Fallback, retries, timeouts.** None beyond SDK defaults. A provider failure is logged and surfaced as a generic 502 or SSE error (`docs/ROADMAP.md` item 18).
+- **Model choice.** Each gem stores a `model` and `provider`, defaulting to `GEMS_DEFAULT_MODEL` and `GEMS_DEFAULT_PROVIDER` from `backend/app/settings.py`; a chat request can override both. `GET /chat/models` and the `list_available_models` tool return `llm_service.available_models()`: each provider's live model list (OpenAI's filtered to chat models), cached for ten minutes, with an environment pin or a static fallback when a key is missing or the call fails. The UI's dropdowns read that endpoint; nothing in the frontend names a model.
+- **Retries and timeouts.** Both SDK clients are built with `LLM_TIMEOUT_SECONDS` per attempt and `LLM_MAX_RETRIES` (the SDKs retry connection errors, 408, 409, 429 and 5xx with backoff). Any SDK failure is wrapped in `ProviderError`, logged, and surfaced as a generic 502 or SSE error. There is no cross-provider fallback.
 - **Rate limits and cost.** Not handled. Every `/chat` and `chat_with_gem` call spends provider credit (`docs/ROADMAP.md` item 11).
 
 ## Trust boundaries

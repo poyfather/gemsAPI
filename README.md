@@ -153,6 +153,9 @@ Backend variables live in `backend/.env` (template: [`.env.example`](.env.exampl
 | `GEMS_API_KEY` | backend and frontend | Shared secret for the `X-API-Key` header. Required |
 | `CORS_ORIGINS` | backend | Comma-separated allowed origins, default `http://localhost:3000` |
 | `BACKEND_URL` | frontend | Where `/api/*` is proxied, default `http://localhost:8000` |
+| `GEMS_DEFAULT_PROVIDER`, `GEMS_DEFAULT_MODEL` | backend | Provider and model for new gems, default `anthropic` and `claude-opus-5-5` |
+| `GEMS_MODELS_ANTHROPIC`, `GEMS_MODELS_OPENAI` | backend | Optional comma-separated model lists. When unset, `GET /chat/models` asks each configured provider for its current models and caches the answer for `GEMS_MODEL_LIST_TTL_SECONDS` (default 600) |
+| `LLM_TIMEOUT_SECONDS`, `LLM_MAX_RETRIES`, `LLM_MAX_TOKENS` | backend | Per-attempt timeout (60), SDK retries on 429 and 5xx (2), and the completion cap (4096) |
 
 ## Project layout
 

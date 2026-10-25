@@ -49,7 +49,8 @@ from app.services.gem_service import (
     resolve_gem_detailed,
     extract_gem_refs,
 )
-from app.services.llm_service import complete, MODELS
+from app import settings
+from app.services.llm_service import available_models, complete
 from app.models import GemCreate
 
 mcp = FastMCP(
@@ -233,8 +234,8 @@ async def create_gem(
     name: str,
     description: str,
     system_prompt: str,
-    model: str = "claude-opus-4-5",
-    provider: str = "anthropic",
+    model: str | None = None,
+    provider: str | None = None,
     tags: list[str] | None = None,
 ) -> dict:
     """
@@ -244,8 +245,8 @@ async def create_gem(
         name:          Unique snake_case name (e.g. 'my_assistant').
         description:   What this gem does.
         system_prompt: The prompt. Use {variable} for placeholders, {{gem:name}} to embed other gems.
-        model:         Default LLM model.
-        provider:      'anthropic' or 'openai'.
+        model:         LLM model; defaults to the server's GEMS_DEFAULT_MODEL.
+        provider:      'anthropic' or 'openai'; defaults to GEMS_DEFAULT_PROVIDER.
         tags:          Optional list of tags.
 
     Example system_prompt with composition:
@@ -259,8 +260,8 @@ async def create_gem(
             name=name,
             description=description,
             system_prompt=system_prompt,
-            model=model,
-            provider=provider,
+            model=model or settings.DEFAULT_MODEL,
+            provider=provider or settings.DEFAULT_PROVIDER,
             tags=tags,
         ))
         return {"success": True, "id": gem.id, "name": gem.name, "variables": gem.variables}
@@ -271,10 +272,10 @@ async def create_gem(
 @mcp.tool()
 async def list_available_models() -> dict:
     """
-    Return the models available for each provider.
+    Return the models each provider currently offers (live list, cached ten minutes).
     Useful when creating or updating gems.
     """
-    return MODELS
+    return await available_models()
 
 
 # ─── Resources ─────────────────────────────────────────────────────────────────

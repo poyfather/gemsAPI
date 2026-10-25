@@ -94,7 +94,7 @@ def run_eval() -> None:
     for tc in TEST_CASES:
         print(f"[{tc['id']}] {tc['description']}")
         response = client.messages.create(
-            model="claude-opus-4-5",
+            model=os.environ.get("GEMS_DEFAULT_MODEL", "claude-opus-5-5"),
             max_tokens=2048,
             system=system_prompt,
             messages=[{"role": "user", "content": tc["input"]}],

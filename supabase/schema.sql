@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS gems (
   name        TEXT        UNIQUE NOT NULL,
   description TEXT        NOT NULL DEFAULT '',
   system_prompt TEXT      NOT NULL DEFAULT '',
-  model       TEXT        NOT NULL DEFAULT 'claude-opus-4-5',
+  model       TEXT        NOT NULL DEFAULT 'claude-opus-5-5',
   provider    TEXT        NOT NULL DEFAULT 'anthropic'
                           CHECK (provider IN ('anthropic', 'openai')),
   tags        TEXT[]      NOT NULL DEFAULT '{}',
@@ -72,7 +72,7 @@ INSERT INTO gems (name, description, system_prompt, model, provider, tags, varia
 - Honest about uncertainty rather than guessing
 - Focused on what the user actually needs, not what they literally asked
 - Technically precise when the topic requires it',
-  'claude-opus-4-5',
+  'claude-opus-5-5',
   'anthropic',
   ARRAY['base', 'personality'],
   ARRAY[]::TEXT[]
@@ -93,7 +93,7 @@ You also specialize in rigorous code review. When reviewing code:
 5. **Style** — follow {language} conventions unless the user specifies otherwise
 
 Format your review with clear sections: **Summary**, **Issues** (severity: critical/major/minor), **Suggestions**, and a **Verdict** (approve / request changes).',
-  'claude-opus-4-5',
+  'claude-opus-5-5',
   'anthropic',
   ARRAY['code', 'review', 'engineering'],
   ARRAY['language']
@@ -111,7 +111,7 @@ You are also an expert creative writer. Your current assignment:
 - Genre: {genre}
 
 When given a creative task, craft vivid, engaging prose with strong voice. Use specific sensory detail, not vague description. Avoid clichés. Show, don''t tell.',
-  'claude-opus-4-5',
+  'claude-opus-5-5',
   'anthropic',
   ARRAY['writing', 'creative'],
   ARRAY['style', 'tone', 'genre']
@@ -129,7 +129,7 @@ When given a creative task, craft vivid, engaging prose with strong voice. Use s
 - Omits filler, repetition, and tangents
 
 Target length: {target_length}.',
-  'claude-opus-4-5',
+  'claude-opus-5-5',
   'anthropic',
   ARRAY['utility', 'writing'],
   ARRAY['depth', 'target_length']
@@ -148,7 +148,7 @@ Beyond code review, you also:
 - Propose a migration path when a rewrite is warranted
 
 Always think about the team, not just the code. Assume {team_size} engineers will maintain this.',
-  'claude-opus-4-5',
+  'claude-opus-5-5',
   'anthropic',
   ARRAY['engineering', 'leadership'],
   ARRAY['language', 'team_size']
@@ -256,7 +256,7 @@ Brief assessment of the original prompt''s weaknesses and what it needs.
 - The enhanced prompt must be immediately usable. Do not use placeholders like `[INSERT CONTEXT HERE]` unless the user genuinely needs to fill in information that cannot be inferred.
 - Write the enhanced prompt as if addressing Claude directly (second person: "You are...", "Your task is...").
 - Match verbosity to task complexity: a simple question needs a clear, tight prompt; a complex agentic task warrants full XML structure and detailed instructions.',
-  'claude-opus-4-5',
+  'claude-opus-5-5',
   'anthropic',
   ARRAY['prompting', 'utility', 'engineering', 'ai'],
   ARRAY[]::TEXT[]

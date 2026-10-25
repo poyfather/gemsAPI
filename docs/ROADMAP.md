@@ -35,8 +35,8 @@ These were found during the audit and fixed because CI could not pass without th
 | 14 | Prompt version history | Product | L | Next |
 | 15 | Supabase CLI migrations instead of hand-run SQL | DX, data | M | Next |
 | 16 | Make `prompts/` the single source of shipped gems | DX, data | S to M | Next |
-| 17 | One place for model defaults, drop retired models | Correctness | S | Next |
-| 18 | Timeouts and retries in `llm_service.py` | Reliability | S | Next |
+| 17 | One place for model defaults, drop retired models | Correctness | S | Next, done |
+| 18 | Timeouts and retries in `llm_service.py` | Reliability | S | Next, done |
 | 19 | Resolver query batching and a prompt size budget | Performance | M | Later |
 | 20 | Structured logging and a real health check | Operations | M | Later |
 | 21 | Multi-user accounts | Product, security | L | Later |
@@ -183,11 +183,15 @@ Design and security decisions that shape everything after them.
 
 ### 17. One place for model defaults, drop retired models
 
+**Status: done.** `backend/app/settings.py` holds the defaults (env-overridable); `GET /chat/models` and the MCP tool list each provider's live models with a cache and a pin; the frontend's hard-coded lists are gone; seeds and the eval use the new default; `supabase/update_default_models.sql` moves existing gems off retired models.
+
 - **Why**: the default model string `claude-opus-4-5` appears in `backend/app/models.py`, `supabase/schema.sql`, `backend/mcp_server.py` and `evals/eval_prompt_enhancer.py`, and the `MODELS` dict in `backend/app/services/llm_service.py` still lists `claude-3-5-sonnet-20241022`, `claude-3-5-haiku-20241022` and `gpt-3.5-turbo`, which the providers have retired or are retiring. A single settings module (default model and provider from env, with the list of offered models loaded from config or from each provider's model list endpoint) keeps the UI dropdown honest.
 - **Size**: S.
 - **Depends on**: nothing.
 
 ### 18. Timeouts and retries in `llm_service.py`
+
+**Status: done.** `LLM_TIMEOUT_SECONDS` and `LLM_MAX_RETRIES` on both clients, SDK failures wrapped in one `ProviderError`.
 
 - **Why**: `ARCHITECTURE.md` already notes that timeouts and retries are inherited from SDK defaults and that there is no fallback. One slow provider call ties up a request indefinitely; a transient 429 or 5xx surfaces straight to the UI. Pass explicit `timeout` and `max_retries` to `AsyncAnthropic` and `AsyncOpenAI`, and map provider exceptions to one internal error type (which 6 needs anyway).
 - **Size**: S.
