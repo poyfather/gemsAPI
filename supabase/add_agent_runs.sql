@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS runs (
   gem_id        UUID        REFERENCES gems (id),
   gem_name      TEXT        NOT NULL,
   status        TEXT        NOT NULL DEFAULT 'running'
-                            CHECK (status IN ('running', 'finished', 'failed', 'max_steps')),
+                            CHECK (status IN ('running', 'waiting_approval', 'finished', 'failed', 'max_steps')),
   model         TEXT        NOT NULL,
   provider      TEXT        NOT NULL,
   input         TEXT        NOT NULL,
@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS runs (
   input_tokens  INTEGER     NOT NULL DEFAULT 0,
   output_tokens INTEGER     NOT NULL DEFAULT 0,
   error         TEXT,
+  state         JSONB,      -- loop state while waiting for an approval (ADR-007, roadmap 33)
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   finished_at   TIMESTAMPTZ
 );
@@ -33,6 +34,11 @@ CREATE TABLE IF NOT EXISTS run_events (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE (run_id, seq)
 );
+
+-- Installs created before approval gates: add the column and widen the status check.
+ALTER TABLE runs ADD COLUMN IF NOT EXISTS state JSONB;
+ALTER TABLE runs DROP CONSTRAINT IF EXISTS runs_status_check;
+ALTER TABLE runs ADD CONSTRAINT runs_status_check CHECK (status IN ('running', 'waiting_approval', 'finished', 'failed', 'max_steps'));
 
 CREATE INDEX IF NOT EXISTS runs_gem_name_idx   ON runs (gem_name);
 CREATE INDEX IF NOT EXISTS runs_created_at_idx ON runs (created_at DESC);

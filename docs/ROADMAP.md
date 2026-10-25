@@ -51,7 +51,7 @@ These were found during the audit and fixed because CI could not pass without th
 | 30 | Side-by-side runs | Product | M | Later |
 | 31 | Few-shot examples as first-class data | Product | M | Later |
 | 32 | Agent tools from remote MCP servers and HTTP endpoints | Agents | M | Next |
-| 33 | Approval gates with pause and resume | Agents, security | M | Next |
+| 33 | Approval gates with pause and resume | Agents, security | M | Next, done |
 | 34 | Run viewer in the UI | Agents, product | M | Next, done |
 | 35 | Managed Agents as an execution backend | Agents | M | Later |
 
@@ -279,9 +279,11 @@ Worth doing once the foundations above are in.
 
 - **Why**: ADR-007 shipped the loop with three built-in tools about the library itself. The useful agents need the user's own tools. FastMCP can act as a client, so a gem could list a remote MCP server (the same config a user pastes into Claude Desktop) and get its tools; a plain HTTP tool described by a JSON schema covers the rest. Both plug into `backend/app/agents/tools.py` as more sources behind the same registry, and both need an allowlist of hosts and a timeout.
 - **Size**: M.
-- **Depends on**: nothing; 33 before anything that writes.
+- **Depends on**: 33 (done), so remote tools that write can be marked risky from day one.
 
 ### 33. Approval gates with pause and resume
+
+**Status: done.** A risky call without `allow_risky` saves the loop state on the run (`runs.state`), sets `waiting_approval` and emits `approval_requested`; `POST /runs/{id}/approve` (and the MCP `approve_run` tool) resumes from that call, approving or denying, with the rest of the run streamable; the chat bubble and the run page show Approve and Deny.
 
 - **Why**: today a tool marked risky is simply refused unless the run opts in with `allow_risky`. Real use needs the run to pause, ask, and continue: a `waiting_approval` status, the pending call stored on the run, and `POST /runs/{id}/approve` that resumes the loop from the recorded messages. The run record already holds everything needed to rebuild the conversation.
 - **Size**: M.

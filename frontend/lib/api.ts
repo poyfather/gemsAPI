@@ -71,11 +71,11 @@ export interface ToolInfo {
   risky: boolean;
 }
 
-export type RunStatus = "running" | "finished" | "failed" | "max_steps";
+export type RunStatus = "running" | "waiting_approval" | "finished" | "failed" | "max_steps";
 
 export interface RunEvent {
   seq: number;
-  type: "run_started" | "model_turn" | "tool_call" | "tool_result" | "run_finished" | "run_failed" | string;
+  type: "run_started" | "model_turn" | "tool_call" | "tool_result" | "approval_requested" | "approval_decided" | "run_finished" | "run_failed" | string;
   data: Record<string, unknown>;
   created_at: string;
 }
@@ -257,6 +257,17 @@ export const agents = {
 export const runs = {
   get: (id: string): Promise<RunResult> =>
     request<RunResult>(`/runs/${encodeURIComponent(id)}`),
+
+  /** Approve or deny the risky tool call a run is waiting on, streaming the rest of the run. */
+  approve: async (id: string, approve: boolean, onEvent: (event: RunEvent) => void): Promise<void> => {
+    for await (const msg of sse(`/runs/${encodeURIComponent(id)}/approve`, { approve, stream: true })) {
+      if (msg.event === "error") {
+        const payload = JSON.parse(msg.data) as { error?: string };
+        throw new ApiError(409, payload.error || "Could not continue the run");
+      }
+      onEvent(JSON.parse(msg.data) as RunEvent);
+    }
+  },
 };
 
 /** Message for an unknown thrown value, for catch blocks. */
