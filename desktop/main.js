@@ -16,7 +16,7 @@ import { TOOLBOX, detectToolbox, toolboxInstallCommand, toolboxSourceLabel } fro
 import { AI_CHOICES, DEFAULT_LOCAL_MODEL, advancedPlan, plan, planAll, summarise } from "./lib/recipes.js";
 import { PORTS, diagnose, readClientConfig, summarise as doctorSummary } from "./lib/doctor.js";
 import { connect as netConnect } from "node:net";
-import { helperHandles, helperPing, helperRequest, shouldFallBack } from "./lib/helper.js";
+import { ensureHelper, helperHandles, helperPing, helperRequest, shouldFallBack } from "./lib/helper.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
@@ -105,8 +105,20 @@ function runCommand(program, args) {
  * no administrator prompt. Otherwise, or when the helper lacks the means, run
  * the publisher's installer here as before.
  */
+/** Start Lapidary Helper if it is installed but stopped; true when the start was accepted. */
+function startHelperService() {
+  return new Promise((resolve) => {
+    const p = spawn("sc.exe", ["start", "LapidaryHelper"], { windowsHide: true });
+    let out = ""; p.stdout.on("data", (d) => (out += d));
+    // 1056 = already running; anything else non-zero means not installed or not allowed
+    p.on("close", (code) => { if (code) log(`[helper] sc start: ${out.trim().split(/\r?\n/).pop()}`); resolve(code === 0 || code === 1056); });
+    p.on("error", () => resolve(false));
+  });
+}
+const helperUp = () => (process.platform === "win32" ? ensureHelper({ start: startHelperService }) : Promise.resolve(null));
+
 async function installTool(id, cmd) {
-  if (process.platform === "win32" && helperHandles(id)) {
+  if (process.platform === "win32" && helperHandles(id) && await helperUp()) {
     log(`[helper] install ${id}`);
     const answer = await helperRequest({ op: "install", id }, { onLine: (line) => log(`[helper] ${line}`) });
     if (!shouldFallBack(answer)) return { ok: answer.ok, message: answer.ok ? "installed" : `${answer.message}; open Logs to see why, then try again` };
@@ -256,7 +268,12 @@ ipcMain.handle("console:doctor:fix", async (_e, action) => {
   }
   if (kind === "open") { await shell.openExternal(arg); return { ok: true, message: "opened" }; }
   if (kind === "view") return { ok: true, message: "", view: arg };
+  if (kind === "helper" && arg === "start") {
+    const up = await helperUp();
+    return { ok: !!up, message: up ? "Lapidary Helper is running" : "Lapidary Helper would not start; reinstall Lapidary Console to repair it" };
+  }
   if (kind === "update" && arg === "console") {
+    if (!(await helperUp())) return { ok: false, message: "Lapidary Helper is not running; download the installer from the releases page instead" };
     const answer = await helperRequest({ op: "update_console" }, { onLine: (line) => log(`[helper] ${line}`) });
     if (!answer) return { ok: false, message: "Lapidary Helper is not running; download the installer from the releases page instead" };
     return { ok: answer.ok, message: answer.message };

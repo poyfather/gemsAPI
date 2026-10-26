@@ -100,7 +100,7 @@ export function diagnose(facts) {
   else add({ id: "version", title: "Could not check for a newer console", state: "skip", detail: "This PC may be offline. Components still update from the Components view." });
 
   if (helper?.running) add({ id: "helper", title: "Lapidary Helper is running", state: "ok", detail: "Installs and updates happen without asking for administrator rights." });
-  else if (helper) add({ id: "helper", title: "Lapidary Helper is not running", state: "warn", detail: "Installs will ask for administrator rights each time. Restart the PC; if it stays off, reinstall Lapidary Console.", fix: { action: "open:https://github.com/poyfather/lapidary/releases/latest", label: "Get the installer" } });
+  else if (helper) add({ id: "helper", title: "Lapidary Helper is not running", state: "warn", detail: "Installs will ask for administrator rights each time. Start it; if it will not stay on, reinstall Lapidary Console.", fix: { action: "helper:start", label: "Start it" } });
 
   return out;
 }

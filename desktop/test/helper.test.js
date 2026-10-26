@@ -4,7 +4,7 @@ import { createServer } from "node:net";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { buildAllowlist, helperHandles, helperPing, helperRequest, shouldFallBack } from "../lib/helper.js";
+import { buildAllowlist, ensureHelper, helperHandles, helperPing, helperRequest, shouldFallBack } from "../lib/helper.js";
 import { COMPONENTS } from "../lib/components.js";
 import { TOOLBOX } from "../lib/toolbox.js";
 
@@ -79,4 +79,16 @@ test("the console hands the helper only what it can install, and falls back when
   assert.ok(shouldFallBack({ ok: false, message: "winget was not found on this machine; install App Installer" }));
   assert.ok(!shouldFallBack({ ok: false, message: "git: the installer stopped with code 1603" }));
   assert.ok(!shouldFallBack({ ok: true, message: "git: done" }));
+});
+
+test("ensureHelper starts a stopped helper and waits for it, or gives up", async () => {
+  const up = { ok: true, message: "Lapidary Helper is running" };
+  const noSleep = async () => {};
+  assert.equal(await ensureHelper({ ping: async () => up, start: async () => { throw new Error("not needed"); } }), up);
+  let pings = 0, starts = 0;
+  const slow = await ensureHelper({ ping: async () => (++pings >= 3 ? up : null), start: async () => (++starts, true), sleep: noSleep });
+  assert.equal(slow, up); assert.equal(starts, 1);
+  assert.equal(await ensureHelper({ ping: async () => null, start: async () => false, sleep: noSleep }), null);
+  assert.equal(await ensureHelper({ ping: async () => null, start: async () => true, sleep: noSleep, waitMs: 10, stepMs: 5 }), null);
+  assert.equal(await ensureHelper({ ping: async () => null }), null);
 });

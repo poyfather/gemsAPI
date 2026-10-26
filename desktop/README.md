@@ -65,6 +65,7 @@ The helper is deliberately narrow:
 - It installs or upgrades only ids on its allowlist, which CI writes from the console's own catalog: winget packages from the winget source, machine-wide and silent, and PowerShell Gallery modules for all users. It never runs a command line it is sent.
 - It updates the console only from this repository's latest GitHub release, only to a newer version, and only after the download matches the published SHA-256 checksum. A signed build also requires a valid Authenticode signature whose subject is exactly the publisher baked in at build time. Downloads go into a new folder only SYSTEM and Administrators can open.
 - It logs everything to `helper.log` next to itself in the install folder.
+- Signed-in users may start it, but not stop, change or remove it. The console starts it when it finds it stopped, for example after a slow first start while antivirus scans it.
 
 When the helper is not running, the console installs as before and Windows asks for administrator rights where the installer needs them. The Doctor shows whether the helper runs, and "Update now" when a newer console is out.
 

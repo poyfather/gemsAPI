@@ -49,6 +49,23 @@ export async function helperPing(opts = {}) {
 }
 
 /**
+ * Ping the helper; if it is installed but stopped, start it (signed-in users
+ * may) and wait for it. Resolves with the ping answer or null. `start` runs
+ * `sc start` and `ping`, `sleep` are injectable for tests.
+ */
+export async function ensureHelper({ ping = helperPing, start, sleep = (ms) => new Promise((r) => setTimeout(r, ms)), waitMs = 60000, stepMs = 2000 } = {}) {
+  const first = await ping();
+  if (first) return first;
+  if (!start || !(await start())) return null;
+  for (let waited = 0; waited < waitMs; waited += stepMs) {
+    await sleep(stepMs);
+    const r = await ping();
+    if (r) return r;
+  }
+  return null;
+}
+
+/**
  * The helper's allowlist, built from the console's own catalog: every component
  * and toolbox entry that installs from winget or the PowerShell Gallery. CI
  * writes it next to the helper (scripts/allowlist.mjs); the helper installs

@@ -30,7 +30,12 @@
   ; Restart it if it ever stops unexpectedly.
   nsExec::ExecToLog '"$SYSDIR\sc.exe" failure LapidaryHelper reset= 86400 actions= restart/60000/restart/60000//0'
   Pop $0
-  nsExec::ExecToLog '"$SYSDIR\sc.exe" start LapidaryHelper'
+  ; Signed-in users may start it (not stop or change it), so the console can wake it.
+  ; The default access list plus RP (start) for interactive users.
+  nsExec::ExecToLog '"$SYSDIR\sc.exe" sdset LapidaryHelper D:(A;;CCLCSWRPWPDTLOCRRC;;;SY)(A;;CCDCLCSWRPWPDTLOCRRC;;;BA)(A;;CCLCSWRPLOCRRC;;;IU)(A;;CCLCSWLOCRRC;;;SU)'
+  Pop $0
+  ; The first start of a new program can be slow while antivirus scans it: try a few times.
+  nsExec::ExecToLog '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -Command "foreach ($$i in 1..4) { Start-Service LapidaryHelper -ErrorAction SilentlyContinue; if ((Get-Service LapidaryHelper).Status -eq [System.ServiceProcess.ServiceControllerStatus]::Running) { exit 0 }; Start-Sleep 5 }; exit 1"'
   Pop $0
 !macroend
 

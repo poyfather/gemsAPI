@@ -181,7 +181,7 @@ jobs:
             Get-Content "$env:RUNNER_TEMP\helper-out.log", "$env:RUNNER_TEMP\helper-err.log" -ErrorAction SilentlyContinue
           }
           $svc = $null
-          foreach ($i in 1..30) { $svc = Get-Service LapidaryHelper -ErrorAction SilentlyContinue; if ($svc.Status -eq "Running") { break }; Start-Sleep 1 }
+          foreach ($i in 1..90) { $svc = Get-Service LapidaryHelper -ErrorAction SilentlyContinue; if ($svc.Status -eq "Running") { break }; Start-Sleep 1 }
           if (-not $svc -or $svc.Status -ne "Running") {
             "--- sc start ---"; sc.exe start LapidaryHelper; Start-Sleep 5
             Show-Diagnostics
@@ -190,6 +190,9 @@ jobs:
           $cfg = Get-CimInstance Win32_Service -Filter "Name='LapidaryHelper'"
           "service: $($cfg.State), start $($cfg.StartMode), runs as $($cfg.StartName), $($cfg.PathName)"
           if ($cfg.StartName -ne "LocalSystem" -or $cfg.StartMode -ne "Auto") { throw "unexpected service configuration" }
+          $sd = (sc.exe sdshow LapidaryHelper) -join ""
+          "access list: $sd"
+          if ($sd -notmatch "\(A;;CCLCSWRPLOCRRC;;;IU\)") { throw "signed-in users cannot start the helper" }
 
           function Ask($json) {
             $c = New-Object System.IO.Pipes.NamedPipeClientStream(".", "LapidaryHelper", [System.IO.Pipes.PipeDirection]::InOut)
