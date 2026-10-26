@@ -39,7 +39,7 @@ jobs:
         shell: pwsh
         run: |
           pip install -r backend/requirements.txt pyinstaller typer
-          pyinstaller --onefile --name lapidary-backend --paths backend --add-data "supabase/schema.sql;supabase" --add-data "backend/app/storage/sqlite_schema.sql;app/storage" --collect-all fastmcp --collect-all mcp --hidden-import uvicorn.loops.auto --hidden-import uvicorn.protocols.http.auto --hidden-import uvicorn.lifespan.on backend/run.py
+          pyinstaller --onefile --name lapidary-backend --paths backend --add-data "supabase/schema.sql;supabase" --add-data "backend/app/storage/sqlite_schema.sql;app/storage" --collect-all fastmcp --collect-all mcp --collect-submodules uvicorn backend/run.py
           New-Item -ItemType Directory -Force build/backend | Out-Null
           Copy-Item dist/lapidary-backend.exe build/backend/
       - name: Smoke test the backend exe
@@ -49,12 +49,18 @@ jobs:
           GEMS_STORAGE: sqlite
           GEMS_SQLITE_PATH: ${{ runner.temp }}\\lapidary-smoke.db
         run: |
-          $p = Start-Process -FilePath build/backend/lapidary-backend.exe -PassThru -WindowStyle Hidden
+          $out = "$env:RUNNER_TEMP\backend-out.log"; $err = "$env:RUNNER_TEMP\backend-err.log"
+          $p = Start-Process -FilePath build/backend/lapidary-backend.exe -PassThru -WindowStyle Hidden -RedirectStandardOutput $out -RedirectStandardError $err
           $ok = $false
-          foreach ($i in 1..60) { try { if ((Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8000/health).StatusCode -eq 200) { $ok = $true; break } } catch { Start-Sleep -Seconds 1 } }
-          Stop-Process -Id $p.Id -Force
-          if (-not $ok) { throw "backend exe did not answer /health" }
-          "backend exe answers /health"
+          foreach ($i in 1..60) {
+            if ($p.HasExited) { break }
+            try { if ((Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8000/health).StatusCode -eq 200) { $ok = $true; break } } catch { Start-Sleep -Seconds 1 }
+          }
+          if ($ok) { $gems = (Invoke-WebRequest -UseBasicParsing -Headers @{ "X-API-Key" = "ci-placeholder" } http://127.0.0.1:8000/gems/).Content | ConvertFrom-Json; "backend exe answers /health and lists $($gems.Count) seed gems" }
+          if (-not $p.HasExited) { Stop-Process -Id $p.Id -Force }
+          "--- backend stdout ---"; Get-Content $out -ErrorAction SilentlyContinue
+          "--- backend stderr ---"; Get-Content $err -ErrorAction SilentlyContinue
+          if (-not $ok) { throw "backend exe did not answer /health (exit code $($p.ExitCode)); see the output above" }
 
       - uses: actions/setup-node@v7
         with:
