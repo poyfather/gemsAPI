@@ -230,9 +230,19 @@ jobs:
         run: |
           $un = Get-ChildItem "$env:ProgramFiles\Lapidary Console\Uninstall*.exe" | Select-Object -First 1
           Start-Process -FilePath $un.FullName -ArgumentList "/S" -Wait
-          foreach ($i in 1..60) { if (-not (Get-Service LapidaryHelper -ErrorAction SilentlyContinue)) { break }; Start-Sleep 1 }
-          if (Get-Service LapidaryHelper -ErrorAction SilentlyContinue) { throw "the uninstaller left Lapidary Helper registered" }
-          "uninstalled; helper removed"
+          # sc.exe closes its handle each time; a service marked for deletion goes once no handle is open.
+          $key = "HKLM:\SYSTEM\CurrentControlSet\Services\LapidaryHelper"
+          $state = "registered"
+          foreach ($i in 1..60) {
+            sc.exe query LapidaryHelper *> $null
+            if ($LASTEXITCODE -eq 1060) { $state = "removed"; break }
+            if ((Get-ItemProperty $key -ErrorAction SilentlyContinue).DeleteFlag -eq 1) { $state = "marked for deletion" }
+            Start-Sleep 1
+          }
+          "helper: $state"
+          if ($state -eq "registered") { sc.exe query LapidaryHelper; sc.exe qc LapidaryHelper; throw "the uninstaller left Lapidary Helper registered" }
+          if (Test-Path "$env:ProgramFiles\Lapidary Console\resources\helper\lapidary-helper.exe") { throw "the uninstaller left the helper's files" }
+          "uninstalled"
 
       - uses: actions/upload-artifact@v4
         with:
