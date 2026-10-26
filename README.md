@@ -1,6 +1,6 @@
 # Lapidary
 
-### Your AI. Your instructions. Every app.
+### Keep your best AI instructions in one place and use them in every app.
 
 Create your best prompts once. Improve them with testing. Turn them into assistants. Use them across your favorite AI tools while keeping control of your data.
 

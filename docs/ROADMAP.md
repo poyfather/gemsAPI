@@ -12,7 +12,7 @@ An outside review on 2026-10-26 read the public repository and docs and conclude
 
 **Positioning.** Sell the outcome, not the parts.
 
-> **Your AI. Your instructions. Every app.**
+> **Keep your best AI instructions in one place and use them in every app.**
 > Create your best prompts once. Improve them with testing. Turn them into assistants. Use them across your favorite AI tools while keeping control of your data.
 
 **Phases.** Work goes in this order; an item outside them waits unless it unblocks one.
