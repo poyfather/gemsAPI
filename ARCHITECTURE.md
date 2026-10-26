@@ -15,7 +15,7 @@ flowchart LR
 
     subgraph core["Lapidary"]
         API["FastAPI service<br/>/gems and /chat, port 8000"]
-        MCPS["FastMCP server<br/>7 tools, 2 resources, stdio"]
+        MCPS["FastMCP server<br/>17 tools, 3 resources, stdio or HTTP"]
         RES["Resolver<br/>expand gem references,<br/>fill variables"]
         LLM["LLM adapter<br/>complete and stream"]
         LOOP["Agent run loop<br/>tools (built in and from<br/>other MCP servers),<br/>step cap, run record"]
@@ -31,7 +31,7 @@ flowchart LR
     UI -- "/api/* proxy,<br/>key added server-side" --> API
     REST --> API
     OWUI --> API
-    MCPC -- "stdio" --> MCPS
+    MCPC -- "stdio, or HTTP at /mcp with the key" --> MCPS
     API --> RES
     MCPS --> RES
     RES --> DB
@@ -135,7 +135,7 @@ flowchart TB
 | Data shapes | `backend/app/models.py` | Pydantic models for gems, resolve and chat requests and responses | Routes, services | Import |
 | Storage layer | `backend/app/storage/` | One `Store` interface; `SQLiteStore` (one file, seeded from `supabase/schema.sql` on first use; the default without a Supabase project and what the console uses) and `SupabaseStore`; chosen by `GEMS_STORAGE` | `database.py` for Supabase | sqlite3 in process, or HTTPS |
 | Database client | `backend/app/database.py` | Lazily built singleton from `SUPABASE_URL` and the service role key, the only credential accepted (hosted mode) | Supabase | HTTPS |
-| MCP server | `backend/mcp_server.py` | Expose the library to MCP clients as tools and resources; reads `backend/.env` itself | `gem_service`, `llm_service` | stdio transport, same process as the services |
+| MCP server | `backend/mcp_server.py`, `app/mcp_http.py` | Expose the library, agents, memory and pipelines to MCP clients as tools and resources; as its own stdio process (reads `backend/.env` itself), or mounted on the API at `/mcp` as stateless streamable HTTP behind the same keys | `gem_service`, `llm_service` | stdio, or HTTP in the API process |
 | Database | `supabase/schema.sql` | The `gems` table, indexes, `updated_at` trigger, RLS with no policies, seed gems | | SQL, run once in the Supabase editor |
 | Prompt mirror and evals | `prompts/`, `evals/` | Reviewable copies of shipped gems; live-API quality checks with recorded baselines | Supabase, Anthropic | Manual runs |
 

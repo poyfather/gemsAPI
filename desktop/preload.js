@@ -11,6 +11,7 @@ contextBridge.exposeInMainWorld("lapidary", {
     chatgpt: () => ipcRenderer.invoke("console:connect:chatgpt"),
     openwebui: () => ipcRenderer.invoke("console:connect:openwebui"),
   },
+  mcp: { details: () => ipcRenderer.invoke("console:mcp:details"), copy: (what) => ipcRenderer.invoke("console:mcp:copy", what) },
   restartLapidary: () => ipcRenderer.invoke("console:lapidary:restart"),
   logs: () => ipcRenderer.invoke("console:logs"),
   pwsh: (script) => ipcRenderer.invoke("console:pwsh", script),

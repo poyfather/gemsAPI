@@ -4,10 +4,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
+from app import settings
+from app.mcp_http import build_mcp_app
 from app.routes import agents, chat, gems, memory, openai_compat, pipelines
 from app.version import __version__
 
 load_dotenv()
+
+mcp_app, mcp_lifespan = build_mcp_app()
 
 
 @asynccontextmanager
@@ -15,7 +19,8 @@ async def lifespan(app: FastAPI):
     # Validate required env vars at startup so misconfiguration is caught immediately.
     from app.auth import _get_configured_key
     _get_configured_key()   # raises RuntimeError if GEMS_API_KEY is missing
-    yield
+    async with mcp_lifespan(app):   # the MCP session manager lives as long as the API
+        yield
 
 
 app = FastAPI(
@@ -48,6 +53,7 @@ app.include_router(agents.runs_router)
 app.include_router(openai_compat.router)
 app.include_router(memory.router)
 app.include_router(pipelines.router)
+app.mount(settings.MCP_HTTP_PATH, mcp_app, name="mcp")
 
 
 @app.get("/", tags=["meta"])
@@ -71,7 +77,8 @@ def root():
             "tools":        "GET  /agents/tools",
             "openai_models": "GET  /v1/models",
             "openai_chat":  "POST /v1/chat/completions",
-            "mcp_server":   "Run: fastmcp run mcp_server.py",
+            "mcp_http":     "POST /mcp (streamable HTTP, same key)",
+            "mcp_server":   "Run: fastmcp run mcp_server.py (stdio)",
         },
     }
 

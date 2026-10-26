@@ -12,6 +12,7 @@ function show(view) {
   if (view === "settings") loadSettings();
   if (view === "start" || view === "dashboard") loadRecipes();
   if (view === "doctor") runDoctor();
+  if (view === "connections") window.lapidary.mcp.details().then((d) => { $("#mcp-url").textContent = d.url; });
 }
 document.querySelectorAll("nav button").forEach((b) => b.addEventListener("click", () => show(b.dataset.view)));
 document.addEventListener("keydown", (e) => {
@@ -135,6 +136,10 @@ const actions = {
   "doctor-run": async () => (await runDoctor(), ""),
   "refresh-logs": async () => (await refreshLogs(), "logs refreshed"),
   "connect-claude": async () => (await window.lapidary.connect.claude()).message,
+  "mcp-copy-url": async () => (await window.lapidary.mcp.copy("url")).message,
+  "mcp-copy-key": async () => (await window.lapidary.mcp.copy("key")).message,
+  "mcp-copy-entry": async () => (await window.lapidary.mcp.copy("entry")).message,
+  "mcp-copy-bridge": async () => (await window.lapidary.mcp.copy("bridge")).message,
   "connect-chatgpt": async () => (await window.lapidary.connect.chatgpt()).message,
   "connect-openwebui": async () => (await window.lapidary.connect.openwebui()).message,
 };
