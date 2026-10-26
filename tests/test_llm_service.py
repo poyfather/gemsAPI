@@ -217,3 +217,9 @@ def test_reasoning_effort_is_optional_and_never_sent_to_openai(monkeypatch) -> N
     assert rec_local.sent["reasoning_effort"] == "none" and rec_local.sent["max_tokens"] == 64
     asyncio.run(llm_service.complete("s", [], "gpt-x", "openai", max_tokens=64))
     assert "reasoning_effort" not in rec_openai.sent and rec_openai.sent["max_tokens"] == 64
+
+
+def test_a_local_server_that_answers_lists_its_models_sorted(monkeypatch) -> None:
+    import asyncio
+    monkeypatch.setattr(llm_service, "_get_local", lambda: _FakeClient(["qwen3:4b", "llama3.2", "gemma3"]))
+    assert asyncio.run(_models())["local"] == ["gemma3", "llama3.2", "qwen3:4b"]
