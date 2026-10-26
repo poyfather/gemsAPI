@@ -27,6 +27,7 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
     memory:        initialGem?.memory        ?? false,
   });
   const [tagInput, setTagInput]   = useState("");
+  const [note, setNote]           = useState("");
   const [saving, setSaving]       = useState(false);
   const [error, setError]         = useState<string | null>(null);
   const [preview, setPreview]     = useState<string | null>(null);
@@ -119,7 +120,7 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
       if (mode === "create") {
         await gemsApi.create(form);
       } else if (initialGem) {
-        await gemsApi.update(initialGem.id, form);
+        await gemsApi.update(initialGem.id, { ...form, note: note.trim() || undefined });
       }
       router.push("/gems");
       router.refresh();
@@ -359,6 +360,19 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
             </div>
           )}
         </div>
+
+        {mode === "edit" && (
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">What changed? <span className="font-normal text-slate-500">(optional, kept in the history)</span></label>
+            <input
+              type="text"
+              placeholder="for example: shorter answers, added a step for edge cases"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg bg-gem-card border border-gem-border text-slate-100 text-sm placeholder:text-slate-600 focus:outline-hidden focus:ring-2 focus:ring-violet-500 transition"
+            />
+          </div>
+        )}
 
         {/* Error + Submit */}
         {error && (

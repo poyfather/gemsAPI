@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from app.database import get_supabase
-from app.models import Gem, GemCreate, Memory, MemoryCreate, Pipeline, PipelineCreate, PipelineRun, Run, RunEvent
+from app.models import Gem, GemCreate, GemVersion, Memory, MemoryCreate, Pipeline, PipelineCreate, PipelineRun, Run, RunEvent
 
 
 class SupabaseStore:
@@ -31,6 +31,16 @@ class SupabaseStore:
 
     async def soft_delete_gem(self, gem_id: str) -> None:
         get_supabase().table("gems").update({"is_active": False}).eq("id", gem_id).execute()
+
+    # ---- gem versions (roadmap 14)
+    async def add_gem_version(self, gem_id, version, snapshot, note, source) -> GemVersion:
+        row = {"gem_id": gem_id, "version": version, "snapshot": snapshot, "note": note or "", "source": source}
+        result = get_supabase().table("gem_versions").insert(row).execute()
+        return GemVersion(**result.data[0])
+
+    async def list_gem_versions(self, gem_id) -> list[GemVersion]:
+        result = get_supabase().table("gem_versions").select("gem_id, version, snapshot, note, source, created_at").eq("gem_id", gem_id).order("version").execute()
+        return [GemVersion(**r) for r in result.data]
 
     # ---- runs
     async def create_run(self, gem_id, gem_name, model, provider, input_text) -> Run:

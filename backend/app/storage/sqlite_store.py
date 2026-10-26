@@ -14,7 +14,7 @@ import threading
 import uuid
 from datetime import datetime, timezone
 
-from app.models import Gem, GemCreate, Memory, MemoryCreate, Pipeline, PipelineCreate, PipelineRun, Run, RunEvent
+from app.models import Gem, GemCreate, GemVersion, Memory, MemoryCreate, Pipeline, PipelineCreate, PipelineRun, Run, RunEvent
 from app.storage.seeds import load_seed_gems, load_seed_pipelines
 
 logger = logging.getLogger(__name__)
@@ -169,6 +169,18 @@ class SQLiteStore:
     async def soft_delete_gem(self, gem_id: str) -> None:
         with self._lock, self._db:
             self._db.execute("UPDATE gems SET is_active = 0, updated_at = ? WHERE id = ?", (_now(), gem_id))
+
+    # ---- gem versions (roadmap 14)
+    async def add_gem_version(self, gem_id, version, snapshot, note, source) -> GemVersion:
+        now = _now()
+        with self._lock, self._db:
+            self._db.execute("INSERT INTO gem_versions (id, gem_id, version, snapshot, note, source, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                             (str(uuid.uuid4()), gem_id, version, json.dumps(snapshot), note or "", source, now))
+        return GemVersion(gem_id=gem_id, version=version, snapshot=snapshot, note=note or "", source=source, created_at=now)
+
+    async def list_gem_versions(self, gem_id) -> list[GemVersion]:
+        rows = self._db.execute("SELECT * FROM gem_versions WHERE gem_id = ? ORDER BY version", (gem_id,)).fetchall()
+        return [GemVersion(gem_id=r["gem_id"], version=r["version"], snapshot=json.loads(r["snapshot"]), note=r["note"], source=r["source"], created_at=r["created_at"]) for r in rows]
 
     # ---- runs
     async def create_run(self, gem_id, gem_name, model, provider, input_text) -> Run:

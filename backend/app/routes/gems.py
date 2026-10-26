@@ -1,8 +1,8 @@
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
-from app.models import Gem, GemCreate, GemUpdate, ResolveRequest, ResolveResponse
-from app.services import gem_service
+from app.models import Gem, GemCreate, GemDiff, GemUpdate, GemVersion, GemVersionSummary, ResolveRequest, ResolveResponse, RevertRequest
+from app.services import gem_service, version_service
 from app.auth import require_api_key
 
 router = APIRouter(prefix="/gems", tags=["gems"], dependencies=[Depends(require_api_key)])
@@ -75,6 +75,50 @@ async def update_gem(gem_id: str, data: GemUpdate):
     if not gem:
         raise HTTPException(status_code=404, detail=f"Gem '{gem_id}' not found.")
     return await gem_service.update_gem(gem.id, data)
+
+
+@router.get("/{gem_id}/versions", response_model=list[GemVersionSummary], summary="A gem's history")
+async def list_versions(gem_id: str):
+    """Every saved version, newest first, with the fields that changed from the one before (roadmap 14)."""
+    gem = await _find_gem(gem_id)
+    if not gem:
+        raise HTTPException(status_code=404, detail=f"Gem '{gem_id}' not found.")
+    return await version_service.history(gem)
+
+
+@router.get("/{gem_id}/versions/{version}", response_model=GemVersion, summary="One version of a gem")
+async def get_version(gem_id: str, version: int):
+    gem = await _find_gem(gem_id)
+    if not gem:
+        raise HTTPException(status_code=404, detail=f"Gem '{gem_id}' not found.")
+    found = await version_service.get(gem, version)
+    if found is None:
+        raise HTTPException(status_code=404, detail=f"'{gem.name}' has no version {version}.")
+    return found
+
+
+@router.get("/{gem_id}/diff", response_model=GemDiff, summary="What changed between two versions")
+async def diff_versions(gem_id: str, from_version: int | None = None, to_version: int | None = None):
+    """Defaults to the latest version against the one before. The prompt comes back as a unified diff, other fields as from and to."""
+    gem = await _find_gem(gem_id)
+    if not gem:
+        raise HTTPException(status_code=404, detail=f"Gem '{gem_id}' not found.")
+    try:
+        return await version_service.diff(gem, from_version, to_version)
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+
+@router.post("/{gem_id}/versions/{version}/revert", response_model=Gem, summary="Restore an earlier version")
+async def revert_version(gem_id: str, version: int, request: RevertRequest | None = None):
+    """Writes that version's fields back as a new version; nothing in the history is lost. The name is kept."""
+    gem = await _find_gem(gem_id)
+    if not gem:
+        raise HTTPException(status_code=404, detail=f"Gem '{gem_id}' not found.")
+    try:
+        return await version_service.revert(gem, version, (request.note if request else ""))
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
 
 
 @router.delete("/{gem_id}", summary="Delete a gem")

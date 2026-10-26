@@ -2,7 +2,7 @@
 from __future__ import annotations
 from typing import Protocol
 
-from app.models import Gem, GemCreate, Memory, MemoryCreate, Pipeline, PipelineCreate, PipelineRun, Run, RunEvent
+from app.models import Gem, GemCreate, GemVersion, Memory, MemoryCreate, Pipeline, PipelineCreate, PipelineRun, Run, RunEvent
 
 
 class Store(Protocol):
@@ -13,6 +13,10 @@ class Store(Protocol):
     async def create_gem(self, data: GemCreate, variables: list[str]) -> Gem: ...
     async def update_gem(self, gem_id: str, updates: dict) -> Gem: ...
     async def soft_delete_gem(self, gem_id: str) -> None: ...
+
+    # ---- gem versions (roadmap 14)
+    async def add_gem_version(self, gem_id: str, version: int, snapshot: dict, note: str, source: str) -> GemVersion: ...
+    async def list_gem_versions(self, gem_id: str) -> list[GemVersion]: ...
 
     # ---- runs
     async def create_run(self, gem_id: str | None, gem_name: str, model: str, provider: str, input_text: str) -> Run: ...

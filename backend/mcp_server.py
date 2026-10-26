@@ -29,6 +29,10 @@ TOOLS
   resolve_gem_prompt   — fully resolve a gem (expand refs + fill variables)
   chat_with_gem        — send a message to an LLM using a gem as system prompt
   create_gem           — add a new gem to the library
+  update_gem           — change a gem; the change is kept in its history
+  gem_history          — a gem's versions, newest first
+  diff_gem_versions    — what changed between two versions
+  revert_gem           — restore an earlier version as a new one
   search_gems          — filter gems by tag or keyword
   run_agent            — run an agent gem: a tool-using loop, with the run record
   approve_run          — continue a run that paused at a risky tool call
@@ -273,10 +277,63 @@ async def create_gem(
             model=model or settings.DEFAULT_MODEL,
             provider=provider or settings.DEFAULT_PROVIDER,
             tags=tags,
-        ))
+        ), source="mcp")
         return {"success": True, "id": gem.id, "name": gem.name, "variables": gem.variables}
     except Exception as exc:
         return {"error": str(exc)}
+
+
+@mcp.tool()
+async def update_gem(name: str, system_prompt: str | None = None, description: str | None = None,
+                     tags: list[str] | None = None, note: str = "") -> dict:
+    """
+    Change a gem and keep the change in its history (roadmap 14). Only the fields you pass change.
+    Say in `note` what you changed and why; it is shown next to the new version.
+    """
+    from app.models import GemUpdate
+    from app.services.gem_service import update_gem as _update
+    gem = await get_gem_by_name(name)
+    if not gem:
+        return {"error": f"Gem '{name}' not found."}
+    updated = await _update(gem.id, GemUpdate(system_prompt=system_prompt, description=description, tags=tags, note=note or None), source="mcp")
+    return {"name": updated.name, "variables": updated.variables, "updated_at": str(updated.updated_at)}
+
+
+@mcp.tool()
+async def gem_history(name: str) -> list[dict]:
+    """A gem's saved versions, newest first: number, date, note, and which fields changed from the version before."""
+    from app.services import version_service
+    gem = await get_gem_by_name(name)
+    if not gem:
+        return [{"error": f"Gem '{name}' not found."}]
+    return [v.model_dump(mode="json") for v in await version_service.history(gem)]
+
+
+@mcp.tool()
+async def diff_gem_versions(name: str, from_version: int | None = None, to_version: int | None = None) -> dict:
+    """What changed between two versions of a gem (default: the latest against the one before). The prompt comes back as a unified diff."""
+    from app.services import version_service
+    gem = await get_gem_by_name(name)
+    if not gem:
+        return {"error": f"Gem '{name}' not found."}
+    try:
+        return (await version_service.diff(gem, from_version, to_version)).model_dump(mode="json")
+    except LookupError as exc:
+        return {"error": str(exc)}
+
+
+@mcp.tool()
+async def revert_gem(name: str, version: int, note: str = "") -> dict:
+    """Restore an earlier version of a gem. It is saved as a new version, so nothing in the history is lost; the name stays."""
+    from app.services import version_service
+    gem = await get_gem_by_name(name)
+    if not gem:
+        return {"error": f"Gem '{name}' not found."}
+    try:
+        restored = await version_service.revert(gem, version, note)
+    except LookupError as exc:
+        return {"error": str(exc)}
+    return {"name": restored.name, "restored_version": version, "updated_at": str(restored.updated_at)}
 
 
 @mcp.tool()

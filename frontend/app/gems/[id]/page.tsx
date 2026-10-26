@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { gems as gemsApi, Gem, ResolveResponse } from "@/lib/api";
 import { explain, providerLabel } from "@/lib/words";
+import GemHistory from "@/components/GemHistory";
 import {
   ArrowLeft, Edit, Trash2, MessageSquare, Loader2,
   AlertTriangle, Variable, LinkIcon, Cpu, ChevronDown, ChevronUp, Bot
@@ -237,6 +238,8 @@ export default function GemDetailPage() {
               </div>
             )}
           </div>
+
+          <GemHistory gem={gem} onRestored={(g) => { setGem(g); setResolve(null); }} />
 
           {/* Resolve panel */}
           <div className="bg-gem-card border border-gem-border rounded-xl overflow-hidden">

@@ -22,7 +22,7 @@ Two tricks make the drawer more than a list:
 - **Prompts can contain other prompts.** Write a short `base_assistant` once ("be direct, be honest about uncertainty"), then start `code_reviewer` with `{{gem:base_assistant}}` and add only the review rules. Improve the base, and everything built on it improves too.
 - **Prompts can have blanks.** Leave `{language}` or `{tone}` in the text and fill it in at the moment you use it, so one prompt serves many situations.
 
-Who it is for: anyone who writes prompts as part of their work and uses them from more than one place. Who it is not for yet: a casual user with three prompts in a notes app, since setting up a database and two services is more than that problem needs. [docs/ROADMAP.md](docs/ROADMAP.md) lists what would change that, starting with version history and per-prompt evals.
+Who it is for: anyone who writes prompts as part of their work and uses them from more than one place. Who it is not for yet: a casual user with three prompts in a notes app, since setting up a database and two services is more than that problem needs. [docs/ROADMAP.md](docs/ROADMAP.md) lists what would change that; version history is done, per-prompt evals are next.
 
 ## How it fits together
 
@@ -68,7 +68,7 @@ Every surface hands the gem to the same resolver, which expands `{{gem:name}}` r
 |---|---|
 | **Web UI** (Next.js 16, port 3000) | Browse, search and tag gems, edit them with a live resolved preview, test any gem in a chat view with streamed replies, run agent gems and watch each tool call as it happens, and open any past run by id |
 | **REST API** (FastAPI, port 8000) | CRUD on `/gems`, `POST /gems/resolve` to expand a gem, `POST /chat` with optional SSE streaming, Swagger at `/docs` |
-| **MCP server** (FastMCP, stdio or HTTP at `/mcp`) | Tools `list_gems`, `search_gems`, `get_gem`, `resolve_gem_prompt`, `chat_with_gem`, `create_gem`, `run_agent`, `approve_run`, `list_agent_tools`, `list_available_models`, `search_memory`, `get_memories`, `remember`, `forget`, `list_pipelines`, `run_pipeline`, `resume_pipeline`, plus `gems://list`, `gems://{name}` and `runs://{id}` resources |
+| **MCP server** (FastMCP, stdio or HTTP at `/mcp`) | Tools `list_gems`, `search_gems`, `get_gem`, `resolve_gem_prompt`, `chat_with_gem`, `create_gem`, `run_agent`, `approve_run`, `list_agent_tools`, `list_available_models`, `search_memory`, `get_memories`, `remember`, `forget`, `list_pipelines`, `run_pipeline`, `resume_pipeline`, `update_gem`, `gem_history`, `diff_gem_versions`, `revert_gem`, plus `gems://list`, `gems://{name}` and `runs://{id}` resources |
 | **Agent runs** | A gem of kind `agent` lists tools it may call; `POST /agents/{name}/runs` runs the loop (model turn, tool calls, results, repeat) and records every step in `runs` and `run_events` |
 | **Seed gems** | `base_assistant`, `code_reviewer`, `creative_writer`, `summarizer`, `engineering_lead`, `prompt_enhancer`, the newcomer prompts `study_buddy`, `writing_coach` and `research_assistant`, `memory_summarizer`, the gate gems `test_runner` and `adversarial_reviewer`, and the agents `gem_librarian`, `rea_analyst`, `windows_operator` and `program_builder`, each also kept as a reviewable file in [`prompts/`](prompts/) |
 
@@ -187,6 +187,18 @@ curl -s http://localhost:8000/pipelines/build_and_check/runs \
   -d '{"message": "A PowerShell script that lists the ten largest files under my Documents folder, with tests."}'
 ```
 
+## History
+
+Every save of a prompt is kept (roadmap item 14). The prompt page shows each version with its date, the note you gave and which fields changed; pick one to see the change as a diff, and Restore puts an older version back as a new one, so nothing is ever lost. The editor asks "What changed?" for the note. Prompts that existed before history was kept get their old state as version 1 the first time they change.
+
+```sh
+curl -s http://localhost:8000/gems/summarizer/versions -H "X-API-Key: $GEMS_API_KEY"
+curl -s "http://localhost:8000/gems/summarizer/diff?from_version=1&to_version=2" -H "X-API-Key: $GEMS_API_KEY"
+curl -s -X POST http://localhost:8000/gems/summarizer/versions/1/revert -H "X-API-Key: $GEMS_API_KEY" -H "Content-Type: application/json" -d '{"note": "v2 made answers too long"}'
+```
+
+Over MCP the same is `update_gem` (with a note), `gem_history`, `diff_gem_versions` and `revert_gem`, so Claude Desktop or Cursor can see what changed between the version that worked and the one that stopped working.
+
 ## Memory
 
 Every run used to start from nothing. Now Lapidary keeps a memory (ADR-010, modelled on claude-mem), and because Claude Desktop, ChatGPT, Open WebUI and the agents all go through Lapidary, it is one memory for every client on the machine.
@@ -260,7 +272,7 @@ desktop/            Lapidary Console, the Windows 11 Electron application (see d
 backend/mcp_server.py   FastMCP server over the same services
 frontend/           Next.js 16 app router UI (app/ including runs/[id], components/ including RunEvents, lib/api.ts with the SSE client, proxy.ts)
 configs/            mcp_servers.json (copy the example) for tools from other MCP servers
-supabase/           schema.sql (tables, RLS, seed gems; also the seed source for SQLite) and one-off migrations such as lock_down_rls.sql, add_agent_runs.sql, add_newcomer_gems.sql, add_memory.sql and add_pipelines.sql
+supabase/           schema.sql (tables, RLS, seed gems; also the seed source for SQLite) and one-off migrations such as lock_down_rls.sql, add_agent_runs.sql, add_newcomer_gems.sql, add_memory.sql, add_pipelines.sql and add_gem_versions.sql
 prompts/            the shipped gems as markdown, one file per gem
 evals/              live-API quality checks for gems (eval_prompt_enhancer.py)
 tests/              pytest unit tests, no network
