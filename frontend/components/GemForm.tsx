@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { gems as gemsApi, chat as chatApi, agents as agentsApi, GemCreate, Gem, AvailableModels, ToolInfo, VariableSpec, VariableType } from "@/lib/api";
+import { gems as gemsApi, chat as chatApi, agents as agentsApi, GemCreate, Gem, AvailableModels, ToolInfo, VariableSpec, VariableType, Example } from "@/lib/api";
 import BlankInputs from "@/components/BlankInputs";
 import { explain } from "@/lib/words";
 import { Info, Plus, X, Loader2, Eye, Bot } from "lucide-react";
@@ -27,6 +27,7 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
     tools:         initialGem?.tools         ?? [],
     memory:        initialGem?.memory        ?? false,
     variable_specs: initialGem?.variable_specs ?? {},
+    examples:      initialGem?.examples      ?? [],
   });
   const [tagInput, setTagInput]   = useState("");
   const [note, setNote]           = useState("");
@@ -415,6 +416,39 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
             })}
           </div>
         )}
+
+        {/* Worked examples (roadmap 31) */}
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-slate-300">Examples <span className="font-normal text-slate-500">(a question and the answer you want; shown to the AI at <code className="text-violet-400">{"{{examples}}"}</code>, or at the end)</span></p>
+          {(form.examples ?? []).map((ex, i) => {
+            const list = form.examples ?? [];
+            const setEx = (patch: Partial<Example>) => setForm((f) => ({ ...f, examples: (f.examples ?? []).map((e, j) => (j === i ? { ...e, ...patch } : e)) }));
+            const move = (to: number) => setForm((f) => {
+              const next = [...(f.examples ?? [])];
+              const [item] = next.splice(i, 1);
+              next.splice(to, 0, item);
+              return { ...f, examples: next };
+            });
+            const box = "w-full px-2 py-1 rounded-md bg-gem-surface border border-gem-border text-slate-200 text-xs placeholder:text-slate-600 focus:outline-hidden focus:ring-1 focus:ring-violet-500";
+            return (
+              <div key={i} className="rounded-lg border border-gem-border bg-gem-card p-2.5 space-y-1.5">
+                <div className="flex items-center gap-2 text-xs text-slate-500">
+                  <span>Example {i + 1}</span>
+                  <span className="ml-auto flex gap-2">
+                    <button type="button" disabled={i === 0} onClick={() => move(i - 1)} className="hover:text-slate-200 disabled:opacity-30">up</button>
+                    <button type="button" disabled={i === list.length - 1} onClick={() => move(i + 1)} className="hover:text-slate-200 disabled:opacity-30">down</button>
+                    <button type="button" onClick={() => setForm((f) => ({ ...f, examples: (f.examples ?? []).filter((_, j) => j !== i) }))} className="hover:text-red-400">remove</button>
+                  </span>
+                </div>
+                <textarea className={box} rows={2} placeholder="The question" value={ex.input} onChange={(e) => setEx({ input: e.target.value })} />
+                <textarea className={box} rows={3} placeholder="The answer you want back" value={ex.output} onChange={(e) => setEx({ output: e.target.value })} />
+                <input className={box} placeholder="Why this example (optional, not sent to the AI)" value={ex.note ?? ""} onChange={(e) => setEx({ note: e.target.value })} />
+              </div>
+            );
+          })}
+          <button type="button" onClick={() => setForm((f) => ({ ...f, examples: [...(f.examples ?? []), { input: "", output: "", note: "" }] }))}
+            className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-200"><Plus className="w-3.5 h-3.5" /> Add an example</button>
+        </div>
 
         {/* Error + Submit */}
         {error && (

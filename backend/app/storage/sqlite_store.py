@@ -19,7 +19,7 @@ from app.storage.seeds import load_seed_gems, load_seed_pipelines
 
 logger = logging.getLogger(__name__)
 _SCHEMA = pathlib.Path(__file__).with_name("sqlite_schema.sql").read_text()
-_JSON_GEM = ("tags", "variables", "tools")
+_JSON_GEM = ("tags", "variables", "tools", "examples")
 
 
 def _now() -> str:
@@ -103,6 +103,9 @@ class SQLiteStore:
         if "variable_specs" not in cols:
             with self._lock, self._db:
                 self._db.execute("ALTER TABLE gems ADD COLUMN variable_specs TEXT NOT NULL DEFAULT '{}'")
+        if "examples" not in cols:
+            with self._lock, self._db:
+                self._db.execute("ALTER TABLE gems ADD COLUMN examples TEXT NOT NULL DEFAULT '[]'")
 
     def _seed(self, seed_sql_file: str | None) -> None:
         if self._db.execute("SELECT COUNT(*) FROM gems").fetchone()[0]:
@@ -152,11 +155,11 @@ class SQLiteStore:
         d = data.model_dump()
         with self._lock, self._db:
             self._db.execute(
-                "INSERT INTO gems (id, name, description, system_prompt, model, provider, tags, variables, kind, tools, memory, variable_specs, is_active, created_at, updated_at)"
-                " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)",
+                "INSERT INTO gems (id, name, description, system_prompt, model, provider, tags, variables, kind, tools, memory, variable_specs, examples, is_active, created_at, updated_at)"
+                " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)",
                 (gem_id, d["name"], d["description"], d["system_prompt"], d["model"], d["provider"],
                  json.dumps(d["tags"]), json.dumps(variables), d["kind"], json.dumps(d["tools"]), int(bool(d.get("memory"))),
-                 json.dumps(d.get("variable_specs") or {}), now, now),
+                 json.dumps(d.get("variable_specs") or {}), json.dumps(d.get("examples") or []), now, now),
             )
         return await self.get_gem_by_id(gem_id)
 

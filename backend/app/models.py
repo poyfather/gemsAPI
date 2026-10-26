@@ -20,6 +20,16 @@ class VariableSpec(BaseModel):
     required: bool = Field(default=True, description="A required blank with no default must be filled before the gem runs")
 
 
+class Example(BaseModel):
+    """A worked example (roadmap 31): an input and the answer you want, rendered into the prompt as literal text."""
+    input: str = Field(..., description="What the user says")
+    output: str = Field(..., description="The answer you want back")
+    note: str = Field(default="", description="Why this example is here; for people, not sent to the AI")
+
+
+MAX_EXAMPLES = 50
+
+
 class GemBase(BaseModel):
     name: str = Field(..., description="Unique snake_case identifier, e.g. 'code_reviewer'")
     description: str = Field(default="", description="Human-readable description of what this gem does")
@@ -34,6 +44,7 @@ class GemBase(BaseModel):
     tools: list[str] = Field(default=[], description="Registered tool names an agent gem may call; see GET /agents/tools")
     memory: bool = Field(default=False, description="Recall: prepend the top memory matches for the message inside a <memory> block (ADR-010)")
     variable_specs: dict[str, VariableSpec] = Field(default={}, description="Descriptions, types, defaults and choices for the {blanks}, by name (roadmap 29)")
+    examples: list[Example] = Field(default=[], description="Worked examples, rendered at {{examples}} in the prompt (or at the end) inside <examples> tags (roadmap 31)")
 
 
 class GemCreate(GemBase):
@@ -51,6 +62,7 @@ class GemUpdate(BaseModel):
     tools: Optional[list[str]] = None
     memory: Optional[bool] = None
     variable_specs: Optional[dict[str, VariableSpec]] = None
+    examples: Optional[list[Example]] = None
     note: Optional[str] = Field(default=None, description="What changed and why; kept with the new version in the gem's history")
 
 
@@ -80,6 +92,7 @@ class ResolveResponse(BaseModel):
     variables_missing: list[str] = []
     variables_defaulted: list[str] = Field(default=[], description="Blanks filled from their default")
     variable_errors: list[str] = Field(default=[], description="Values that do not fit their blank's type or choices, and required blanks left empty")
+    examples_used: int = Field(default=0, description="Worked examples rendered into the prompt, from this gem and the ones it embeds")
 
 
 # ─── Chat models ───────────────────────────────────────────────────────────────
@@ -283,7 +296,7 @@ class PipelineResult(BaseModel):
 
 # ─── Version history (roadmap 14) ─────────────────────────────────────────────
 
-VERSIONED_FIELDS = ("name", "description", "system_prompt", "model", "provider", "tags", "variables", "kind", "tools", "memory", "variable_specs")
+VERSIONED_FIELDS = ("name", "description", "system_prompt", "model", "provider", "tags", "variables", "kind", "tools", "memory", "variable_specs", "examples")
 
 
 class GemVersion(BaseModel):
