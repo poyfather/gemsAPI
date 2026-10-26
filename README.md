@@ -5,9 +5,9 @@
 Create your best prompts once. Improve them with testing. Turn them into assistants. Use them across your favorite AI tools while keeping control of your data.
 
 <p align="center">
-  <img src="docs/screenshots/compare-tests.png" width="100%" alt="Lapidary's Compare page for the code_reviewer prompt: version 1 and version 2 side by side, each run through the prompt's four tests on a free local model. Version 1 passes 2 of 4: it finds the empty-list crash and names the ZeroDivisionError, but does not say how to test the fix and is not short enough to act on. Version 2 passes 4 of 4.">
+  <img src="docs/screenshots/compare-answers.png" width="100%" alt="Lapidary's Compare page: two versions of the code_reviewer prompt answer the same request to review a Python average function, on qwen3:4b running on the PC. Version 1 writes a long review with Summary, Issues, Suggestions and Verdict sections. Version 2, after one added paragraph, answers in one line: the ZeroDivisionError on an empty list, the fix, and the test that catches it.">
 </p>
-<p align="center"><sub>A real run: the same review prompt before and after one edit, scored by its own tests on qwen3:4b running on the PC. Version 1 passes 2 of 4, version 2 passes 4 of 4.</sub></p>
+<p align="center"><sub>A real run, not a mock-up: the same prompt before and after one edit, side by side, answered by qwen3:4b on the PC. Its tests scored version 1 at 2 of 4 and version 2 at 4 of 4.</sub></p>
 
 Lapidary is your own home for the instructions you give AI, and for the assistants you build from them. Write a prompt once, improve it safely, and use it from Claude, ChatGPT, Cursor, Open WebUI or your own scripts, with a free model on your own PC or an online one with your own key.
 
@@ -40,8 +40,8 @@ A live demo in the browser, with nothing to install and no key, is the next thin
 |---|---|
 | <img src="docs/screenshots/library.png" alt="The library: every prompt and assistant with its tags, its blanks, what it is built from, and which AI it uses."> | <img src="docs/screenshots/prompt-page.png" alt="A prompt's page: its tests with the past scores (4 of 4 on version 2, 2 of 4 on version 1, the baseline), and its history with what changed between versions as a diff."> |
 | **One library.** Every prompt and assistant, tagged, searchable, built from smaller prompts. | **Tests and history.** Every save is a version; the tests score each one against a baseline. |
-| <img src="docs/screenshots/compare-answers.png" alt="Compare answers: version 1 writes a long sectioned review, version 2 answers in one numbered line with the fix and the test."> | <img src="docs/screenshots/chat.png" alt="Chat: the improved code_reviewer answering on qwen3:4b on this PC, with its blank filled in."> |
-| **Side by side.** The same question through two versions or two AIs. | **Use it.** Chat here, or from any app that connects. |
+| <img src="docs/screenshots/compare-tests.png" alt="Compare on the tests: version 1 and version 2 of code_reviewer through its four tests on qwen3:4b. In this run version 1 passes 1 of 4 and version 2 passes 3 of 4; the AI judge explains why each answer did or did not meet the brevity test."> | <img src="docs/screenshots/chat.png" alt="Chat: the improved code_reviewer answering on qwen3:4b on this PC, with its blank filled in."> |
+| **Side by side on the tests.** Two versions or two AIs through the same tests. This run gave 1 of 4 and 3 of 4; a small model varies, which is why the tests exist. | **Use it.** Chat here, or from any app that connects. |
 | <img src="docs/screenshots/console-start.png" alt="Lapidary Console's first run: Which AI should we use? with five plain-language choices from the free one on this PC to a mix."> | <img src="docs/screenshots/console-doctor.png" alt="Lapidary Console's Doctor: every check in plain words, with one suggestion and the button that fixes it."> |
 | **Lapidary Console.** Two questions, then one click, on Windows 11. | **The Doctor.** Finds what is wrong and offers the fix. |
 

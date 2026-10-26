@@ -41,7 +41,7 @@ def main() -> None:
         {"url": f"{UI}/gems/{gid}", "out": str(OUT / "prompt-page.png"), "width": 1100, "clipHeight": 850, "load": 5000},
         {"url": f"{UI}/gems/{gid}/compare", "out": str(OUT / "compare-answers.png"), "clipHeight": 1100, "load": 5000,
          "steps": fill + [{"js": f"({CLICK})('Compare answers')", "wait": 3000, "until": IDLE}]},
-        {"url": f"{UI}/gems/{gid}/compare", "out": str(OUT / "compare-tests.png"), "clipHeight": 810, "load": 5000,
+        {"url": f"{UI}/gems/{gid}/compare", "out": str(OUT / "compare-tests.png"), "clipHeight": 1000, "load": 5000,
          "steps": fill + [{"js": f"({CLICK})('Compare on the 4 tests')", "wait": 3000, "until": IDLE}]},
         {"url": f"{UI}/chat?gem=code_reviewer", "out": str(OUT / "chat.png"), "load": 5000,
          "steps": [{"js": f"({SET})('textarea', {QUESTION})"},
