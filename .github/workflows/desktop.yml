@@ -166,9 +166,27 @@ jobs:
         run: |
           $setup = Get-ChildItem desktop/dist/LapidaryConsole-Setup-*.exe | Select-Object -First 1
           Start-Process -FilePath $setup.FullName -ArgumentList "/S" -Wait
+          $helperDir = "$env:ProgramFiles\Lapidary Console\resources\helper"
+          function Show-Diagnostics {
+            "--- sc query / qc ---"; sc.exe query LapidaryHelper; sc.exe qc LapidaryHelper
+            "--- helper folder ---"; Get-ChildItem $helperDir -ErrorAction SilentlyContinue | Select-Object Name, Length | Format-Table | Out-String
+            "--- helper.log ---"; Get-Content "$helperDir\helper.log" -ErrorAction SilentlyContinue
+            "--- service control manager events ---"
+            Get-WinEvent -FilterHashtable @{ LogName = "System"; ProviderName = "Service Control Manager"; StartTime = (Get-Date).AddMinutes(-15) } -ErrorAction SilentlyContinue | Select-Object -First 15 TimeCreated, Id, Message | Format-List | Out-String
+            "--- application errors ---"
+            Get-WinEvent -FilterHashtable @{ LogName = "Application"; Level = 2; StartTime = (Get-Date).AddMinutes(-15) } -ErrorAction SilentlyContinue | Select-Object -First 10 TimeCreated, ProviderName, Message | Format-List | Out-String
+            "--- running it in the console (debug) for 15 seconds ---"
+            $p = Start-Process -FilePath "$helperDir\lapidary-helper.exe" -ArgumentList "debug" -PassThru -NoNewWindow -RedirectStandardOutput "$env:RUNNER_TEMP\helper-out.log" -RedirectStandardError "$env:RUNNER_TEMP\helper-err.log"
+            Start-Sleep 15; if (-not $p.HasExited) { Stop-Process -Id $p.Id -Force }
+            Get-Content "$env:RUNNER_TEMP\helper-out.log", "$env:RUNNER_TEMP\helper-err.log" -ErrorAction SilentlyContinue
+          }
           $svc = $null
           foreach ($i in 1..30) { $svc = Get-Service LapidaryHelper -ErrorAction SilentlyContinue; if ($svc.Status -eq "Running") { break }; Start-Sleep 1 }
-          if (-not $svc -or $svc.Status -ne "Running") { throw "Lapidary Helper is not running after install (status: $($svc.Status))" }
+          if (-not $svc -or $svc.Status -ne "Running") {
+            "--- sc start ---"; sc.exe start LapidaryHelper; Start-Sleep 5
+            Show-Diagnostics
+            throw "Lapidary Helper is not running after install (status: $($svc.Status))"
+          }
           $cfg = Get-CimInstance Win32_Service -Filter "Name='LapidaryHelper'"
           "service: $($cfg.State), start $($cfg.StartMode), runs as $($cfg.StartName), $($cfg.PathName)"
           if ($cfg.StartName -ne "LocalSystem" -or $cfg.StartMode -ne "Auto") { throw "unexpected service configuration" }

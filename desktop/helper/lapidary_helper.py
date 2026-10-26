@@ -319,6 +319,14 @@ try:
 
         def SvcDoRun(self) -> None:
             logging.basicConfig(filename=os.path.join(here(), "helper.log"), level=logging.INFO, format="%(asctime)s %(message)s")
+            logging.info("starting from %s", here())
+            try:
+                self._run_service()
+            except Exception:
+                logging.exception("the helper stopped on an error")
+                raise
+
+        def _run_service(self) -> None:
             _clean_last_update_dir()
             servicemanager.LogMsg(servicemanager.EVENTLOG_INFORMATION_TYPE, servicemanager.PYS_SERVICE_STARTED, (self._svc_name_, ""))
             allowlist = load_allowlist(os.path.join(here(), "allowlist.json"))
