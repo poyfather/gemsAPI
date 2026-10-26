@@ -48,7 +48,7 @@ These were found during the audit and fixed because CI could not pass without th
 | 27 | Split-deploy guide | Docs | S | Later |
 | 28 | Evals per gem, runnable from the UI | Product, quality | M | Now, done |
 | 29 | Typed variables with descriptions and defaults | Product, MCP | M | Next |
-| 30 | Side-by-side runs | Product | M | Later |
+| 30 | Side-by-side runs | Product | M | Now, done |
 | 31 | Few-shot examples as first-class data | Product | M | Later |
 | 32 | Agent tools from remote MCP servers and HTTP endpoints | Agents | M | Next, MCP done |
 | 33 | Approval gates with pause and resume | Agents, security | M | Next, done |
@@ -328,6 +328,8 @@ Worth doing once the foundations above are in.
 
 ### 30. Side-by-side runs
 
+**Status: done** (`backend/app/services/compare_service.py`: two to four columns, each a version from the history and an AI; one question through every column at the same time, or the gem's tests through every column as a pass and fail grid with totals, not recorded as eval runs. A past version is rebuilt from its stored prompt, provider and model with the new `gem_service.resolve_text`; the prompts it embeds resolve as they are now. An assistant runs its full loop, so only its current version can be compared, on different AIs. The call cap and the free-on-this-PC estimate from item 28 apply. `POST /gems/{id}/compare`, `/compare/tests`, `/compare/estimate`, the MCP tool `compare_gem`, and a Compare page reached from the prompt page; 10 tests). Not done: streaming each column as it answers; the columns appear together when all have answered.
+
 - **Why**: the chat page runs one gem against one model. The everyday prompting question is comparative: this version or the last one, this model or that one, same input. A compare view that takes one input and two configurations (gem version from 14, or model and provider override) and shows the outputs next to each other, with the eval score from 28 if cases exist, is where the library becomes a workbench. The backend already has everything it needs; this is mostly `app/chat/page.tsx` and a small compare route that runs two completions.
 - **Size**: M.
 - **Depends on**: 14 for version-to-version compare, 13 so both panes stream; model-to-model compare needs neither.
@@ -470,7 +472,7 @@ The engineering items make the project safe to run. These are the ones that woul
 
 1. Version history with diffs and rollback (14), done.
 2. Evals per gem, run from the UI, with a recorded baseline (28), done.
-3. Side-by-side runs across versions and models (30).
+3. Side-by-side runs across versions and models (30), done.
 4. Typed variables with descriptions and defaults, exposed over MCP (29).
 5. Few-shot examples as data rather than prose (31).
 6. Import and export in a hand-readable format (22).

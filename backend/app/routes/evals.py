@@ -1,12 +1,13 @@
-"""Evals per gem over REST (roadmap 28): cases, the cost estimate, runs, the baseline."""
+"""Evals per gem over REST (roadmap 28): cases, the cost estimate, runs, the baseline. And side-by-side runs (roadmap 30)."""
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.auth import require_api_key
-from app.models import EvalCase, EvalCaseCreate, EvalCaseUpdate, EvalEstimate, EvalRun, EvalRunReport, EvalRunRequest
+from app.models import (CompareEstimate, CompareRequest, CompareResult, CompareTestsResult, EvalCase, EvalCaseCreate,
+                        EvalCaseUpdate, EvalEstimate, EvalRun, EvalRunReport, EvalRunRequest)
 from app.routes.gems import _find_gem
-from app.services import eval_service
+from app.services import compare_service, eval_service
 
 router = APIRouter(prefix="/gems", tags=["evals"], dependencies=[Depends(require_api_key)])
 
@@ -82,3 +83,32 @@ async def set_baseline(gem_id: str, run_id: str):
     if run is None:
         raise HTTPException(status_code=404, detail=f"Eval run '{run_id}' not found.")
     return run
+
+
+# ─── Side-by-side runs (roadmap 30) ───────────────────────────────────────────
+
+@router.post("/{gem_id}/compare/estimate", response_model=CompareEstimate, summary="What a comparison would cost")
+async def compare_estimate(gem_id: str, request: CompareRequest, tests: bool = False):
+    """Which version and AI each column uses, how many model calls it takes, and whether it is all free on this PC. Nothing is called."""
+    try:
+        return await compare_service.estimate(await _gem(gem_id), request, on_tests=tests)
+    except compare_service.CompareError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@router.post("/{gem_id}/compare", response_model=CompareResult, summary="One question, two to four columns")
+async def compare(gem_id: str, request: CompareRequest):
+    """Each column is a version of the gem (from its history) and an AI; all of them answer the same message at the same time."""
+    try:
+        return await compare_service.compare(await _gem(gem_id), request)
+    except compare_service.CompareError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@router.post("/{gem_id}/compare/tests", response_model=CompareTestsResult, summary="The gem's tests through every column")
+async def compare_tests(gem_id: str, request: CompareRequest):
+    """A pass and fail grid with totals per column. Calls the model for every test in every column; refused above the call cap."""
+    try:
+        return await compare_service.compare_tests(await _gem(gem_id), request)
+    except compare_service.CompareError as exc:
+        raise HTTPException(status_code=409 if "cap" in str(exc) or "no tests" in str(exc) else 400, detail=str(exc))
