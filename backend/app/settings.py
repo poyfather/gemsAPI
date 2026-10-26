@@ -35,10 +35,13 @@ OPENAI_DEFAULT_MODEL: str = _env("GEMS_OPENAI_DEFAULT_MODEL", "")   # empty: fir
 LOCAL_OPENAI_BASE_URL: str = _env("LOCAL_OPENAI_BASE_URL", "http://127.0.0.1:11434/v1")
 LOCAL_OPENAI_API_KEY: str = _env("LOCAL_OPENAI_API_KEY", "ollama")
 LOCAL_DEFAULT_MODEL: str = _env("GEMS_LOCAL_DEFAULT_MODEL", "")      # empty: first model the server lists
-# Thinking models (qwen3, deepseek-r1, gpt-oss) can spend a whole token budget reasoning and return an
-# empty answer, which empties tests, comparisons and judges. Sent as reasoning_effort to local servers
-# only; "none" turns thinking off (Ollama, vLLM), "low"/"medium"/"high" allow some, empty sends nothing.
-LOCAL_REASONING_EFFORT: str = _env("GEMS_LOCAL_REASONING_EFFORT", "none")
+# Thinking models (qwen3, deepseek-r1, gpt-oss) reason before they answer, and a local server counts that
+# reasoning against max_tokens. Under a small cap (tests, comparisons, judges) they ran out before writing
+# the answer. Local calls get this many extra tokens to think with; the answer itself keeps its cap.
+LOCAL_THINKING_TOKENS: int = int(_env("GEMS_LOCAL_THINKING_TOKENS", "4096"))
+# Optional reasoning_effort for local servers that accept it (Ollama, vLLM): none, low, medium or high.
+# Empty (the default) sends nothing. "none" is faster, but small models then think out loud in the answer.
+LOCAL_REASONING_EFFORT: str = _env("GEMS_LOCAL_REASONING_EFFORT", "")
 
 # The model policy, answered in the UI by "Which AI should we use?":
 #   local  = the free one on this PC      online = the online ones

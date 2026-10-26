@@ -78,6 +78,11 @@ def _local_extra(provider: str) -> dict:
     return {"reasoning_effort": effort} if provider == "local" and effort else {}
 
 
+def _cap(provider: str, max_tokens: int) -> int:
+    """A local server counts a thinking model's reasoning against max_tokens; give it room before the answer."""
+    return max_tokens + settings.LOCAL_THINKING_TOKENS if provider == "local" else max_tokens
+
+
 def _openai_like(provider: str) -> AsyncOpenAI:
     return _get_local() if provider == "local" else _get_openai()
 
@@ -115,7 +120,7 @@ async def complete(
         response = await client.chat.completions.create(
             model=model,
             messages=full_messages,
-            max_tokens=max_tokens,
+            max_tokens=_cap(provider, max_tokens),
             **_local_extra(provider),
         )
         return response.choices[0].message.content or ""
@@ -156,7 +161,7 @@ async def complete_stream(
             model=model,
             messages=full_messages,
             stream=True,
-            max_tokens=max_tokens,
+            max_tokens=_cap(provider, max_tokens),
             **_local_extra(provider),
         )
         async for chunk in stream:
@@ -311,7 +316,7 @@ async def complete_turn(
 
         client = _openai_like(provider)
         full_messages = [{"role": "system", "content": system_prompt}] + messages
-        kwargs = dict(model=model, messages=full_messages, max_tokens=max_tokens, **_local_extra(provider))
+        kwargs = dict(model=model, messages=full_messages, max_tokens=_cap(provider, max_tokens), **_local_extra(provider))
         if tools:
             kwargs["tools"] = [
                 {"type": "function", "function": {"name": t["name"], "description": t["description"], "parameters": t["parameters"]}}

@@ -199,25 +199,25 @@ class _Recorder:
         return type("Chat", (), {"completions": _Completions()})()
 
 
-def test_local_servers_are_asked_not_to_think_by_default(monkeypatch) -> None:
+def test_local_calls_get_room_to_think_and_no_reasoning_field_by_default(monkeypatch) -> None:
     import asyncio
     rec = _Recorder()
     monkeypatch.setattr(llm_service, "_get_local", lambda: rec)
-    assert asyncio.run(llm_service.complete("s", [{"role": "user", "content": "hi"}], "qwen3:4b", "local", max_tokens=64)) == "ok"
-    assert rec.sent["reasoning_effort"] == "none" and rec.sent["max_tokens"] == 64
+    monkeypatch.setattr(settings, "LOCAL_THINKING_TOKENS", 4096)
+    assert asyncio.run(llm_service.complete("s", [{"role": "user", "content": "hi"}], "qwen3:4b", "local", max_tokens=1024)) == "ok"
+    assert rec.sent["max_tokens"] == 1024 + 4096
+    assert "reasoning_effort" not in rec.sent
 
 
-def test_reasoning_effort_is_configurable_and_never_sent_to_openai(monkeypatch) -> None:
+def test_reasoning_effort_is_optional_and_never_sent_to_openai(monkeypatch) -> None:
     import asyncio
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
     rec_local, rec_openai = _Recorder(), _Recorder()
     monkeypatch.setattr(llm_service, "_get_local", lambda: rec_local)
     monkeypatch.setattr(llm_service, "_get_openai", lambda: rec_openai)
-    monkeypatch.setattr(settings, "LOCAL_REASONING_EFFORT", "")
-    asyncio.run(llm_service.complete("s", [], "qwen3:4b", "local"))
-    assert "reasoning_effort" not in rec_local.sent
-    monkeypatch.setattr(settings, "LOCAL_REASONING_EFFORT", "low")
-    asyncio.run(llm_service.complete("s", [], "qwen3:4b", "local"))
-    assert rec_local.sent["reasoning_effort"] == "low"
-    asyncio.run(llm_service.complete("s", [], "gpt-x", "openai"))
-    assert "reasoning_effort" not in rec_openai.sent
+    monkeypatch.setattr(settings, "LOCAL_REASONING_EFFORT", "none")
+    monkeypatch.setattr(settings, "LOCAL_THINKING_TOKENS", 0)
+    asyncio.run(llm_service.complete("s", [], "qwen3:4b", "local", max_tokens=64))
+    assert rec_local.sent["reasoning_effort"] == "none" and rec_local.sent["max_tokens"] == 64
+    asyncio.run(llm_service.complete("s", [], "gpt-x", "openai", max_tokens=64))
+    assert "reasoning_effort" not in rec_openai.sent and rec_openai.sent["max_tokens"] == 64
