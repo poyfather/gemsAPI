@@ -45,6 +45,7 @@ async def get_gem(name: str) -> dict:
         "kind": g.kind,
         "tools": g.tools,
         "variables_schema": gem_service.variables_schema(g),
+        "examples": [e.model_dump() for e in g.examples],
     }
 
 

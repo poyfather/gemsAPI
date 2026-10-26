@@ -61,6 +61,7 @@ async def resolve_gem(request: ResolveRequest):
         variables_missing=result.variables_missing,
         variables_defaulted=result.variables_defaulted,
         variable_errors=result.variable_errors,
+        examples_used=result.examples_used,
     )
 
 

@@ -25,6 +25,7 @@ export default function GemDetailPage() {
   const [loadingResolve, setLoadingResolve] = useState(false);
   const [varValues, setVarValues]   = useState<Record<string, string>>({});
   const [showRaw, setShowRaw]       = useState(false);
+  const [testsRefresh, setTestsRefresh] = useState(0);
 
   useEffect(() => {
     const load = async () => {
@@ -196,6 +197,31 @@ export default function GemDetailPage() {
             </div>
           )}
 
+          {(gem.examples ?? []).length > 0 && (
+            <div className="bg-gem-card border border-gem-border rounded-xl p-4 space-y-2">
+              <p className="text-xs text-slate-500 flex items-center gap-1">
+                <MessageSquare className="w-3 h-3" /> Examples ({(gem.examples ?? []).length})
+              </p>
+              <ul className="space-y-2">
+                {(gem.examples ?? []).map((ex, i) => (
+                  <li key={i} className="text-xs space-y-0.5">
+                    <p className="text-slate-300 line-clamp-2">{ex.input}</p>
+                    <p className="text-slate-500 line-clamp-2">{ex.output}</p>
+                    <button
+                      onClick={async () => {
+                        try { await gemsApi.exampleToTest(gem.id, i); setTestsRefresh((n) => n + 1); }
+                        catch (e) { alert(explain(e, "Could not make a test from it.")); }
+                      }}
+                      className="text-violet-400 hover:text-violet-300"
+                    >
+                      Make a test from it
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           {gemRefs.length > 0 && (
             <div className="bg-gem-card border border-gem-border rounded-xl p-4 space-y-2">
               <p className="text-xs text-slate-500 flex items-center gap-1">
@@ -248,7 +274,7 @@ export default function GemDetailPage() {
             )}
           </div>
 
-          <GemEvals gem={gem} />
+          <GemEvals gem={gem} refresh={testsRefresh} />
 
           <GemHistory gem={gem} onRestored={(g) => { setGem(g); setResolve(null); }} />
 

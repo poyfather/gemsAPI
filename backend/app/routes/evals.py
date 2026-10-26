@@ -51,6 +51,18 @@ async def delete_case(gem_id: str, case_id: str):
         raise HTTPException(status_code=404, detail=f"Eval case '{case_id}' not found.")
 
 
+@router.post("/{gem_id}/examples/{index}/test", response_model=EvalCase, status_code=201, summary="Turn an example into a test")
+async def example_to_test(gem_id: str, index: int):
+    """A judge test from a worked example (roadmap 31 with 28): the example's input, and the criterion that the answer matches the example's in substance."""
+    gem = await _gem(gem_id)
+    if not 0 <= index < len(gem.examples):
+        raise HTTPException(status_code=404, detail=f"'{gem.name}' has no example {index + 1}.")
+    ex = gem.examples[index]
+    name = (ex.note or ex.input)[:60]
+    expected = f"Gives the same answer in substance as this example, allowing different wording:\n{ex.output}"
+    return await eval_service.add_case(gem, EvalCaseCreate(name=f"example: {name}", input=ex.input, check="judge", expected=expected))
+
+
 @router.get("/{gem_id}/evals/estimate", response_model=EvalEstimate, summary="What a run would cost")
 async def estimate(gem_id: str, provider_override: str | None = None, model_override: str | None = None):
     """Model calls, rough tokens, which AI, and whether it is free (runs on this PC). Nothing is called."""
