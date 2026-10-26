@@ -16,6 +16,7 @@ import { TOOLBOX, detectToolbox, toolboxInstallCommand, toolboxSourceLabel } fro
 import { AI_CHOICES, DEFAULT_LOCAL_MODEL, advancedPlan, plan, planAll, summarise } from "./lib/recipes.js";
 import { PORTS, diagnose, readClientConfig, summarise as doctorSummary } from "./lib/doctor.js";
 import { connect as netConnect } from "node:net";
+import { helperHandles, helperPing, helperRequest, shouldFallBack } from "./lib/helper.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
@@ -99,14 +100,29 @@ function runCommand(program, args) {
   });
 }
 
+/**
+ * Install through Lapidary Helper when it runs (Windows, installed per machine):
+ * no administrator prompt. Otherwise, or when the helper lacks the means, run
+ * the publisher's installer here as before.
+ */
+async function installTool(id, cmd) {
+  if (process.platform === "win32" && helperHandles(id)) {
+    log(`[helper] install ${id}`);
+    const answer = await helperRequest({ op: "install", id }, { onLine: (line) => log(`[helper] ${line}`) });
+    if (!shouldFallBack(answer)) return { ok: answer.ok, message: answer.ok ? "installed" : `${answer.message}; open Logs to see why, then try again` };
+    log(`[helper] ${answer ? answer.message : "not available"}; installing directly`);
+  }
+  if (!cmd) return { ok: false, message: "this one has nothing to install; it is built in or detected only" };
+  const code = await runCommand(cmd.program, cmd.args);
+  return { ok: code === 0, message: code === 0 ? "installed" : `the installer stopped with code ${code}; open Logs to see why, then try again` };
+}
+
 // ---- IPC surface
 ipcMain.handle("console:components", async () => ({ components: COMPONENTS.map(({ id, name, kind, blurb, costs }) => ({ id, name, kind, blurb, costs })), status: await detectAll(io) }));
 ipcMain.handle("console:toolbox", async () => ({ tools: TOOLBOX.map((t) => ({ id: t.id, name: t.name, publisher: t.publisher, category: t.category, source: toolboxSourceLabel(t), homepage: t.homepage, blurb: t.blurb, needs: t.needs })), status: await detectToolbox(io) }));
 ipcMain.handle("console:install", async (_e, id) => {
   const cmd = installCommand(id) || toolboxInstallCommand(id, { pwshPath: (await io.which("pwsh")) || "powershell.exe" });
-  if (!cmd) return { ok: false, message: "this one has nothing to install; it is built in or detected only" };
-  const code = await runCommand(cmd.program, cmd.args);
-  return { ok: code === 0, message: code === 0 ? "installed" : `the installer stopped with code ${code}; open Logs to see why, then try again` };
+  return installTool(id, cmd);
 });
 ipcMain.handle("console:settings:get", async () => { const s = loadSettings(); return { modelPolicy: "auto", localModel: DEFAULT_LOCAL_MODEL, ...s, anthropicKey: s.anthropicKey ? "set" : "", openaiKey: s.openaiKey ? "set" : "", supabaseKey: s.supabaseKey ? "set" : "" }; });
 ipcMain.handle("console:settings:set", async (_e, patch) => {
@@ -204,7 +220,7 @@ const readText = (file) => { try { return readFileSync(file, "utf8"); } catch { 
 
 ipcMain.handle("console:doctor", async () => {
   const s = loadSettings();
-  const [status, ports, anthropic, openai, latest] = await Promise.all([
+  const [status, ports, anthropic, openai, latest, helper] = await Promise.all([
     detectAll(io),
     (async () => ({
       [PORTS.lapidary]: await portState(PORTS.lapidary, "http://127.0.0.1:8000/health"),
@@ -215,6 +231,7 @@ ipcMain.handle("console:doctor", async () => {
     probeKey("anthropic", s.anthropicKey),
     probeKey("openai", s.openaiKey),
     latestRelease(),
+    process.platform === "win32" ? helperPing().then((r) => ({ running: !!r })) : undefined,
   ]);
   const findings = diagnose({
     status,
@@ -225,6 +242,7 @@ ipcMain.handle("console:doctor", async () => {
     composeExists: existsSync(join(dataDir, "open-webui.compose.yml")),
     version: app.getVersion(),
     latest,
+    helper,
   });
   log(`[doctor] ${doctorSummary(findings)}`);
   return { findings, summary: doctorSummary(findings), checkedAt: new Date().toISOString() };
@@ -238,6 +256,11 @@ ipcMain.handle("console:doctor:fix", async (_e, action) => {
   }
   if (kind === "open") { await shell.openExternal(arg); return { ok: true, message: "opened" }; }
   if (kind === "view") return { ok: true, message: "", view: arg };
+  if (kind === "update" && arg === "console") {
+    const answer = await helperRequest({ op: "update_console" }, { onLine: (line) => log(`[helper] ${line}`) });
+    if (!answer) return { ok: false, message: "Lapidary Helper is not running; download the installer from the releases page instead" };
+    return { ok: answer.ok, message: answer.message };
+  }
   if (["install", "start", "pull", "connect", "policy"].includes(kind)) {
     const r = await runStep({ id: action, kind, detail: "" }, kind === "policy" ? { modelPolicy: arg } : {});
     return r;
@@ -268,9 +291,8 @@ async function runStep(step, patch) {
   switch (step.kind) {
     case "install": {
       const cmd = installCommand(arg);
-      if (!cmd) return { ok: false, message: `nothing to install for ${arg}` };
-      const code = await runCommand(cmd.program, cmd.args);
-      return { ok: code === 0, message: code === 0 ? "installed" : `the installer exited with ${code}; see Logs` };
+      if (!cmd && !helperHandles(arg)) return { ok: false, message: `nothing to install for ${arg}` };
+      return installTool(arg, cmd);
     }
     case "start": {
       const ollama = (await io.which("ollama")) || "ollama";

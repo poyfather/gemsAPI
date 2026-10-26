@@ -32,3 +32,14 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file notes.md --verify-tag
+
+  # A release made with the workflow token does not start other workflows, so
+  # build the Windows installer here and attach it with its checksum.
+  windows-installer:
+    needs: release
+    uses: ./.github/workflows/desktop.yml
+    with:
+      release_tag: ${{ github.ref_name }}
+    secrets: inherit
+    permissions:
+      contents: write

@@ -1,7 +1,11 @@
 name: Desktop
 
 # Builds the Lapidary Console installer for Windows: the backend as a PyInstaller
-# single file, the UI as a Next.js standalone server, then electron-builder.
+# single file, the UI as a Next.js standalone server, Lapidary Helper (the
+# install and update service), then electron-builder. The installer is signed
+# when signing secrets exist (desktop/README.md, "Code signing"), installed on
+# the runner to check the helper service, and, when the release workflow calls
+# this one, attached to the release with its SHA-256 checksum.
 on:
   pull_request:
     paths: ["desktop/**", "backend/**", "frontend/**", ".github/workflows/desktop.yml"]
@@ -9,6 +13,12 @@ on:
     branches: [main]
     paths: ["desktop/**", "backend/**", "frontend/**", ".github/workflows/desktop.yml"]
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      release_tag:
+        description: Attach the installer and its checksum to this release.
+        type: string
+        default: ""
 
 permissions:
   contents: read
@@ -29,8 +39,32 @@ jobs:
     name: Windows installer
     runs-on: windows-latest
     needs: console-tests
+    env:
+      # Signing. Azure Artifact Signing (formerly Trusted Signing) when these are set:
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      SIGNING_ENDPOINT: ${{ vars.AZURE_SIGNING_ENDPOINT }}
+      SIGNING_ACCOUNT: ${{ vars.AZURE_SIGNING_ACCOUNT }}
+      SIGNING_PROFILE: ${{ vars.AZURE_SIGNING_PROFILE }}
+      # ...or a .pfx code-signing certificate (base64) and its password:
+      PFX_BASE64: ${{ secrets.WIN_CSC_LINK }}
+      PFX_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+      # The certificate's full subject, for example "CN=Jane Doe, O=Jane Doe, L=Austin, S=Texas, C=US".
+      # The helper refuses a console update not signed by exactly this subject.
+      PUBLISHER_SUBJECT: ${{ vars.LAPIDARY_PUBLISHER_SUBJECT }}
     steps:
       - uses: actions/checkout@v7
+
+      - name: Decide how to sign
+        shell: pwsh
+        run: |
+          $mode = "none"
+          if ($env:AZURE_CLIENT_SECRET -and $env:SIGNING_ENDPOINT -and $env:SIGNING_ACCOUNT -and $env:SIGNING_PROFILE -and $env:PUBLISHER_SUBJECT) { $mode = "azure" }
+          elseif ($env:PFX_BASE64 -and $env:PUBLISHER_SUBJECT) { $mode = "pfx" }
+          "SIGN_MODE=$mode" >> $env:GITHUB_ENV
+          if ($mode -eq "none") { "::notice::Unsigned build: Windows SmartScreen will warn on install. See desktop/README.md, Code signing." }
+          else { "Signing with $mode as $env:PUBLISHER_SUBJECT" }
 
       - uses: actions/setup-python@v7
         with:
@@ -47,7 +81,7 @@ jobs:
         env:
           GEMS_API_KEY: ci-placeholder
           GEMS_STORAGE: sqlite
-          GEMS_SQLITE_PATH: ${{ runner.temp }}\\lapidary-smoke.db
+          GEMS_SQLITE_PATH: ${{ runner.temp }}\lapidary-smoke.db
         run: |
           $out = "$env:RUNNER_TEMP\backend-out.log"; $err = "$env:RUNNER_TEMP\backend-err.log"
           $p = Start-Process -FilePath build/backend/lapidary-backend.exe -PassThru -WindowStyle Hidden -RedirectStandardOutput $out -RedirectStandardError $err
@@ -62,9 +96,22 @@ jobs:
           "--- backend stderr ---"; Get-Content $err -ErrorAction SilentlyContinue
           if (-not $ok) { throw "backend exe did not answer /health (exit code $($p.ExitCode)); see the output above" }
 
+      - name: Build Lapidary Helper
+        shell: pwsh
+        run: |
+          pip install pywin32
+          pyinstaller --onedir --noconfirm --name lapidary-helper --distpath build --workpath "$env:RUNNER_TEMP/pyi-helper" --specpath "$env:RUNNER_TEMP" --hidden-import win32timezone desktop/helper/lapidary_helper.py
+          if (-not (Test-Path build/lapidary-helper/lapidary-helper.exe)) { throw "helper exe missing" }
+
       - uses: actions/setup-node@v7
         with:
           node-version: "24"
+      - name: Write the helper's allowlist
+        shell: pwsh
+        run: |
+          # Only a signed build pins the publisher; an unsigned one checks the published checksum only.
+          $env:LAPIDARY_PUBLISHER = if ($env:SIGN_MODE -ne "none") { $env:PUBLISHER_SUBJECT } else { "" }
+          node desktop/scripts/allowlist.mjs build/lapidary-helper/allowlist.json
       - name: Build the UI as a standalone server
         shell: pwsh
         run: |
@@ -83,10 +130,110 @@ jobs:
         run: |
           cd desktop
           npm ci
-          npm run dist:win
+          $extra = @()
+          if ($env:SIGN_MODE -eq "azure") {
+            $cn = [regex]::Match($env:PUBLISHER_SUBJECT, 'CN=([^,]+)').Groups[1].Value.Trim()
+            $extra = @(
+              "-c.win.azureSignOptions.publisherName=$cn",
+              "-c.win.azureSignOptions.endpoint=$env:SIGNING_ENDPOINT",
+              "-c.win.azureSignOptions.codeSigningAccountName=$env:SIGNING_ACCOUNT",
+              "-c.win.azureSignOptions.certificateProfileName=$env:SIGNING_PROFILE"
+            )
+          } elseif ($env:SIGN_MODE -eq "pfx") {
+            $env:WIN_CSC_LINK = $env:PFX_BASE64
+            $env:WIN_CSC_KEY_PASSWORD = $env:PFX_PASSWORD
+          } else {
+            $env:CSC_IDENTITY_AUTO_DISCOVERY = "false"
+          }
+          npx electron-builder --win --x64 @extra
+          Get-ChildItem dist/*.exe | ForEach-Object {
+            $hash = (Get-FileHash -Algorithm SHA256 $_.FullName).Hash.ToLower()
+            "$hash  $($_.Name)" | Out-File -Encoding ascii -NoNewline "$($_.FullName).sha256"
+            "$($_.Name)  $hash"
+          }
+
+      - name: Check signatures
+        if: env.SIGN_MODE != 'none'
+        shell: pwsh
+        run: |
+          $setup = Get-ChildItem desktop/dist/LapidaryConsole-Setup-*.exe | Select-Object -First 1
+          $s = Get-AuthenticodeSignature $setup.FullName
+          "$($s.Status): $($s.SignerCertificate.Subject)"
+          if ($s.Status -ne "Valid") { throw "the installer is not validly signed" }
+
+      - name: Install it and check the helper service
+        shell: pwsh
+        run: |
+          $setup = Get-ChildItem desktop/dist/LapidaryConsole-Setup-*.exe | Select-Object -First 1
+          Start-Process -FilePath $setup.FullName -ArgumentList "/S" -Wait
+          $svc = $null
+          foreach ($i in 1..30) { $svc = Get-Service LapidaryHelper -ErrorAction SilentlyContinue; if ($svc.Status -eq "Running") { break }; Start-Sleep 1 }
+          if (-not $svc -or $svc.Status -ne "Running") { throw "Lapidary Helper is not running after install (status: $($svc.Status))" }
+          $cfg = Get-CimInstance Win32_Service -Filter "Name='LapidaryHelper'"
+          "service: $($cfg.State), start $($cfg.StartMode), runs as $($cfg.StartName), $($cfg.PathName)"
+          if ($cfg.StartName -ne "LocalSystem" -or $cfg.StartMode -ne "Auto") { throw "unexpected service configuration" }
+
+          function Ask($json) {
+            $c = New-Object System.IO.Pipes.NamedPipeClientStream(".", "LapidaryHelper", [System.IO.Pipes.PipeDirection]::InOut)
+            $c.Connect(10000)
+            $w = New-Object System.IO.StreamWriter($c); $w.AutoFlush = $true
+            $r = New-Object System.IO.StreamReader($c)
+            $w.Write($json + "`n")
+            while ($null -ne ($line = $r.ReadLine())) { $m = $line | ConvertFrom-Json; if ($m.done) { $c.Dispose(); return $m }; "  $($m.line)" | Out-Host }
+            $c.Dispose(); throw "the helper closed without an answer"
+          }
+          $ping = Ask '{"op":"ping"}'
+          "ping: $($ping.message) ($($ping.version))"
+          if (-not $ping.ok) { throw "ping failed" }
+          $evil = Ask '{"op":"install","id":"not-on-the-list"}'
+          "refused as expected: $($evil.message)"
+          if ($evil.ok) { throw "the helper accepted an id that is not on its allowlist" }
+          $cmd = Ask '{"op":"run","cmd":"calc.exe"}'
+          if ($cmd.ok) { throw "the helper accepted an unknown op" }
+          "helper log:"; Get-Content "$env:ProgramFiles\Lapidary Console\resources\helper\helper.log"
+
+      - name: Install an allowlisted tool through the helper (informational)
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $c = New-Object System.IO.Pipes.NamedPipeClientStream(".", "LapidaryHelper", [System.IO.Pipes.PipeDirection]::InOut)
+          $c.Connect(10000)
+          $w = New-Object System.IO.StreamWriter($c); $w.AutoFlush = $true
+          $r = New-Object System.IO.StreamReader($c)
+          $w.Write('{"op":"install","id":"7zip"}' + "`n")
+          while ($null -ne ($line = $r.ReadLine())) { $line; if (($line | ConvertFrom-Json).done) { break } }
+          $c.Dispose()
+
+      - name: Uninstall and check the helper is gone
+        shell: pwsh
+        run: |
+          $un = Get-ChildItem "$env:ProgramFiles\Lapidary Console\Uninstall*.exe" | Select-Object -First 1
+          Start-Process -FilePath $un.FullName -ArgumentList "/S" -Wait
+          foreach ($i in 1..60) { if (-not (Get-Service LapidaryHelper -ErrorAction SilentlyContinue)) { break }; Start-Sleep 1 }
+          if (Get-Service LapidaryHelper -ErrorAction SilentlyContinue) { throw "the uninstaller left Lapidary Helper registered" }
+          "uninstalled; helper removed"
 
       - uses: actions/upload-artifact@v4
         with:
           name: LapidaryConsole-Setup
-          path: desktop/dist/*.exe
+          path: |
+            desktop/dist/*.exe
+            desktop/dist/*.exe.sha256
           if-no-files-found: error
+
+  release-assets:
+    name: Attach to the release
+    if: inputs.release_tag
+    needs: windows-installer
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: LapidaryConsole-Setup
+          path: dist
+      - name: Upload the installer and checksum
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ inputs.release_tag }}" dist/*.exe dist/*.exe.sha256 --clobber --repo "${{ github.repository }}"

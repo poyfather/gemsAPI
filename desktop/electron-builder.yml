@@ -9,16 +9,25 @@ files:
   - renderer/**
   - node_modules/**
 extraResources:
-  # Built by CI before packaging: the backend as a single-file exe and the UI as a standalone server.
+  # Built by CI before packaging: the backend as a single-file exe, the UI as a standalone server,
+  # and Lapidary Helper (the install and update service) with its allowlist.
   - from: ../build/backend/
     to: backend/
   - from: ../build/frontend/
     to: frontend/
+  - from: ../build/lapidary-helper/
+    to: helper/
 win:
   target:
     - nsis
   artifactName: LapidaryConsole-Setup-${version}.exe
+  # Code signing is switched on in CI only when signing secrets exist (see README, "Code signing").
+  # When it is on, every .exe in the package is signed: the console, the backend and the helper.
 nsis:
-  oneClick: false
-  allowToChangeInstallationDirectory: true
-  perMachine: false
+  # Like Chrome: one administrator prompt, installed for every user on this PC, and a
+  # service (Lapidary Helper) that installs and updates afterwards without asking again.
+  oneClick: true
+  perMachine: true
+  include: installer.nsh
+  createDesktopShortcut: true
+  deleteAppDataOnUninstall: false
