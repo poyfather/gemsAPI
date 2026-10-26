@@ -28,6 +28,24 @@ updates:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
 
+  # Lapidary Console (Electron). Minor and patch updates as one grouped PR a month.
+  # Electron majors are migrations (43 deprecates safeStorage, which holds the keys).
+  # rea-agents is pinned on purpose: 6.5 and later add frida, a 99 MB native
+  # instrumentation toolkit, to the installer, so it is upgraded by hand.
+  - package-ecosystem: "npm"
+    directory: "/desktop"
+    schedule:
+      interval: "monthly"
+    labels: ["dependencies", "desktop"]
+    groups:
+      desktop:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "rea-agents"
+
   # Base images. The frontend image tracks the current Node LTS line, so skip
   # odd-numbered (non-LTS) majors; Python minors are fine.
   - package-ecosystem: "docker"
