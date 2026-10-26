@@ -22,9 +22,10 @@ const PORTS = { lapidary: 8000, ui: 3000, openwebui: 3080, ollama: 11434 };
  *   clients       { claude: { exists, connected }, chatgpt: { exists, connected } } from reading the config files
  *   composeExists Open WebUI compose file written by the console
  *   version       the console's own version; latest: the newest release, or null when offline
+ *   helper        on Windows: { running } for Lapidary Helper, the install and update service; elsewhere undefined
  */
 export function diagnose(facts) {
-  const { status = {}, settings = {}, keys = {}, ports = {}, clients = {}, composeExists = false, version = "", latest = null } = facts;
+  const { status = {}, settings = {}, keys = {}, ports = {}, clients = {}, composeExists = false, version = "", latest = null, helper } = facts;
   const st = (id) => status[id] || {};
   const policy = settings.modelPolicy || "auto";
   const localModel = settings.localModel || DEFAULT_LOCAL_MODEL;
@@ -92,10 +93,14 @@ export function diagnose(facts) {
   if (pwsh.installed) add({ id: "pwsh", title: "PowerShell 7 is installed", state: "ok", detail: `Version ${pwsh.version || "unknown"}.` });
   else add({ id: "pwsh", title: "PowerShell 7 is missing", state: "warn", detail: "Windows PowerShell 5 is used instead; some modern commands will not work.", fix: { action: "install:pwsh", label: "Install PowerShell 7" } });
 
-  // 6. Versions
-  if (latest && version && latest !== version) add({ id: "version", title: `A newer Lapidary Console is available (${latest}, you have ${version})`, state: "warn", detail: "Download the new installer from the releases page; your settings are kept.", fix: { action: "open:https://github.com/poyfather/lapidary/releases/latest", label: "Open releases" } });
+  // 6. Versions, and the helper that installs and updates without administrator prompts
+  const canUpdate = helper?.running;
+  if (latest && version && latest !== version) add({ id: "version", title: `A newer Lapidary Console is available (${latest}, you have ${version})`, state: "warn", detail: canUpdate ? "Update now installs it in the background; the console closes and reopens, and your settings are kept." : "Download the new installer from the releases page; your settings are kept.", fix: canUpdate ? { action: "update:console", label: "Update now" } : { action: "open:https://github.com/poyfather/lapidary/releases/latest", label: "Open releases" } });
   else if (latest) add({ id: "version", title: `Lapidary Console is up to date (${version})`, state: "ok", detail: "Components update from their publishers through the Components view." });
   else add({ id: "version", title: "Could not check for a newer console", state: "skip", detail: "This PC may be offline. Components still update from the Components view." });
+
+  if (helper?.running) add({ id: "helper", title: "Lapidary Helper is running", state: "ok", detail: "Installs and updates happen without asking for administrator rights." });
+  else if (helper) add({ id: "helper", title: "Lapidary Helper is not running", state: "warn", detail: "Installs will ask for administrator rights each time. Start it; if it will not stay on, reinstall Lapidary Console.", fix: { action: "helper:start", label: "Start it" } });
 
   return out;
 }
