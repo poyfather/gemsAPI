@@ -39,6 +39,9 @@ LOCAL_DEFAULT_MODEL: str = _env("GEMS_LOCAL_DEFAULT_MODEL", "")      # empty: fi
 # reasoning against max_tokens. Under a small cap (tests, comparisons, judges) they ran out before writing
 # the answer. Local calls get this many extra tokens to think with; the answer itself keeps its cap.
 LOCAL_THINKING_TOKENS: int = int(_env("GEMS_LOCAL_THINKING_TOKENS", "4096"))
+# A local server answers one request at a time while a thinking model reasons, so comparisons and test runs
+# queue there; the cloud timeout (LLM_TIMEOUT_SECONDS) cut them off. Seconds to wait for a local answer.
+LOCAL_TIMEOUT_SECONDS: float = float(_env("GEMS_LOCAL_TIMEOUT_SECONDS", "600"))
 # Optional reasoning_effort for local servers that accept it (Ollama, vLLM): none, low, medium or high.
 # Empty (the default) sends nothing. "none" is faster, but small models then think out loud in the answer.
 LOCAL_REASONING_EFFORT: str = _env("GEMS_LOCAL_REASONING_EFFORT", "")

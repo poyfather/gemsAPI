@@ -66,7 +66,7 @@ def _get_local() -> AsyncOpenAI:
         _local = AsyncOpenAI(
             api_key=settings.LOCAL_OPENAI_API_KEY or "local",
             base_url=settings.LOCAL_OPENAI_BASE_URL,
-            timeout=settings.LLM_TIMEOUT_SECONDS,
+            timeout=settings.LOCAL_TIMEOUT_SECONDS,
             max_retries=settings.LLM_MAX_RETRIES,
         )
     return _local
