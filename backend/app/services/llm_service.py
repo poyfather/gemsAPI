@@ -186,7 +186,7 @@ async def _fetch_models(provider: str) -> list[str]:
         return sorted(ids, reverse=True)
     if provider == "local":
         client = _get_local()
-        return sorted(m.id async for m in client.models.list())
+        return sorted([m.id async for m in client.models.list()])
     client = _get_openai()
     ids = [m.id async for m in client.models.list()]
     chat = [i for i in ids if _OPENAI_CHAT_RE.match(i) and not _OPENAI_EXCLUDE_RE.search(i)]
