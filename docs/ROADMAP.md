@@ -4,7 +4,33 @@ A prioritised list of improvements to the project itself, written on 2026-10-23 
 
 Sizes: **S** is under half a day, **M** is one to three days, **L** is a week or more. Items are numbered so they can be referenced from issues and from the root roadmap.
 
-Two lenses run through the list. Items 1 to 27 come from reading the code: correctness, security, developer experience. Items 14, 21, 22 and 28 to 31 come from asking what a person who writes prompts for a living needs from a prompt library, and are summarised in [For the prompt practitioner](#for-the-prompt-practitioner) at the end. If only one thread gets attention, that one is the product. Items 32 to 35 follow ADR-007, which turned gems into agent definitions with a thin run loop. Items 36 to 42 follow ADR-009, the Windows console that installs and connects the AI tools on a machine with Lapidary as the hub. Items 47 to 50 follow ADR-012 and come first among the console items: the platform is for someone who does not know AI yet and should get something great out of it on day one.
+Two lenses run through the list. Items 1 to 27 come from reading the code: correctness, security, developer experience. Items 14, 21, 22 and 28 to 31 come from asking what a person who writes prompts for a living needs from a prompt library, and are summarised in [For the prompt practitioner](#for-the-prompt-practitioner) at the end. If only one thread gets attention, that one is the product. Items 32 to 35 follow ADR-007, which turned gems into agent definitions with a thin run loop. Items 36 to 42 follow ADR-009, the Windows console that installs and connects the AI tools on a machine with Lapidary as the hub. Items 47 to 50 follow ADR-012 and come first among the console items: the platform is for someone who does not know AI yet and should get something great out of it on day one. Items 51 to 58 follow ADR-013 and now come first of all: see [Growth plan](#growth-plan-adr-013) below.
+
+## Growth plan (ADR-013)
+
+An outside review on 2026-10-26 read the public repository and docs and concluded that Lapidary has more functionality than its public presentation communicates. It does not need another dozen technical features right now. It needs a compelling first experience, easy distribution, and visible proof that it makes AI more useful. The biggest risk is adoption: the project speaks to developers, newcomers, IT administrators and organizations at once, and each expects something different. The biggest opportunity is that someone can understand it, try it and get something useful from it within five minutes.
+
+**Positioning.** Sell the outcome, not the parts.
+
+> **Your AI. Your instructions. Every app.**
+> Create your best prompts once. Improve them with testing. Turn them into assistants. Use them across your favorite AI tools while keeping control of your data.
+
+**Phases.** Work goes in this order; an item outside them waits unless it unblocks one.
+
+| Phase | Goal | Items |
+|---|---|---|
+| 1. Attract | A visitor understands it and wants to try it | 51 live demo, 52 presentation and consistent docs |
+| 2. Activate | A new user gets a first useful result | 53 gem gallery, 22 easy import, the first run (47, done) |
+| 3. Retain | People come back and bring others | 54 visual builder, 55 usage and cost dashboard, 56 sharing, 57 trust for teams |
+| Throughout | Know whether it is working | 58 measure the three numbers |
+
+**What to measure.** Three numbers, defined in item 58:
+
+1. The share of visitors who create their first gem.
+2. The share of those who use it again seven days later.
+3. The number who share a gem with another person.
+
+**The first five minutes**, as the target experience: open the demo or install the console; pick a gem from the gallery or paste a prompt you already use; see it answer, then see the improved version answer better side by side; use it from Claude, ChatGPT or Cursor without copying anything.
 
 ## Already done in the hygiene pull request
 
@@ -29,7 +55,7 @@ These were found during the audit and fixed because CI could not pass without th
 | 8 | Turn the strict TypeScript lint rules back on | DX | S | Now, done |
 | 9 | Decide the Supabase RLS and key model | Security | M to L | Next, done |
 | 10 | Per-client API keys, and auth for a hosted MCP server | Security | M | Now, done with 41 |
-| 11 | Rate limits and spend guards on chat | Security, cost | M | Next |
+| 11 | Rate limits and spend guards on chat | Security, cost | M | Now, within 55 |
 | 12 | API consistency and versioning | API, MCP | M | Next |
 | 13 | Streaming in the chat UI | Product | M | Next, done |
 | 14 | Prompt version history | Product | L | Now, done |
@@ -39,12 +65,12 @@ These were found during the audit and fixed because CI could not pass without th
 | 18 | Timeouts and retries in `llm_service.py` | Reliability | S | Next, done |
 | 19 | Resolver query batching and a prompt size budget | Performance | M | Later |
 | 20 | Structured logging and a real health check | Operations | M | Later |
-| 21 | Multi-user accounts | Product, security | L | Later |
-| 22 | Gem import and export | Product | M | Later |
+| 21 | Multi-user accounts | Product, security | L | Next, within 57 |
+| 22 | Gem import and export, from ChatGPT, Claude, Cursor, Markdown and JSON | Product, growth | M to L | Now, phase 2 |
 | 23 | Backend packaging, lock file, one-command dev | DX | M | Later |
 | 24 | Frontend tests | Tests | M | Later |
 | 25 | One version source and a tidy release process | Release | S | Later, done |
-| 26 | Screenshots, API reference, resolution guide | Docs | S to M | Later |
+| 26 | Screenshots, API reference, resolution guide | Docs | S to M | Now, screenshots done with 52 |
 | 27 | Split-deploy guide | Docs | S | Later |
 | 28 | Evals per gem, runnable from the UI | Product, quality | M | Now, done |
 | 29 | Typed variables with descriptions and defaults | Product, MCP | M | Now, done |
@@ -69,6 +95,14 @@ These were found during the audit and fixed because CI could not pass without th
 | 48 | Plain-language pass over the console and the web UI | Console, newcomers | M | Now, done |
 | 49 | Doctor: self-check with offered fixes | Console, newcomers | M | Now, done |
 | 50 | Explainers: every screen says what it is for and why | Console, newcomers | S | Now, done |
+| 51 | Live demo in the browser: no install, no key | Growth, attract | L | Now, phase 1 |
+| 52 | Repository presentation: positioning, screenshots, demo video, install options, consistent docs | Growth, attract | S to M | Now, phase 1, partly done |
+| 53 | Gem gallery: curated gems with preview, example output, quality score, one-click install | Growth, activate | L | Now, phase 2 |
+| 54 | Visual builder for assistants, tools, tests and approvals | Growth, retain | L | Next, phase 3 |
+| 55 | Usage, cost and performance dashboard with spend limits, alerts and rate limits | Growth, retain | M to L | Next, phase 3 |
+| 56 | Sharing: publish a gem as a link, install someone's gem, update without losing your changes | Growth, retain | L | Next, phase 3 |
+| 57 | Trust for teams: accounts and roles, approval workflows, scoped keys, signed installer, security review | Growth, security | L | Next, phase 3 |
+| 58 | Measure first gem, seven-day return and sharing | Growth | M | Now, throughout |
 
 ## Now
 
@@ -261,6 +295,8 @@ Worth doing once the foundations above are in.
 - **Depends on**: 9, 10, 15.
 
 ### 22. Gem import and export
+
+**Status: moved to Now by ADR-013** (phase 2, activate). The scope grows from moving a library between instances to getting someone's existing prompts in without effort: paste instructions from ChatGPT custom instructions, Claude projects or Cursor rules; import Markdown and JSON files; let an AI split them into named gems with descriptions, tags and blanks, suggest improvements, and point out duplicates and near duplicates before anything is saved. Export stays the hand-readable bundle described below, and is the format sharing (56) builds on.
 
 - **Why**: moving a library between instances, or backing it up, has no supported path. A JSON or YAML bundle with gems and their references, exported by a route and a script, imported with conflict handling. Already on the root roadmap. For a practitioner this is also how a library is shared with a colleague or published alongside a blog post, so the format should be readable by hand.
 - **Size**: M.
@@ -479,7 +515,61 @@ The engineering items make the project safe to run. These are the ones that woul
 3. Side-by-side runs across versions and models (30), done.
 4. Typed variables with descriptions and defaults, exposed over MCP (29), done.
 5. Few-shot examples as data rather than prose (31), done.
-6. Import and export in a hand-readable format (22).
+6. Import and export in a hand-readable format (22), now in phase 2 of the growth plan.
 7. Accounts and sharing, once there is something worth sharing (9, 10, 21).
 
 What the project already does well for that person: one named home per prompt, composition of small prompts into larger ones, and the MCP server, which lets Claude Desktop and Cursor fetch the right prompt themselves instead of the user pasting it.
+
+## Growth (ADR-013)
+
+These items carry the growth plan. They come first, in phase order. Each says what the visitor or user should be able to do, because that is how it will be judged.
+
+### 51. Live demo in the browser: no install, no key
+
+- **Why**: the first investment. A visitor opens a link and, without installing anything or entering a key, watches an ordinary prompt become a reusable, tested assistant: write or pick a prompt, add a blank, run it, improve it, and compare the original and the improved answers side by side with the tests scoring both. A hosted instance of the web UI in a read-only demo mode with a fixed library, a per-visitor sandbox that resets, and answers from a small hosted model or recorded responses so it costs nothing to keep up and cannot be abused. The demo ends with the two ways to keep going: install the console, or run it with Docker.
+- **Size**: L.
+- **Depends on**: 30 and 28 (compare and tests, done), 55's rate limits before any live model sits behind it.
+
+### 52. Repository presentation: positioning, screenshots, demo video, install options, consistent docs
+
+**Status: partly done** with ADR-013: the README leads with the positioning and real screenshots, the install options are side by side, and `CONTEXT.md`, `SECURITY.md`, `CONTRIBUTING.md`, `SUPPORT.md`, `STANDARDS.md`, the root roadmap and the architecture prose now agree with the code. Still open: a 90-second demo video at the top of the README, GitHub topics and description, and a social preview image.
+
+- **Why**: the repository is the storefront. It showed no picture of the product, and some documents contradicted the code, which costs trust for a tool that holds AI credentials and runs tools on people's computers. From now on a document that disagrees with the code is a bug.
+- **Size**: S to M.
+- **Depends on**: nothing.
+
+### 53. Gem gallery: curated gems with preview, example output, quality score, one-click install
+
+- **Why**: people need something useful before they create anything themselves. 25 to 50 curated prompts and assistants across programming, writing, research, sales, IT and everyday productivity. Each has a one-line purpose, a preview of the prompt, an example question and answer, its tests and the score they give, and an Install button that adds it to your library with its history starting at version 1. Built on the export format of 22, so a gallery entry is just a published bundle. Community ratings, forks and public sharing come later with 56.
+- **Size**: L.
+- **Depends on**: 22 for the bundle format, 28 for the quality score.
+
+### 54. Visual builder for assistants, tools, tests and approvals
+
+- **Why**: pipelines and gates (45) already run work like "research a topic, draft a report, fact-check it, ask for approval", but only someone who writes JSON can set one up. A canvas where you connect assistants, the tools each may use, the tests and gates between steps, and where a person approves, saved as an ordinary pipeline so the API, MCP and the console run it unchanged.
+- **Size**: L.
+- **Depends on**: 45 (done), 33 (done).
+
+### 55. Usage, cost and performance dashboard with spend limits, alerts and rate limits
+
+- **Why**: a reason to keep opening Lapidary, and the guard rails it still lacks. Per gem: how often it is used, which models answered, approximate cost, response time, and how its tests score over time. Monthly spending limits, usage alerts and per-key rate limits close item 11. The data is already in `runs`, `run_events` and `eval_runs`; token prices per model are the new piece.
+- **Size**: M to L.
+- **Depends on**: 11 (absorbed here), 20 for structured logs.
+
+### 56. Sharing: publish a gem as a link, install someone's gem, update without losing your changes
+
+- **Why**: growth comes from people handing a good gem to someone else. Publish a gem (and what it is built from) as a link; anyone can preview it and install it; when the author improves it, the person who installed it gets the update as a new version merged with their own edits, with a diff to review, like a fork that can pull. The gallery (53) is the curated front of the same mechanism.
+- **Size**: L.
+- **Depends on**: 22, 14 (done), 53.
+
+### 57. Trust for teams: accounts and roles, approval workflows, scoped keys, signed installer, security review
+
+- **Why**: before Lapidary is deployed beyond one person or recommended to an organization. User accounts and role-based permissions (absorbs 21), approval workflows for publishing and for risky tools, API keys that are hashed and scoped to what a client may do, the Windows installer signed (42; the setup is in `desktop/README.md`, it waits on credentials), and a security review of the backend, the MCP surfaces and the helper service with the findings published.
+- **Size**: L.
+- **Depends on**: 9, 10 (done), 21, 42.
+
+### 58. Measure first gem, seven-day return and sharing
+
+- **Why**: the three numbers that say whether the plan works: the share of visitors who create their first gem, the share who use it again seven days later, and the number who share a gem with another person. The hosted demo and the gallery can count them directly. A self-hosted install counts nothing unless its owner opts in, because local-first is a promise; the console asks once, in plain words, and the setting is visible in the Doctor.
+- **Size**: M.
+- **Depends on**: 51, 53, 56 for the events to count.

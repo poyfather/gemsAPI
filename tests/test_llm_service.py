@@ -130,9 +130,11 @@ def test_clients_get_timeout_and_retries(monkeypatch) -> None:
     assert seen["anthropic"] == {"api_key": "a", "timeout": 12.5, "max_retries": 4}
     assert seen["openai"] == {"api_key": "o", "timeout": 12.5, "max_retries": 4}
     monkeypatch.setattr(settings, "LOCAL_OPENAI_BASE_URL", "http://127.0.0.1:1234/v1")
+    monkeypatch.setattr(settings, "LOCAL_TIMEOUT_SECONDS", 600.0)
     llm_service._get_local()
     llm_service._local = None
-    assert seen["openai"] == {"api_key": "ollama", "base_url": "http://127.0.0.1:1234/v1", "timeout": 12.5, "max_retries": 4}
+    # A local server gets its own, longer timeout: it queues requests while a model thinks.
+    assert seen["openai"] == {"api_key": "ollama", "base_url": "http://127.0.0.1:1234/v1", "timeout": 600.0, "max_retries": 4}
 
 
 def test_missing_key_is_an_environment_error_not_a_provider_error(monkeypatch) -> None:
@@ -173,3 +175,51 @@ def test_new_gems_default_to_the_configured_model_and_provider(monkeypatch) -> N
     monkeypatch.setattr(settings, "DEFAULT_MODEL", "auto")
     monkeypatch.setattr(settings, "DEFAULT_PROVIDER", "auto")
     assert GemCreate(name="y").provider == "auto"
+
+
+class _Recorder:
+    """An OpenAI-shaped client that records what was sent and answers 'ok'."""
+    def __init__(self) -> None:
+        self.sent: dict = {}
+
+    @property
+    def chat(self):
+        outer = self
+
+        class _Completions:
+            async def create(self, **kw):
+                outer.sent = kw
+                msg = type("M", (), {"content": "ok", "tool_calls": None})()
+                return type("R", (), {"choices": [type("C", (), {"message": msg, "finish_reason": "stop"})()], "usage": None})()
+
+        return type("Chat", (), {"completions": _Completions()})()
+
+
+def test_local_calls_get_room_to_think_and_no_reasoning_field_by_default(monkeypatch) -> None:
+    import asyncio
+    rec = _Recorder()
+    monkeypatch.setattr(llm_service, "_get_local", lambda: rec)
+    monkeypatch.setattr(settings, "LOCAL_THINKING_TOKENS", 4096)
+    assert asyncio.run(llm_service.complete("s", [{"role": "user", "content": "hi"}], "qwen3:4b", "local", max_tokens=1024)) == "ok"
+    assert rec.sent["max_tokens"] == 1024 + 4096
+    assert "reasoning_effort" not in rec.sent
+
+
+def test_reasoning_effort_is_optional_and_never_sent_to_openai(monkeypatch) -> None:
+    import asyncio
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+    rec_local, rec_openai = _Recorder(), _Recorder()
+    monkeypatch.setattr(llm_service, "_get_local", lambda: rec_local)
+    monkeypatch.setattr(llm_service, "_get_openai", lambda: rec_openai)
+    monkeypatch.setattr(settings, "LOCAL_REASONING_EFFORT", "none")
+    monkeypatch.setattr(settings, "LOCAL_THINKING_TOKENS", 0)
+    asyncio.run(llm_service.complete("s", [], "qwen3:4b", "local", max_tokens=64))
+    assert rec_local.sent["reasoning_effort"] == "none" and rec_local.sent["max_tokens"] == 64
+    asyncio.run(llm_service.complete("s", [], "gpt-x", "openai", max_tokens=64))
+    assert "reasoning_effort" not in rec_openai.sent and rec_openai.sent["max_tokens"] == 64
+
+
+def test_a_local_server_that_answers_lists_its_models_sorted(monkeypatch) -> None:
+    import asyncio
+    monkeypatch.setattr(llm_service, "_get_local", lambda: _FakeClient(["qwen3:4b", "llama3.2", "gemma3"]))
+    assert asyncio.run(_models())["local"] == ["gemma3", "llama3.2", "qwen3:4b"]
