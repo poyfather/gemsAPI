@@ -12,10 +12,13 @@
     "lint": "node --check main.js && node --check preload.js && node --check lib/components.js && node --check lib/configs.js && node --check lib/sidecars.js && node --check lib/pwsh.js && node --check lib/toolbox.js && node --check lib/recipes.js && node --check lib/doctor.js && node --check lib/helper.js && node --check scripts/allowlist.mjs && node --check renderer/console.js"
   },
   "devDependencies": {
-    "electron": "^42.11.16",
+    "electron": "^42.11.18",
     "electron-builder": "^26.0.12"
   },
   "dependencies": {
     "rea-agents": "6.4.0"
+  },
+  "overrides": {
+    "zod": "^4.6.6"
   }
 }
