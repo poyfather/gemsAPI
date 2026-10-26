@@ -130,9 +130,11 @@ def test_clients_get_timeout_and_retries(monkeypatch) -> None:
     assert seen["anthropic"] == {"api_key": "a", "timeout": 12.5, "max_retries": 4}
     assert seen["openai"] == {"api_key": "o", "timeout": 12.5, "max_retries": 4}
     monkeypatch.setattr(settings, "LOCAL_OPENAI_BASE_URL", "http://127.0.0.1:1234/v1")
+    monkeypatch.setattr(settings, "LOCAL_TIMEOUT_SECONDS", 600.0)
     llm_service._get_local()
     llm_service._local = None
-    assert seen["openai"] == {"api_key": "ollama", "base_url": "http://127.0.0.1:1234/v1", "timeout": 12.5, "max_retries": 4}
+    # A local server gets its own, longer timeout: it queues requests while a model thinks.
+    assert seen["openai"] == {"api_key": "ollama", "base_url": "http://127.0.0.1:1234/v1", "timeout": 600.0, "max_retries": 4}
 
 
 def test_missing_key_is_an_environment_error_not_a_provider_error(monkeypatch) -> None:
