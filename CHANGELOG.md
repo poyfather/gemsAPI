@@ -17,6 +17,7 @@ All notable changes to Lapidary are documented here. The format follows [Keep a 
 - Per-client API keys (roadmap item 10): `GEMS_CLIENT_KEYS=name:key,name:key` adds accepted keys that can be rotated or revoked one at a time; every check returns the client's name.
 
 ### Changed
+- Every diagram in `ARCHITECTURE.md` is now an SVG infographic in the style of the big picture, drawn by `docs/diagrams/build.py`: the component model, the chat, MCP and agent run flows, gem composition, the resolution walkthrough, the data model, the trust boundaries and the deployment topologies. They replace the nine Mermaid diagrams and bring them up to date with SQLite, the model router, memory, versions, tests, pipelines, MCP over HTTP, the Windows console and its helper. The MCP tool count is read from `backend/mcp_server.py`, so it cannot drift.
 - Lapidary Console runs on Electron 42 (from 38; Dependabot PR 43). None of the breaking changes in 39 to 42 touch the APIs the console uses.
 
 ### Planned

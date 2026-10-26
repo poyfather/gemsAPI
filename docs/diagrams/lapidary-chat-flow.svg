@@ -1,0 +1,162 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1234" viewBox="0 0 1200 1234" font-family="Segoe UI, -apple-system, BlinkMacSystemFont, Helvetica Neue, Arial, sans-serif" role="img" aria-labelledby="t d"><title id="t">Chat from the Web UI, Streamed</title><desc id="d">The browser posts to the Next.js proxy, which adds the API key and forwards to FastAPI. The route resolves the gem (one store query per gem in the tree), adds remembered context when the gem asks for it, asks the router which AI to use, and streams the provider&#x27;s text back to the browser as server-sent events.</desc><defs><marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#3557d6"/></marker><marker id="arrowStart" viewBox="0 0 10 10" refX="1.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#3557d6"/></marker><filter id="shadow" x="-5%" y="-5%" width="110%" height="120%"><feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#1e3a8a" flood-opacity="0.10"/></filter></defs><rect width="1200" height="1234" fill="#ffffff"/><text x="600" y="52" font-size="34" font-weight="800" fill="#14213d" text-anchor="middle">Chat from the Web UI, Streamed</text>
+<text x="600" y="82" font-size="17" font-weight="500" fill="#5b6577" text-anchor="middle">One question from the chat page to the AI and back, token by token</text>
+<rect x="48.99999999999999" y="108" width="113.55555555555556" height="58" rx="10" fill="#f5f9ff" stroke="#93b4f5" stroke-width="1.6"/>
+<g transform="translate(65.4,121.0) scale(0.667)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></g>
+<text x="87.37777777777777" y="134" font-size="14.0" font-weight="800" fill="#14213d" text-anchor="start">Browser</text>
+<text x="105.77777777777777" y="153" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="middle">chat page</text>
+<rect x="172.55555555555557" y="108" width="113.55555555555556" height="58" rx="10" fill="#f5f9ff" stroke="#93b4f5" stroke-width="1.6"/>
+<g transform="translate(188.9,121.0) scale(0.667)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M6 15.5V9a3 3 0 0 1 3-3h6.5M8.5 18h7"/></g>
+<text x="210.93333333333334" y="134" font-size="14.0" font-weight="800" fill="#14213d" text-anchor="start">Next.js</text>
+<text x="229.33333333333334" y="153" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="middle">proxy.ts</text>
+<rect x="296.11111111111114" y="108" width="113.55555555555556" height="58" rx="10" fill="#eef4fe" stroke="#3b82f6" stroke-width="1.6"/>
+<g transform="translate(312.5,121.0) scale(0.667)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1"/></g>
+<text x="334.48888888888894" y="134" font-size="14.0" font-weight="800" fill="#14213d" text-anchor="start">FastAPI</text>
+<text x="352.8888888888889" y="153" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="middle">routes/chat.py</text>
+<rect x="419.6666666666667" y="108" width="113.55555555555556" height="58" rx="10" fill="#eef4fe" stroke="#3b82f6" stroke-width="1.6"/>
+<g transform="translate(431.8,121.0) scale(0.667)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l10 5-10 5L2 7z"/><path d="M2 12l10 5 10-5M2 17l10 5 10-5"/></g>
+<text x="453.84444444444443" y="134" font-size="14.0" font-weight="800" fill="#14213d" text-anchor="start">Resolver</text>
+<text x="476.44444444444446" y="153" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="middle">gem_service</text>
+<rect x="543.2222222222222" y="108" width="113.55555555555556" height="58" rx="10" fill="#f2f4f7" stroke="#9aa4b2" stroke-width="1.6"/>
+<g transform="translate(568.0,121.0) scale(0.667)" fill="none" stroke="#475467" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></g>
+<text x="590.0" y="134" font-size="14.0" font-weight="800" fill="#14213d" text-anchor="start">Store</text>
+<text x="600.0" y="153" font-size="11.11111111111111" font-weight="400" fill="#5b6577" text-anchor="middle">SQLite, Supabase</text>
+<rect x="666.7777777777777" y="108" width="113.55555555555556" height="58" rx="10" fill="#ecf8ef" stroke="#34a853" stroke-width="1.6"/>
+<g transform="translate(687.4,121.0) scale(0.667)" fill="none" stroke="#1e7a37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></g>
+<text x="709.3555555555555" y="134" font-size="14.0" font-weight="800" fill="#14213d" text-anchor="start">Memory</text>
+<text x="723.5555555555555" y="153" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="middle">memory_service</text>
+<rect x="790.3333333333333" y="108" width="113.55555555555556" height="58" rx="10" fill="#f5f0ff" stroke="#8b5cf6" stroke-width="1.6"/>
+<g transform="translate(810.9,121.0) scale(0.667)" fill="none" stroke="#6d28d9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M6 15.5V9a3 3 0 0 1 3-3h6.5M8.5 18h7"/></g>
+<text x="832.911111111111" y="134" font-size="14.0" font-weight="800" fill="#14213d" text-anchor="start">Router</text>
+<text x="847.1111111111111" y="153" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="middle">router.py</text>
+<rect x="913.8888888888888" y="108" width="113.55555555555556" height="58" rx="10" fill="#f5f0ff" stroke="#8b5cf6" stroke-width="1.6"/>
+<g transform="translate(922.9,121.0) scale(0.667)" fill="none" stroke="#6d28d9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9.5" y="9.5" width="5" height="5"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></g>
+<text x="944.8888888888888" y="134" font-size="11.144781144781145" font-weight="800" fill="#14213d" text-anchor="start">LLM adapter</text>
+<text x="970.6666666666666" y="153" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="middle">llm_service</text>
+<rect x="1037.4444444444443" y="108" width="113.55555555555556" height="58" rx="10" fill="#f5f0ff" stroke="#8b5cf6" stroke-width="1.6"/>
+<g transform="translate(1074.8,121.0) scale(0.667)" fill="none" stroke="#6d28d9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18h10a4 4 0 0 0 .6-8A6 6 0 0 0 6 9.6 4.2 4.2 0 0 0 7 18z"/></g>
+<text x="1096.822222222222" y="134" font-size="14.0" font-weight="800" fill="#14213d" text-anchor="start">AI</text>
+<text x="1094.2222222222222" y="153" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="middle">local or online</text>
+<path d="M1094.2 166 V1124.0" stroke="#b8c4da" stroke-width="1.4" stroke-dasharray="4 5"/>
+<path d="M970.7 166 V1124.0" stroke="#b8c4da" stroke-width="1.4" stroke-dasharray="4 5"/>
+<path d="M847.1 166 V1124.0" stroke="#b8c4da" stroke-width="1.4" stroke-dasharray="4 5"/>
+<path d="M723.6 166 V1124.0" stroke="#b8c4da" stroke-width="1.4" stroke-dasharray="4 5"/>
+<path d="M600.0 166 V1124.0" stroke="#b8c4da" stroke-width="1.4" stroke-dasharray="4 5"/>
+<path d="M476.4 166 V1124.0" stroke="#b8c4da" stroke-width="1.4" stroke-dasharray="4 5"/>
+<path d="M352.9 166 V1124.0" stroke="#b8c4da" stroke-width="1.4" stroke-dasharray="4 5"/>
+<path d="M229.3 166 V1124.0" stroke="#b8c4da" stroke-width="1.4" stroke-dasharray="4 5"/>
+<path d="M105.8 166 V1124.0" stroke="#b8c4da" stroke-width="1.4" stroke-dasharray="4 5"/>
+<rect x="420.7" y="424.0" width="304.8" height="132.0" rx="10" fill="#fff5ea" fill-opacity="0.7" stroke="#f08c2e" stroke-width="1.4" stroke-dasharray="5 4"/><rect x="428.7" y="430.0" width="284.8" height="19" rx="6" fill="#f08c2e"/><text x="436.7" y="443.5" font-size="12" font-weight="700" fill="#ffffff">loop  once per gem in the reference tree</text>
+<rect x="297.1" y="658.0" width="482.2" height="132.0" rx="10" fill="#ecf8ef" fill-opacity="0.7" stroke="#34a853" stroke-width="1.4" stroke-dasharray="5 4"/><rect x="305.1" y="664.0" width="251.2" height="19" rx="6" fill="#34a853"/><text x="313.1" y="677.5" font-size="12" font-weight="700" fill="#ffffff">opt  the gem remembers earlier work</text>
+<rect x="44.0" y="179.0" width="374.9" height="20.0" rx="5" fill="#ffffff" stroke="#e3e9f5" stroke-width="1"/>
+<text x="231.44000000000003" y="194" font-size="12" font-weight="500" fill="#14213d" text-anchor="middle">POST /api/chat {gem_name, messages, variables, stream}</text>
+<path d="M131.77777777777777,206 L224.33333333333334,206" fill="none" stroke="#3557d6" stroke-width="1.9" marker-end="url(#arrow)"/>
+<circle cx="118.8" cy="206.0" r="11" fill="#3557d6"/>
+<text x="118.77777777777777" y="210.3" font-size="12" font-weight="800" fill="#ffffff" text-anchor="middle">1</text>
+<path d="M234.33333333333334 244 h34 v16 h-31" fill="none" stroke="#3557d6" stroke-width="1.9" marker-end="url(#arrow)"/>
+<circle cx="214.3" cy="252.0" r="11" fill="#3557d6"/>
+<text x="214.33333333333334" y="256.3" font-size="12" font-weight="800" fill="#ffffff" text-anchor="middle">2</text>
+<rect x="275.3" y="240.0" width="106.1" height="20" rx="5" fill="#ffffff" stroke="#e3e9f5"/>
+<text x="281.33333333333337" y="254" font-size="12" font-weight="500" fill="#14213d" text-anchor="start">adds X-API-Key</text>
+<rect x="211.2" y="271.0" width="159.8" height="20.0" rx="5" fill="#ffffff" stroke="#e3e9f5" stroke-width="1"/>
+<text x="291.11111111111114" y="286" font-size="12" font-weight="500" fill="#14213d" text-anchor="middle">POST /chat (rewritten)</text>
+<path d="M255.33333333333334,298 L347.8888888888889,298" fill="none" stroke="#3557d6" stroke-width="1.9" marker-end="url(#arrow)"/>
+<circle cx="242.3" cy="298.0" r="11" fill="#3557d6"/>
+<text x="242.33333333333334" y="302.3" font-size="12" font-weight="800" fill="#ffffff" text-anchor="middle">3</text>
+<path d="M357.8888888888889 336 h34 v16 h-31" fill="none" stroke="#3557d6" stroke-width="1.9" marker-end="url(#arrow)"/>
+<circle cx="337.9" cy="344.0" r="11" fill="#3557d6"/>
+<text x="337.8888888888889" y="348.3" font-size="12" font-weight="800" fill="#ffffff" text-anchor="middle">4</text>
+<rect x="398.9" y="332.0" width="112.8" height="20" rx="5" fill="#ffffff" stroke="#e3e9f5"/>
+<text x="404.8888888888889" y="346" font-size="12" font-weight="500" fill="#14213d" text-anchor="start">require_api_key</text>
+<rect x="314.6" y="363.0" width="200.2" height="20.0" rx="5" fill="#ffffff" stroke="#e3e9f5" stroke-width="1"/>
+<text x="414.66666666666674" y="378" font-size="12" font-weight="500" fill="#14213d" text-anchor="middle">resolve_gem(name, variables)</text>
+<path d="M378.8888888888889,390 L471.44444444444446,390" fill="none" stroke="#3557d6" stroke-width="1.9" marker-end="url(#arrow)"/>
+<circle cx="365.9" cy="390.0" r="11" fill="#3557d6"/>
+<text x="365.8888888888889" y="394.3" font-size="12" font-weight="800" fill="#ffffff" text-anchor="middle">5</text>
+<rect x="458.3" y="449.0" width="159.8" height="20.0" rx="5" fill="#ffffff" stroke="#e3e9f5" stroke-width="1"/>
+<text x="538.2222222222222" y="464" font-size="12" font-weight="500" fill="#14213d" text-anchor="middle">the active gem by name</text>
+<path d="M502.44444444444446,476 L595.0,476" fill="none" stroke="#3557d6" stroke-width="1.9" marker-end="url(#arrow)"/>
+<circle cx="489.4" cy="476.0" r="11" fill="#3557d6"/>
+<text x="489.44444444444446" y="480.3" font-size="12" font-weight="800" fill="#ffffff" text-anchor="middle">6</text>
+<rect x="522.1" y="495.0" width="32.2" height="20.0" rx="5" fill="#ffffff" stroke="#e3e9f5" stroke-width="1"/>
+<text x="538.2222222222222" y="510" font-size="12" font-weight="500" fill="#3d4b6b" text-anchor="middle">row</text>
+<path d="M574.0,522 L481.44444444444446,522" fill="none" stroke="#6b84d9" stroke-width="1.9" stroke-dasharray="6 5" marker-end="url(#arrow)"/>
+<circle cx="587.0" cy="522.0" r="11" fill="#6b84d9"/>
+<text x="587.0" y="526.3" font-size="12" font-weight="800" fill="#ffffff" text-anchor="middle">7</text>
+<rect x="183.5" y="551.0" width="462.2" height="20.0" rx="5" fill="#ffffff" stroke="#e3e9f5" stroke-width="1"/>
+<text x="414.6666666666667" y="566" font-size="12" font-weight="500" fill="#3d4b6b" text-anchor="middle">prompt: references expanded, blanks checked and filled, examples in</text>
+<path d="M450.44444444444446,578 L357.8888888888889,578" fill="none" stroke="#6b84d9" stroke-width="1.9" stroke-dasharray="6 5" marker-end="url(#arrow)"/>
+<circle cx="463.4" cy="578.0" r="11" fill="#6b84d9"/>
+<text x="463.44444444444446" y="582.3" font-size="12" font-weight="800" fill="#ffffff" text-anchor="middle">8</text>
+<rect x="339.4" y="597.0" width="274.1" height="20.0" rx="5" fill="#ffffff" stroke="#e3e9f5" stroke-width="1"/>
+<text x="476.44444444444446" y="612" font-size="12" font-weight="500" fill="#14213d" text-anchor="middle">get_gem_by_name: kind, pin, memory flag</text>
+<path d="M378.8888888888889,624 L595.0,624" fill="none" stroke="#3557d6" stroke-width="1.9" marker-end="url(#arrow)"/>
+<circle cx="365.9" cy="624.0" r="11" fill="#3557d6"/>
+<text x="365.8888888888889" y="628.3" font-size="12" font-weight="800" fill="#ffffff" text-anchor="middle">9</text>
+<rect x="444.9" y="683.0" width="186.7" height="20.0" rx="5" fill="#ffffff" stroke="#e3e9f5" stroke-width="1"/>
+<text x="538.2222222222222" y="698" font-size="12" font-weight="500" fill="#14213d" text-anchor="middle">recall_block(last message)</text>
+<path d="M378.8888888888889,710 L718.5555555555555,710" fill="none" stroke="#3557d6" stroke-width="1.9" marker-end="url(#arrow)"/>
+<circle cx="365.9" cy="710.0" r="11" fill="#3557d6"/>
+<text x="365.8888888888889" y="714.3" font-size="12" font-weight="800" fill="#ffffff" text-anchor="middle">10</text>
+<rect x="421.3" y="729.0" width="233.8" height="20.0" rx="5" fill="#ffffff" stroke="#e3e9f5" stroke-width="1"/>
+<text x="538.2222222222222" y="744" font-size="12" font-weight="500" fill="#3d4b6b" text-anchor="middle">&lt;memory&gt; block of the top matches</text>
+<path d="M697.5555555555555,756 L357.8888888888889,756" fill="none" stroke="#6b84d9" stroke-width="1.9" stroke-dasharray="6 5" marker-end="url(#arrow)"/>
+<circle cx="710.6" cy="756.0" r="11" fill="#6b84d9"/>
+<text x="710.5555555555555" y="760.3" font-size="12" font-weight="800" fill="#ffffff" text-anchor="middle">11</text>
+<rect x="520.1" y="785.0" width="159.8" height="20.0" rx="5" fill="#ffffff" stroke="#e3e9f5" stroke-width="1"/>
+<text x="600.0" y="800" font-size="12" font-weight="500" fill="#14213d" text-anchor="middle">choose(gem, overrides)</text>
+<path d="M378.8888888888889,812 L842.1111111111111,812" fill="none" stroke="#3557d6" stroke-width="1.9" marker-end="url(#arrow)"/>
+<circle cx="365.9" cy="812.0" r="11" fill="#3557d6"/>
+<text x="365.8888888888889" y="816.3" font-size="12" font-weight="800" fill="#ffffff" text-anchor="middle">12</text>
+<rect x="493.2" y="831.0" width="213.6" height="20.0" rx="5" fill="#ffffff" stroke="#e3e9f5" stroke-width="1"/>
+<text x="600.0" y="846" font-size="12" font-weight="500" fill="#3d4b6b" text-anchor="middle">provider, model and the reason</text>
+<path d="M821.1111111111111,858 L357.8888888888889,858" fill="none" stroke="#6b84d9" stroke-width="1.9" stroke-dasharray="6 5" marker-end="url(#arrow)"/>
+<circle cx="834.1" cy="858.0" r="11" fill="#6b84d9"/>
+<text x="834.1111111111111" y="862.3" font-size="12" font-weight="800" fill="#ffffff" text-anchor="middle">13</text>
+<rect x="487.8" y="877.0" width="348.0" height="20.0" rx="5" fill="#ffffff" stroke="#e3e9f5" stroke-width="1"/>
+<text x="661.7777777777778" y="892" font-size="12" font-weight="500" fill="#14213d" text-anchor="middle">complete_stream(system, messages, model, provider)</text>
+<path d="M378.8888888888889,904 L965.6666666666666,904" fill="none" stroke="#3557d6" stroke-width="1.9" marker-end="url(#arrow)"/>
+<circle cx="365.9" cy="904.0" r="11" fill="#3557d6"/>
+<text x="365.8888888888889" y="908.3" font-size="12" font-weight="800" fill="#ffffff" text-anchor="middle">14</text>
+<rect x="969.3" y="923.0" width="126.2" height="20.0" rx="5" fill="#ffffff" stroke="#e3e9f5" stroke-width="1"/>
+<text x="1032.4444444444443" y="938" font-size="12" font-weight="500" fill="#14213d" text-anchor="middle">streaming request</text>
+<path d="M996.6666666666666,950 L1089.2222222222222,950" fill="none" stroke="#3557d6" stroke-width="1.9" marker-end="url(#arrow)"/>
+<circle cx="983.7" cy="950.0" r="11" fill="#3557d6"/>
+<text x="983.6666666666666" y="954.3" font-size="12" font-weight="800" fill="#ffffff" text-anchor="middle">15</text>
+<rect x="989.5" y="969.0" width="85.9" height="20.0" rx="5" fill="#ffffff" stroke="#e3e9f5" stroke-width="1"/>
+<text x="1032.4444444444443" y="984" font-size="12" font-weight="500" fill="#3d4b6b" text-anchor="middle">text deltas</text>
+<path d="M1068.2222222222222,996 L975.6666666666666,996" fill="none" stroke="#6b84d9" stroke-width="1.9" stroke-dasharray="6 5" marker-end="url(#arrow)"/>
+<circle cx="1081.2" cy="996.0" r="11" fill="#6b84d9"/>
+<text x="1081.2222222222222" y="1000.3" font-size="12" font-weight="800" fill="#ffffff" text-anchor="middle">16</text>
+<rect x="635.6" y="1015.0" width="52.3" height="20.0" rx="5" fill="#ffffff" stroke="#e3e9f5" stroke-width="1"/>
+<text x="661.7777777777778" y="1030" font-size="12" font-weight="500" fill="#3d4b6b" text-anchor="middle">chunks</text>
+<path d="M944.6666666666666,1042 L357.8888888888889,1042" fill="none" stroke="#6b84d9" stroke-width="1.9" stroke-dasharray="6 5" marker-end="url(#arrow)"/>
+<circle cx="957.7" cy="1042.0" r="11" fill="#6b84d9"/>
+<text x="957.6666666666666" y="1046.3" font-size="12" font-weight="800" fill="#ffffff" text-anchor="middle">17</text>
+<rect x="44.0" y="1061.0" width="401.8" height="20.0" rx="5" fill="#ffffff" stroke="#e3e9f5" stroke-width="1"/>
+<text x="244.88000000000002" y="1076" font-size="12" font-weight="500" fill="#3d4b6b" text-anchor="middle">text/event-stream: data: {&quot;content&quot;: ...} ... data: [DONE]</text>
+<path d="M326.8888888888889,1088 L110.77777777777777,1088" fill="none" stroke="#6b84d9" stroke-width="1.9" stroke-dasharray="6 5" marker-end="url(#arrow)"/>
+<circle cx="339.9" cy="1088.0" r="11" fill="#6b84d9"/>
+<text x="339.8888888888889" y="1092.3" font-size="12" font-weight="800" fill="#ffffff" text-anchor="middle">18</text>
+<rect x="40" y="1144" width="1120" height="70" rx="12" fill="#f3faf5" stroke="#cfe9d6" stroke-width="1.5"/>
+<g transform="translate(59.0,1166.0) scale(1.083)" fill="none" stroke="#1e7a37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M7 12l3.5 3.5L17 9"/></g>
+<text x="98" y="1186" font-size="20" font-weight="800" fill="#14213d" text-anchor="start">Key points</text>
+<line x1="252.0" y1="1158" x2="252.0" y2="1200" stroke="#cfe9d6" stroke-width="1.5"/>
+<circle cx="282.0" cy="1179" r="11" fill="#1e7a37"/>
+<path d="M276.0 1179l4 4 7-7" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="300.0" y="1175" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">The browser never</text>
+<text x="300.0" y="1192" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">holds a key</text>
+<line x1="474.5" y1="1158" x2="474.5" y2="1200" stroke="#cfe9d6" stroke-width="1.5"/>
+<circle cx="504.5" cy="1179" r="11" fill="#1e7a37"/>
+<path d="M498.5 1179l4 4 7-7" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="522.5" y="1175" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">Blank errors stop it</text>
+<text x="522.5" y="1192" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">with a 400</text>
+<line x1="697.0" y1="1158" x2="697.0" y2="1200" stroke="#cfe9d6" stroke-width="1.5"/>
+<circle cx="727.0" cy="1179" r="11" fill="#1e7a37"/>
+<path d="M721.0 1179l4 4 7-7" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="745.0" y="1175" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">The router says</text>
+<text x="745.0" y="1192" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">why it picked</text>
+<line x1="919.5" y1="1158" x2="919.5" y2="1200" stroke="#cfe9d6" stroke-width="1.5"/>
+<circle cx="949.5" cy="1179" r="11" fill="#1e7a37"/>
+<path d="M943.5 1179l4 4 7-7" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="967.5" y="1175" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">Provider errors become</text>
+<text x="967.5" y="1192" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">a fixed 502</text></svg>

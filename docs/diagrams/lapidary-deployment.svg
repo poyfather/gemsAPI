@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="754" viewBox="0 0 1200 754" font-family="Segoe UI, -apple-system, BlinkMacSystemFont, Helvetica Neue, Arial, sans-serif" role="img" aria-labelledby="t d"><title id="t">Deployment Topologies</title><desc id="d">Four ways to run Lapidary: the Windows console on one PC with SQLite, local development with uvicorn, next dev and the stdio MCP server, Docker Compose with a backend and a frontend image, and a split deploy with the backend on Fly.io, Railway or Render and the frontend on Vercel; the store is a SQLite file or Supabase Postgres.</desc><defs><marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#3557d6"/></marker><marker id="arrowStart" viewBox="0 0 10 10" refX="1.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#3557d6"/></marker><filter id="shadow" x="-5%" y="-5%" width="110%" height="120%"><feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#1e3a8a" flood-opacity="0.10"/></filter></defs><rect width="1200" height="754" fill="#ffffff"/><text x="600" y="52" font-size="34" font-weight="800" fill="#14213d" text-anchor="middle">Deployment Topologies</text>
+<text x="600" y="82" font-size="17" font-weight="500" fill="#5b6577" text-anchor="middle">From one Windows PC to a hosted split deploy: same code, same store interface</text>
+<rect x="40.0" y="104" width="269.5" height="414" rx="14" fill="#eef4fe" stroke="#3b82f6" stroke-width="2" filter="url(#shadow)"/>
+<circle cx="68.0" cy="134" r="18.7" fill="#ffffff"/>
+<g transform="translate(57.0,123.0) scale(0.917)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M7 13l2 2-2 2M11 17h5"/></g>
+<text x="90.0" y="140" font-size="16" font-weight="800" fill="#14213d" text-anchor="start">Windows console</text>
+<text x="90.0" y="160" font-size="12.5" font-weight="400" fill="#5b6577" text-anchor="start">one PC, one installer</text>
+<rect x="54.0" y="178" width="241.5" height="50" rx="10" fill="#ffffff" stroke="#c9d3e3" stroke-width="1.6"/>
+<g transform="translate(64.5,193.5) scale(0.792)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M7 13l2 2-2 2M11 17h5"/></g>
+<text x="90.0" y="200.0" font-size="13.5" font-weight="700" fill="#14213d" text-anchor="start">Lapidary Console</text>
+<text x="90.0" y="217.0" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="start">Electron, per machine</text>
+<rect x="54.0" y="238" width="241.5" height="50" rx="10" fill="#ffffff" stroke="#c9d3e3" stroke-width="1.6"/>
+<g transform="translate(64.5,253.5) scale(0.792)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1"/></g>
+<text x="90.0" y="260.0" font-size="13.5" font-weight="700" fill="#14213d" text-anchor="start">lapidary-backend.exe</text>
+<text x="90.0" y="277.0" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="start">127.0.0.1:8000</text>
+<rect x="54.0" y="298" width="241.5" height="50" rx="10" fill="#ffffff" stroke="#c9d3e3" stroke-width="1.6"/>
+<g transform="translate(64.5,313.5) scale(0.792)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></g>
+<text x="90.0" y="320.0" font-size="13.5" font-weight="700" fill="#14213d" text-anchor="start">Web UI</text>
+<text x="90.0" y="337.0" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="start">Next standalone :3000</text>
+<rect x="54.0" y="358" width="241.5" height="50" rx="10" fill="#ffffff" stroke="#c9d3e3" stroke-width="1.6"/>
+<g transform="translate(64.5,373.5) scale(0.792)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z"/><path d="M9 12l2 2 4-4"/></g>
+<text x="90.0" y="380.0" font-size="13.5" font-weight="700" fill="#14213d" text-anchor="start">Lapidary Helper</text>
+<text x="90.0" y="397.0" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="start">installs and updates</text>
+<rect x="54.0" y="418" width="241.5" height="50" rx="10" fill="#ffffff" stroke="#c9d3e3" stroke-width="1.6"/>
+<g transform="translate(64.5,433.5) scale(0.792)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2v5M15 2v5M6 7h12v4a6 6 0 0 1-12 0zM12 17v5"/></g>
+<text x="90.0" y="440.0" font-size="13.5" font-weight="700" fill="#14213d" text-anchor="start">backend.exe --mcp</text>
+<text x="90.0" y="457.0" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="start">for Claude Desktop</text>
+<line x1="56.0" y1="486" x2="293.5" y2="486" stroke="#3b82f6" stroke-width="1.2"/>
+<text x="58.0" y="506" font-size="12" font-weight="700" fill="#1d4ed8" text-anchor="start">stores in</text>
+<text x="122.0" y="506" font-size="12.5" font-weight="500" fill="#14213d" text-anchor="start">SQLite in your profile</text>
+<rect x="323.5" y="104" width="269.5" height="414" rx="14" fill="#ecf8ef" stroke="#34a853" stroke-width="2" filter="url(#shadow)"/>
+<circle cx="351.5" cy="134" r="18.7" fill="#ffffff"/>
+<g transform="translate(340.5,123.0) scale(0.917)" fill="none" stroke="#1e7a37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/></g>
+<text x="373.5" y="140" font-size="16" font-weight="800" fill="#14213d" text-anchor="start">Local development</text>
+<text x="373.5" y="160" font-size="12.5" font-weight="400" fill="#5b6577" text-anchor="start">any OS</text>
+<rect x="337.5" y="178" width="241.5" height="50" rx="10" fill="#ffffff" stroke="#c9d3e3" stroke-width="1.6"/>
+<g transform="translate(348.0,193.5) scale(0.792)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1"/></g>
+<text x="373.5" y="200.0" font-size="13.5" font-weight="700" fill="#14213d" text-anchor="start">uvicorn app.main:app</text>
+<text x="373.5" y="217.0" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="start">--reload :8000</text>
+<rect x="337.5" y="238" width="241.5" height="50" rx="10" fill="#ffffff" stroke="#c9d3e3" stroke-width="1.6"/>
+<g transform="translate(348.0,253.5) scale(0.792)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></g>
+<text x="373.5" y="260.0" font-size="13.5" font-weight="700" fill="#14213d" text-anchor="start">next dev</text>
+<text x="373.5" y="277.0" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="start">:3000</text>
+<rect x="337.5" y="298" width="241.5" height="50" rx="10" fill="#ffffff" stroke="#c9d3e3" stroke-width="1.6"/>
+<g transform="translate(348.0,313.5) scale(0.792)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2v5M15 2v5M6 7h12v4a6 6 0 0 1-12 0zM12 17v5"/></g>
+<text x="373.5" y="320.0" font-size="13.5" font-weight="700" fill="#14213d" text-anchor="start">python mcp_server.py</text>
+<text x="373.5" y="337.0" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="start">started by the client</text>
+<line x1="339.5" y1="486" x2="577.0" y2="486" stroke="#34a853" stroke-width="1.2"/>
+<text x="341.5" y="506" font-size="12" font-weight="700" fill="#1e7a37" text-anchor="start">stores in</text>
+<text x="405.5" y="506" font-size="12.5" font-weight="500" fill="#14213d" text-anchor="start">SQLite, or Supabase from .env</text>
+<rect x="607.0" y="104" width="269.5" height="414" rx="14" fill="#fff5ea" stroke="#f08c2e" stroke-width="2" filter="url(#shadow)"/>
+<circle cx="635.0" cy="134" r="18.7" fill="#ffffff"/>
+<g transform="translate(624.0,123.0) scale(0.917)" fill="none" stroke="#c2410c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l10 5-10 5L2 7z"/><path d="M2 12l10 5 10-5M2 17l10 5 10-5"/></g>
+<text x="657.0" y="140" font-size="16" font-weight="800" fill="#14213d" text-anchor="start">Docker Compose</text>
+<text x="657.0" y="160" font-size="12.5" font-weight="400" fill="#5b6577" text-anchor="start">one host</text>
+<rect x="621.0" y="178" width="241.5" height="50" rx="10" fill="#ffffff" stroke="#c9d3e3" stroke-width="1.6"/>
+<g transform="translate(631.5,193.5) scale(0.792)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1"/></g>
+<text x="657.0" y="200.0" font-size="13.5" font-weight="700" fill="#14213d" text-anchor="start">backend image</text>
+<text x="657.0" y="217.0" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="start">python:3.12-slim</text>
+<rect x="621.0" y="238" width="241.5" height="50" rx="10" fill="#ffffff" stroke="#c9d3e3" stroke-width="1.6"/>
+<g transform="translate(631.5,253.5) scale(0.792)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></g>
+<text x="657.0" y="260.0" font-size="13.5" font-weight="700" fill="#14213d" text-anchor="start">frontend image</text>
+<text x="657.0" y="277.0" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="start">node:24-alpine</text>
+<rect x="621.0" y="298" width="241.5" height="50" rx="10" fill="#ffffff" stroke="#c9d3e3" stroke-width="1.6"/>
+<g transform="translate(631.5,313.5) scale(0.792)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M7 12l3.5 3.5L17 9"/></g>
+<text x="657.0" y="320.0" font-size="13.5" font-weight="700" fill="#14213d" text-anchor="start">waits for /health</text>
+<text x="657.0" y="337.0" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="start">then starts the UI</text>
+<line x1="623.0" y1="486" x2="860.5" y2="486" stroke="#f08c2e" stroke-width="1.2"/>
+<text x="625.0" y="506" font-size="12" font-weight="700" fill="#c2410c" text-anchor="start">stores in</text>
+<text x="689.0" y="506" font-size="12.5" font-weight="500" fill="#14213d" text-anchor="start">Supabase from .env</text>
+<rect x="890.5" y="104" width="269.5" height="414" rx="14" fill="#f5f0ff" stroke="#8b5cf6" stroke-width="2" filter="url(#shadow)"/>
+<circle cx="918.5" cy="134" r="18.7" fill="#ffffff"/>
+<g transform="translate(907.5,123.0) scale(0.917)" fill="none" stroke="#6d28d9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18h10a4 4 0 0 0 .6-8A6 6 0 0 0 6 9.6 4.2 4.2 0 0 0 7 18z"/></g>
+<text x="940.5" y="140" font-size="16" font-weight="800" fill="#14213d" text-anchor="start">Split deploy</text>
+<text x="940.5" y="160" font-size="12.5" font-weight="400" fill="#5b6577" text-anchor="start">hosted</text>
+<rect x="904.5" y="178" width="241.5" height="50" rx="10" fill="#ffffff" stroke="#c9d3e3" stroke-width="1.6"/>
+<g transform="translate(915.0,193.5) scale(0.792)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1"/></g>
+<text x="940.5" y="200.0" font-size="13.5" font-weight="700" fill="#14213d" text-anchor="start">Backend</text>
+<text x="940.5" y="217.0" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="start">Fly.io, Railway or Render</text>
+<rect x="904.5" y="238" width="241.5" height="50" rx="10" fill="#ffffff" stroke="#c9d3e3" stroke-width="1.6"/>
+<g transform="translate(915.0,253.5) scale(0.792)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></g>
+<text x="940.5" y="260.0" font-size="13.5" font-weight="700" fill="#14213d" text-anchor="start">Frontend on Vercel</text>
+<text x="940.5" y="277.0" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="start">BACKEND_URL set</text>
+<rect x="904.5" y="298" width="241.5" height="50" rx="10" fill="#ffffff" stroke="#c9d3e3" stroke-width="1.6"/>
+<g transform="translate(915.0,313.5) scale(0.792)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M6 15.5V9a3 3 0 0 1 3-3h6.5M8.5 18h7"/></g>
+<text x="940.5" y="320.0" font-size="13.5" font-weight="700" fill="#14213d" text-anchor="start">/api/* rewrite</text>
+<text x="940.5" y="337.0" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="start">frontend to backend</text>
+<line x1="906.5" y1="486" x2="1144.0" y2="486" stroke="#8b5cf6" stroke-width="1.2"/>
+<text x="908.5" y="506" font-size="12" font-weight="700" fill="#6d28d9" text-anchor="start">stores in</text>
+<text x="972.5" y="506" font-size="12.5" font-weight="500" fill="#14213d" text-anchor="start">Supabase cloud</text>
+<rect x="40" y="574" width="545" height="70" rx="12" fill="#f2f4f7" stroke="#9aa4b2" stroke-width="1.8" filter="url(#shadow)"/>
+<circle cx="72" cy="609" r="20.4" fill="#ffffff"/>
+<g transform="translate(60.0,597.0) scale(1.000)" fill="none" stroke="#475467" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></g>
+<text x="100" y="604" font-size="17" font-weight="800" fill="#14213d" text-anchor="start">SQLite file</text>
+<text x="100" y="625" font-size="12.5" font-weight="400" fill="#5b6577" text-anchor="start">the default without a Supabase project • the console keeps it in your profile</text>
+<rect x="615" y="574" width="545" height="70" rx="12" fill="#f2f4f7" stroke="#9aa4b2" stroke-width="1.8" filter="url(#shadow)"/>
+<circle cx="647" cy="609" r="20.4" fill="#ffffff"/>
+<g transform="translate(635.0,597.0) scale(1.000)" fill="none" stroke="#475467" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18h10a4 4 0 0 0 .6-8A6 6 0 0 0 6 9.6 4.2 4.2 0 0 0 7 18z"/></g>
+<text x="675" y="604" font-size="17" font-weight="800" fill="#14213d" text-anchor="start">Supabase Postgres</text>
+<text x="675" y="625" font-size="12.5" font-weight="400" fill="#5b6577" text-anchor="start">set SUPABASE_URL and the service role key • GEMS_STORAGE=supabase</text>
+<path d="M174.75,518 L174.75,572" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<path d="M428.25,518 L428.25,572" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<path d="M488.25,518 L488.25,546 L700,546 L700,572" fill="none" stroke="#3557d6" stroke-width="1.8" stroke-dasharray="6 5" marker-end="url(#arrow)"/>
+<rect x="565.8" y="537.5" width="24.9" height="19.5" rx="5" fill="#ffffff" stroke="#e3e9f5" stroke-width="1"/>
+<text x="578.25" y="552" font-size="11.5" font-weight="500" fill="#3557d6" text-anchor="middle">or</text>
+<path d="M741.75,518 L741.75,572" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<path d="M1025.25,518 L1025.25,572" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<rect x="706.8" y="537.5" width="70.0" height="19.5" rx="5" fill="#ffffff" stroke="#e3e9f5" stroke-width="1"/>
+<text x="741.75" y="552" font-size="11.5" font-weight="500" fill="#3557d6" text-anchor="middle">from .env</text>
+<rect x="40" y="664" width="1120" height="70" rx="12" fill="#f3faf5" stroke="#cfe9d6" stroke-width="1.5"/>
+<g transform="translate(59.0,686.0) scale(1.083)" fill="none" stroke="#1e7a37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M7 12l3.5 3.5L17 9"/></g>
+<text x="98" y="706" font-size="20" font-weight="800" fill="#14213d" text-anchor="start">Key points</text>
+<line x1="252.0" y1="678" x2="252.0" y2="720" stroke="#cfe9d6" stroke-width="1.5"/>
+<circle cx="282.0" cy="699" r="11" fill="#1e7a37"/>
+<path d="M276.0 699l4 4 7-7" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="300.0" y="695" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">One installer</text>
+<text x="300.0" y="712" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">on Windows</text>
+<line x1="474.5" y1="678" x2="474.5" y2="720" stroke="#cfe9d6" stroke-width="1.5"/>
+<circle cx="504.5" cy="699" r="11" fill="#1e7a37"/>
+<path d="M498.5 699l4 4 7-7" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="522.5" y="704" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">SQLite needs no setup</text>
+<line x1="697.0" y1="678" x2="697.0" y2="720" stroke="#cfe9d6" stroke-width="1.5"/>
+<circle cx="727.0" cy="699" r="11" fill="#1e7a37"/>
+<path d="M721.0 699l4 4 7-7" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="745.0" y="695" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">Supabase when you</text>
+<text x="745.0" y="712" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">host it</text>
+<line x1="919.5" y1="678" x2="919.5" y2="720" stroke="#cfe9d6" stroke-width="1.5"/>
+<circle cx="949.5" cy="699" r="11" fill="#1e7a37"/>
+<path d="M943.5 699l4 4 7-7" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="967.5" y="695" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">MCP over stdio,</text>
+<text x="967.5" y="712" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">or at /mcp</text></svg>

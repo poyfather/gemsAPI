@@ -1,6 +1,6 @@
 # Architecture
 
-Lapidary is a prompt library that grew into an agent harness with a Windows console. A FastAPI service and a FastMCP server share the same Python package (`backend/app`) and the same services: the resolver, the model router, the agent run loop, history, tests, memory and pipelines. A Next.js app is the web interface, an Electron app (`desktop/`) is the Windows console, and one store holds everything: SQLite on the machine by default, or Supabase Postgres. This page is the map: what each part does, how a request moves through them, how gem composition works, what the data looks like, and where the trust boundaries are. The big picture is an SVG drawn by `docs/diagrams/build.py` (edit and rerun it to change the picture); the detailed diagrams below are Mermaid and render on GitHub.
+Lapidary is a prompt library that grew into an agent harness with a Windows console. A FastAPI service and a FastMCP server share the same Python package (`backend/app`) and the same services: the resolver, the model router, the agent run loop, history, tests, memory and pipelines. A Next.js app is the web interface, an Electron app (`desktop/`) is the Windows console, and one store holds everything: SQLite on the machine by default, or Supabase Postgres. This page is the map: what each part does, how a request moves through them, how gem composition works, what the data looks like, and where the trust boundaries are. Every diagram on this page is an SVG infographic drawn by `docs/diagrams/build.py`; edit it and rerun it to change a picture.
 
 ## The big picture
 
@@ -20,63 +20,9 @@ A **gem** is a named system prompt stored in Postgres. It can embed other gems w
 
 ## Component model
 
-```mermaid
-flowchart TB
-    subgraph browser["Browser"]
-        PAGES["app/ pages<br/>gems list, detail, new, edit,<br/>chat, runs/[id]"]
-        COMPS["components/<br/>GemCard, GemForm, Navigation,<br/>RunEvents"]
-        APITS["lib/api.ts<br/>typed client, calls /api/*,<br/>SSE reader for streams"]
-        PAGES --> COMPS
-        PAGES --> APITS
-    end
-
-    subgraph nextsrv["Next.js server (frontend/, port 3000)"]
-        MW["proxy.ts<br/>adds X-API-Key from GEMS_API_KEY"]
-        RW["next.config.mjs<br/>rewrites /api/* to BACKEND_URL"]
-        MW --> RW
-    end
-
-    subgraph fastapi["FastAPI service (backend/app, port 8000)"]
-        MAIN["main.py<br/>app, CORS, lifespan check, /health"]
-        AUTH["auth.py<br/>require_api_key dependency"]
-        RG["routes/gems.py<br/>CRUD and POST /gems/resolve"]
-        RC["routes/chat.py<br/>POST /chat, GET /chat/models, SSE"]
-        MAIN --> RG
-        MAIN --> RC
-        AUTH -.-> RG
-        AUTH -.-> RC
-    end
-
-    subgraph mcpproc["MCP server process (backend/mcp_server.py, stdio)"]
-        TOOLS["Tools<br/>list_gems, search_gems, get_gem,<br/>resolve_gem_prompt, chat_with_gem,<br/>create_gem, list_available_models"]
-        RSRC["Resources<br/>gems://list, gems://{name}"]
-    end
-
-    subgraph services["Shared service layer (backend/app)"]
-        GS["services/gem_service.py<br/>CRUD, extract_variables,<br/>extract_gem_refs, resolve_gem"]
-        LS["services/llm_service.py<br/>complete, complete_stream,<br/>available_models"]
-        MODELS["models.py<br/>Pydantic request and response shapes"]
-        DBPY["database.py<br/>Supabase client singleton"]
-        GS --> DBPY
-        GS --> MODELS
-    end
-
-    SUPA[("Supabase Postgres<br/>gems table, RLS, trigger")]
-    ANT["Anthropic"]
-    OAI["OpenAI"]
-
-    APITS -- "HTTP, same origin" --> MW
-    RW -- "HTTP + X-API-Key" --> MAIN
-    RG --> GS
-    RC --> GS
-    RC --> LS
-    TOOLS --> GS
-    TOOLS --> LS
-    RSRC --> GS
-    DBPY -- "supabase-py over HTTPS" --> SUPA
-    LS -- "anthropic SDK" --> ANT
-    LS -- "openai SDK" --> OAI
-```
+<p align="center">
+  <img src="docs/diagrams/lapidary-components.svg" width="100%" alt="Component Model: Callers (the web UI through the Next.js proxy, the Windows console, MCP over HTTP, scripts and Open WebUI, and MCP over stdio) reach the FastAPI routes or the stdio MCP process; both call the same shared services (resolver, router, LLM adapter, versions, evals, compare, memory, the agent loop and pipelines), which use one store, the AI providers and the agent tools.">
+</p>
 
 | Component | Where | Responsibility | Talks to | How |
 |---|---|---|---|---|
@@ -101,71 +47,23 @@ flowchart TB
 | Database | `supabase/schema.sql` | The `gems` table, indexes, `updated_at` trigger, RLS with no policies, seed gems | | SQL, run once in the Supabase editor |
 | Prompt mirror and evals | `prompts/`, `evals/` | Reviewable copies of shipped gems; live-API quality checks with recorded baselines | Supabase, Anthropic | Manual runs |
 
-Two things the diagram makes visible that the code does not say out loud: the MCP server is a **second entry point into the same service layer**, so anything added to `gem_service` is available to both REST and MCP for free; and the API key check lives on the **REST edge only**, so the MCP server is gated by whoever can start the process, not by the key.
+Two things the diagram makes visible that the code does not say out loud: the MCP server is a **second entry point into the same service layer**, so anything added to `gem_service` is available to both REST and MCP for free; and the API key check lives on the **HTTP edge** (REST and `/mcp`), so the stdio MCP server is gated by whoever can start the process, not by the key.
 
 ## Request flows
 
 ### Chat from the web UI, streamed
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant B as Browser (chat page)
-    participant N as Next.js server
-    participant A as FastAPI
-    participant G as gem_service
-    participant S as Supabase
-    participant L as llm_service
-    participant P as Provider
+<p align="center">
+  <img src="docs/diagrams/lapidary-chat-flow.svg" width="100%" alt="Chat from the Web UI, Streamed: The browser posts to the Next.js proxy, which adds the API key and forwards to FastAPI. The route resolves the gem (one store query per gem in the tree), adds remembered context when the gem asks for it, asks the router which AI to use, and streams the provider's text back to the browser as server-sent events.">
+</p>
 
-    B->>N: POST /api/chat {gem_name, messages, variables, stream}
-    N->>N: proxy.ts adds X-API-Key
-    N->>A: POST /chat (rewritten)
-    A->>A: require_api_key
-    A->>G: resolve_gem(name, variables)
-    loop one query per gem in the reference tree
-        G->>S: select * from gems where name = ... and is_active
-        S-->>G: row
-    end
-    G-->>A: resolved prompt, referenced gems
-    A->>G: get_gem_by_name (default model and provider)
-    G->>S: select
-    S-->>A: gem
-    A->>L: complete_stream(system, messages, model, provider)
-    L->>P: streaming request
-    P-->>L: text deltas
-    L-->>A: chunks
-    A-->>B: text/event-stream: data: {"content": ...} ... data: [DONE]
-```
-
-The chat page uses the streamed form for prompt gems and renders the chunks as they arrive. Without `stream`, step 13 onward is a single `complete()` call and the response is one `ChatResponse` JSON body. Provider errors are logged on the server and the client receives a fixed 502 message (or a fixed SSE `error` event), never the exception text.
+The chat page uses the streamed form for prompt gems and renders the chunks as they arrive. Without `stream`, the adapter call (step 14) is a single `complete()` call and the response is one `ChatResponse` JSON body. Provider errors are logged on the server and the client receives a fixed 502 message (or a fixed SSE `error` event), never the exception text.
 
 ### A tool call from an MCP client
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant C as Claude Desktop or Cursor
-    participant M as mcp_server.py
-    participant G as gem_service
-    participant S as Supabase
-    participant L as llm_service
-    participant P as Provider
-
-    C->>M: tools/call resolve_gem_prompt {name, variables} (stdio)
-    M->>G: resolve_gem(name, variables)
-    G->>S: select, once per gem in the tree
-    S-->>G: rows
-    G-->>M: resolved prompt, referenced gems
-    M-->>C: {gem_name, resolved_prompt, referenced_gems, variables_missing}
-
-    C->>M: tools/call chat_with_gem {gem_name, message}
-    M->>G: resolve_gem, then get_gem_by_name
-    M->>L: complete(system, [user message], model, provider)
-    L->>P: request
-    P-->>L: completion
-    M-->>C: {gem_name, response, model, provider}
-```
+<p align="center">
+  <img src="docs/diagrams/lapidary-mcp-flow.svg" width="100%" alt="A Tool Call from an MCP Client: An MCP client calls resolve_gem_prompt or chat_with_gem over stdio; mcp_server.py calls the resolver, the router and the LLM adapter directly in its own process and returns the result, without HTTP or the API key check.">
+</p>
 
 The MCP server does not go through HTTP or `auth.py`. It calls the same functions the routes call, in its own process, with the credentials from `backend/.env`.
 
@@ -173,71 +71,25 @@ The MCP server does not go through HTTP or `auth.py`. It calls the same function
 
 ADR-007 added the loop. A gem of kind `agent` lists tool names; the loop gives the model those tools and keeps going until it answers without one.
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant C as Caller (REST, MCP)
-    participant R as runner.run_agent
-    participant G as gem_service
-    participant T as Tool registry
-    participant L as llm_service.complete_turn
-    participant P as Provider
-    participant S as runs, run_events
-
-    C->>R: run_agent(gem, message, variables)
-    R->>G: resolve_gem_detailed, get_gem_by_name
-    R->>S: insert run (status running)
-    R->>S: event run_started
-    loop until the model answers without tools, or AGENT_MAX_STEPS
-        R->>L: complete_turn(system, messages, tools)
-        L->>P: messages.create with tools (Anthropic) or chat.completions with functions (OpenAI)
-        P-->>L: text and zero or more tool calls
-        L-->>R: ToolTurn (neutral shape)
-        R->>S: event model_turn
-        alt tool calls present
-            R->>S: on a risky call without allow_risky: status waiting_approval, state saved, event approval_requested; stop here until POST /runs/{id}/approve resumes
-            R->>T: execute each call (unknown: an error string; denied: an error string)
-            T-->>R: result text, truncated at AGENT_TOOL_RESULT_MAX_CHARS
-            R->>S: events tool_call, tool_result
-            R->>R: append results in the provider's shape (one user message for Anthropic, one tool message per call for OpenAI)
-        end
-    end
-    R->>S: event run_finished, update run (status, output, steps, tokens)
-    R-->>C: RunResult (run + events), or the events as SSE while it happens
-```
+<p align="center">
+  <img src="docs/diagrams/lapidary-agent-flow.svg" width="100%" alt="Agent Runs: run_agent resolves the gem, picks the AI, records the run, then loops: the model answers with text and tool calls, tools run (risky ones pause for approval until POST /runs/{id}/approve), every turn and call is an event, and the run ends when the model answers without a tool or the step cap is reached.">
+</p>
 
 What the loop promises: a tool error never escapes the run (unknown tool, denied tool, bad arguments and tool exceptions all go back to the model as text); a provider failure ends the run as `failed` with a record; every run has at most `AGENT_MAX_STEPS` model turns; nothing is held in memory between requests. A risky tool call pauses the run instead of running: the loop state (conversation, calls still to execute, results so far) is saved in the `runs.state` column, `approval_requested` is the last event, and `resume_run()` picks up from that call once `POST /runs/{id}/approve` arrives, approving (the call runs) or denying (the model gets an error result), then continues the turn and the loop, pausing again at the next risky call. Tools from other MCP servers are listed when a run or the tools endpoint asks for them (cached), and each call opens the server's transport for that call. What it does not do yet: plain HTTP endpoints as tools without an MCP server in front, a token budget per run, or a list of past runs (roadmap item 35; the viewer itself is `app/runs/[id]` and the chat page).
 
 ## Gem composition and resolution
 
-Gems compose by reference. The seed library ships a three-level example:
+Gems compose by reference. Most of the seed library embeds one shared gem, and `engineering_lead` makes a three-level chain:
 
-```mermaid
-flowchart TD
-    EL["engineering_lead<br/>uses {team_size}"]
-    CR["code_reviewer<br/>uses {language}"]
-    BA["base_assistant<br/>no variables, no references"]
-    CW["creative_writer<br/>uses {style}, {tone}, {genre}"]
-    SUM["summarizer<br/>uses {depth}, {target_length}"]
-    PE["prompt_enhancer<br/>standalone"]
-
-    EL -- "{{gem:code_reviewer}}" --> CR
-    CR -- "{{gem:base_assistant}}" --> BA
-    CW -- "{{gem:base_assistant}}" --> BA
-```
+<p align="center">
+  <img src="docs/diagrams/lapidary-composition.svg" width="100%" alt="Gems Compose by Reference: engineering_lead embeds code_reviewer; six prompt gems and five assistant gems embed base_assistant; summarizer, prompt_enhancer, memory_summarizer and build_and_check stand alone.">
+</p>
 
 Resolving `engineering_lead` with `{"language": "Python", "team_size": "4"}`:
 
-```mermaid
-flowchart TD
-    A["Step 1<br/>Load engineering_lead"] --> B["Step 2<br/>Find {{gem:code_reviewer}},<br/>recurse (depth 1)"]
-    B --> C["Step 3<br/>Find {{gem:base_assistant}},<br/>recurse (depth 2)"]
-    C --> D["Step 4<br/>base_assistant has no refs:<br/>return its text"]
-    D --> E["Step 5<br/>Splice into code_reviewer,<br/>return"]
-    E --> F["Step 6<br/>Splice into engineering_lead"]
-    F --> G["Step 7<br/>Fill {language} and {team_size}<br/>across the whole text"]
-    G --> H["Resolved prompt +<br/>referenced_gems: [code_reviewer, base_assistant]"]
-```
+<p align="center">
+  <img src="docs/diagrams/lapidary-resolution.svg" width="100%" alt="Resolving engineering_lead: Load engineering_lead, expand code_reviewer and then base_assistant depth first, splice the text back up, collect the blanks and their specs, check and default them, fill every blank in one pass, swap in the worked examples, and return the prompt with the referenced gems.">
+</p>
 
 Rules enforced in `resolve_gem`:
 
@@ -250,22 +102,9 @@ Rules enforced in `resolve_gem`:
 
 ## Data model
 
-```mermaid
-erDiagram
-    GEMS {
-        uuid id PK "uuid_generate_v4()"
-        text name UK "snake_case, unique"
-        text description
-        text system_prompt "may contain {variable} and {{gem:name}}"
-        text model "default from GEMS_DEFAULT_MODEL"
-        text provider "anthropic or openai (CHECK)"
-        text_array tags "GIN indexed"
-        text_array variables "derived from system_prompt on save"
-        boolean is_active "soft delete flag"
-        timestamptz created_at
-        timestamptz updated_at "trigger sets NOW() on update"
-    }
-```
+<p align="center">
+  <img src="docs/diagrams/lapidary-data-model.svg" width="100%" alt="Data Model: gems is the centre: gem_versions, eval_cases, eval_runs and runs point at it; run_events belong to runs; memories link to runs and gems loosely; pipelines own pipeline_runs by name, whose attempts hold run ids.">
+</p>
 
 - The same tables exist in both backends: Postgres on Supabase (`supabase/schema.sql`) and SQLite (`backend/app/storage/sqlite_schema.sql`, lists and JSON as text). The seed gems have one source, the `INSERT` in `schema.sql`, which the SQLite backend parses on first start.
 - References between gems are text inside `system_prompt`, resolved by name at read time; there is no foreign key, so a referenced gem can be renamed or soft-deleted and the reference only fails at resolution.
@@ -291,57 +130,19 @@ erDiagram
 
 ## Trust boundaries
 
-```mermaid
-flowchart LR
-    subgraph z1["Browser"]
-        UI2["Web UI<br/>holds no secrets"]
-    end
-    subgraph z2["Next.js server"]
-        MW2["proxy + rewrite<br/>holds GEMS_API_KEY only"]
-    end
-    subgraph z3["FastAPI service"]
-        API2["/gems and /chat<br/>behind require_api_key<br/>holds GEMS_API_KEY,<br/>Supabase key, LLM keys"]
-    end
-    subgraph z4["MCP process"]
-        MCP2["mcp_server.py<br/>no API key check<br/>holds Supabase key, LLM keys"]
-    end
-    SUP2[("Supabase<br/>RLS denies all but<br/>the service role")]
-    PROV["Providers"]
-
-    UI2 --> MW2 --> API2 --> SUP2
-    API2 --> PROV
-    MCP2 --> SUP2
-    MCP2 --> PROV
-```
+<p align="center">
+  <img src="docs/diagrams/lapidary-trust.svg" width="100%" alt="Trust Boundaries: The browser holds no secrets; the Next.js proxy adds the API key; FastAPI checks it on every route and at /mcp and holds the database and AI keys; the stdio MCP process has no key check and trusts whoever starts it; the console keeps keys in Windows safeStorage and runs the backend on 127.0.0.1; the helper service only runs allowlisted installs; Supabase allows only the service role.">
+</p>
 
 Keep the FastAPI service and the MCP server on a private network or behind TLS and a reverse proxy; see `SECURITY.md`.
 
 ## Deployment topologies
 
-```mermaid
-flowchart TB
-    subgraph local["Local development"]
-        L1["uvicorn app.main:app --reload :8000"]
-        L2["next dev :3000"]
-        L3["python mcp_server.py (started by the MCP client)"]
-    end
-    subgraph compose["Docker Compose"]
-        C1["backend image, python:3.12-slim"]
-        C2["frontend image, node:24-alpine"]
-        C1 --- C2
-    end
-    subgraph split["Split deploy"]
-        S1["Backend on Fly.io, Railway or Render"]
-        S2["Frontend on Vercel, BACKEND_URL set"]
-        S2 -- "/api/* rewrite" --> S1
-    end
-    SB[("Supabase cloud")]
-    local --> SB
-    compose --> SB
-    split --> SB
-```
+<p align="center">
+  <img src="docs/diagrams/lapidary-deployment.svg" width="100%" alt="Deployment Topologies: Four ways to run Lapidary: the Windows console on one PC with SQLite, local development with uvicorn, next dev and the stdio MCP server, Docker Compose with a backend and a frontend image, and a split deploy with the backend on Fly.io, Railway or Render and the frontend on Vercel; the store is a SQLite file or Supabase Postgres.">
+</p>
 
-Compose builds a standalone Next.js server and a uvicorn image, gates the frontend on the backend's `/health`, and hands the frontend only `BACKEND_URL` and `GEMS_API_KEY`. The MCP server is always a local process started by the client over stdio; hosting it over HTTP would need authentication first.
+Compose builds a standalone Next.js server and a uvicorn image, gates the frontend on the backend's `/health`, and hands the frontend only `BACKEND_URL` and `GEMS_API_KEY`. The stdio MCP server is a local process started by the client; over HTTP it is the API's `/mcp` path, behind the same key.
 
 ## Evaluation and quality gates
 

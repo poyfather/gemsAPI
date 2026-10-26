@@ -1,0 +1,186 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1030" viewBox="0 0 1200 1030" font-family="Segoe UI, -apple-system, BlinkMacSystemFont, Helvetica Neue, Arial, sans-serif" role="img" aria-labelledby="t d"><title id="t">Component Model</title><desc id="d">Callers (the web UI through the Next.js proxy, the Windows console, MCP over HTTP, scripts and Open WebUI, and MCP over stdio) reach the FastAPI routes or the stdio MCP process; both call the same shared services (resolver, router, LLM adapter, versions, evals, compare, memory, the agent loop and pipelines), which use one store, the AI providers and the agent tools.</desc><defs><marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#3557d6"/></marker><marker id="arrowStart" viewBox="0 0 10 10" refX="1.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#3557d6"/></marker><filter id="shadow" x="-5%" y="-5%" width="110%" height="120%"><feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#1e3a8a" flood-opacity="0.10"/></filter></defs><rect width="1200" height="1030" fill="#ffffff"/><text x="600" y="52" font-size="34" font-weight="800" fill="#14213d" text-anchor="middle">Component Model</text>
+<text x="600" y="82" font-size="17" font-weight="500" fill="#5b6577" text-anchor="middle">Every door leads to the same services, one store and the AI you choose</text>
+<text x="40" y="118" font-size="12" font-weight="800" fill="#5b6577" text-anchor="start">WHO CALLS</text>
+<rect x="40.0" y="126" width="212.8" height="52" rx="10" fill="#ffffff" stroke="#c9d3e3" stroke-width="1.6"/>
+<g transform="translate(50.5,142.5) scale(0.792)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></g>
+<text x="76.0" y="149.0" font-size="13.5" font-weight="700" fill="#14213d" text-anchor="start">Web UI</text>
+<text x="76.0" y="166.0" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="start">the browser</text>
+<rect x="266.8" y="126" width="212.8" height="52" rx="10" fill="#ffffff" stroke="#c9d3e3" stroke-width="1.6"/>
+<g transform="translate(277.3,142.5) scale(0.792)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M7 13l2 2-2 2M11 17h5"/></g>
+<text x="302.8" y="149.0" font-size="13.5" font-weight="700" fill="#14213d" text-anchor="start">Lapidary Console</text>
+<text x="302.8" y="166.0" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="start">Windows app</text>
+<rect x="493.6" y="126" width="212.8" height="52" rx="10" fill="#ffffff" stroke="#c9d3e3" stroke-width="1.6"/>
+<g transform="translate(504.1,142.5) scale(0.792)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2v5M15 2v5M6 7h12v4a6 6 0 0 1-12 0zM12 17v5"/></g>
+<text x="529.6" y="149.0" font-size="13.5" font-weight="700" fill="#14213d" text-anchor="start">MCP over HTTP</text>
+<text x="529.6" y="166.0" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="start">connectors, ChatGPT</text>
+<rect x="720.4000000000001" y="126" width="212.8" height="52" rx="10" fill="#ffffff" stroke="#c9d3e3" stroke-width="1.6"/>
+<g transform="translate(730.9,142.5) scale(0.792)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/></g>
+<text x="756.4000000000001" y="149.0" font-size="13.5" font-weight="700" fill="#14213d" text-anchor="start">Scripts, Open WebUI</text>
+<text x="756.4000000000001" y="166.0" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="start">REST and /v1</text>
+<rect x="947.2" y="126" width="212.8" height="52" rx="10" fill="#ffffff" stroke="#c9d3e3" stroke-width="1.6"/>
+<g transform="translate(957.7,142.5) scale(0.792)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2v5M15 2v5M6 7h12v4a6 6 0 0 1-12 0zM12 17v5"/></g>
+<text x="983.2" y="149.0" font-size="13.5" font-weight="700" fill="#14213d" text-anchor="start">MCP over stdio</text>
+<text x="983.2" y="166.0" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="start">Claude Desktop, Cursor</text>
+<rect x="40" y="214" width="430" height="112" rx="14" fill="#f5f9ff" stroke="#93b4f5" stroke-width="1.6" stroke-dasharray="6 5"/>
+<g transform="translate(54.0,228.0) scale(0.833)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></g>
+<text x="82" y="244" font-size="15" font-weight="800" fill="#14213d" text-anchor="start">Next.js server</text>
+<text x="213.60000000000002" y="244" font-size="12.5" font-weight="400" fill="#5b6577" text-anchor="start">frontend/ on :3000</text>
+<rect x="58" y="254" width="190" height="58" rx="10" fill="#ffffff" stroke="#93b4f5" stroke-width="1.6"/>
+<text x="72" y="277" font-size="14" font-weight="800" fill="#14213d" text-anchor="start">proxy.ts</text>
+<text x="72" y="294" font-size="12" font-weight="400" fill="#475467" text-anchor="start">adds X-API-Key on the hop</text>
+<rect x="262" y="254" width="190" height="58" rx="10" fill="#ffffff" stroke="#93b4f5" stroke-width="1.6"/>
+<text x="276" y="277" font-size="14" font-weight="800" fill="#14213d" text-anchor="start">next.config.mjs</text>
+<text x="276" y="294" font-size="12" font-weight="400" fill="#475467" text-anchor="start">/api/* to BACKEND_URL</text>
+<path d="M146.4,178 L146.4,214" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<rect x="101.9" y="186.5" width="89.0" height="20.5" rx="5" fill="#ffffff" stroke="#e3e9f5" stroke-width="1"/>
+<text x="146.4" y="202" font-size="12.5" font-weight="500" fill="#3557d6" text-anchor="middle">same origin</text>
+<path d="M373.20000000000005,178 L373.20000000000005,214" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<rect x="292.2" y="186.5" width="222.0" height="20.5" rx="5" fill="#ffffff" stroke="#e3e9f5" stroke-width="1"/>
+<text x="403.20000000000005" y="202" font-size="12.5" font-weight="500" fill="#3557d6" text-anchor="middle">embeds the UI, starts sidecars</text>
+<rect x="900" y="214" width="260" height="112" rx="14" fill="#f5f0ff" stroke="#8b5cf6" stroke-width="1.6" stroke-dasharray="6 5"/>
+<g transform="translate(914.0,228.0) scale(0.833)" fill="none" stroke="#6d28d9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2v5M15 2v5M6 7h12v4a6 6 0 0 1-12 0zM12 17v5"/></g>
+<text x="942" y="244" font-size="15" font-weight="800" fill="#14213d" text-anchor="start">MCP stdio process</text>
+<text x="942" y="262" font-size="12.5" font-weight="600" fill="#344054" text-anchor="start">backend/mcp_server.py</text>
+<text x="942" y="282" font-size="12.5" font-weight="400" fill="#475467" text-anchor="start">25 tools • 3 resources</text>
+<text x="942" y="302" font-size="12.5" font-weight="400" fill="#475467" text-anchor="start">no key check: its own process</text>
+<path d="M1053.6000000000001,178 L1053.6000000000001,214" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<rect x="40" y="360" width="1120" height="176" rx="14" fill="#eef4fe" stroke="#3b82f6" stroke-width="1.6" stroke-dasharray="6 5"/>
+<g transform="translate(54.0,374.0) scale(0.833)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1"/></g>
+<text x="82" y="390" font-size="15" font-weight="800" fill="#14213d" text-anchor="start">FastAPI service</text>
+<text x="222.0" y="390" font-size="12.5" font-weight="400" fill="#5b6577" text-anchor="start">backend/app on :8000 • main.py, auth.py: every route but / and /health needs a key</text>
+<rect x="60.0" y="400" width="126.25" height="74" rx="10" fill="#ffffff" stroke="#3b82f6" stroke-width="1.6"/>
+<text x="74.0" y="423" font-size="12.5" font-weight="800" fill="#14213d" text-anchor="start">gems.py</text>
+<text x="74.0" y="440" font-size="12" font-weight="400" fill="#475467" text-anchor="start">CRUD, resolve,</text>
+<text x="74.0" y="457" font-size="12" font-weight="400" fill="#475467" text-anchor="start">versions, diff</text>
+<rect x="196.25" y="400" width="126.25" height="74" rx="10" fill="#ffffff" stroke="#3b82f6" stroke-width="1.6"/>
+<text x="210.25" y="423" font-size="12.5" font-weight="800" fill="#14213d" text-anchor="start">evals.py</text>
+<text x="210.25" y="440" font-size="12" font-weight="400" fill="#475467" text-anchor="start">tests, compare,</text>
+<text x="210.25" y="457" font-size="12" font-weight="400" fill="#475467" text-anchor="start">estimates</text>
+<rect x="332.5" y="400" width="126.25" height="74" rx="10" fill="#ffffff" stroke="#3b82f6" stroke-width="1.6"/>
+<text x="346.5" y="423" font-size="12.5" font-weight="800" fill="#14213d" text-anchor="start">chat.py</text>
+<text x="346.5" y="440" font-size="12" font-weight="400" fill="#475467" text-anchor="start">chat (SSE),</text>
+<text x="346.5" y="457" font-size="12" font-weight="400" fill="#475467" text-anchor="start">models, policy</text>
+<rect x="468.75" y="400" width="126.25" height="74" rx="10" fill="#ffffff" stroke="#3b82f6" stroke-width="1.6"/>
+<text x="482.75" y="423" font-size="12.5" font-weight="800" fill="#14213d" text-anchor="start">agents.py</text>
+<text x="482.75" y="440" font-size="12" font-weight="400" fill="#475467" text-anchor="start">agents, runs,</text>
+<text x="482.75" y="457" font-size="12" font-weight="400" fill="#475467" text-anchor="start">approve</text>
+<rect x="605.0" y="400" width="126.25" height="74" rx="10" fill="#ffffff" stroke="#3b82f6" stroke-width="1.6"/>
+<text x="619.0" y="423" font-size="12.5" font-weight="800" fill="#14213d" text-anchor="start">pipelines.py</text>
+<text x="619.0" y="440" font-size="12" font-weight="400" fill="#475467" text-anchor="start">pipelines,</text>
+<text x="619.0" y="457" font-size="12" font-weight="400" fill="#475467" text-anchor="start">accept</text>
+<rect x="741.25" y="400" width="126.25" height="74" rx="10" fill="#ffffff" stroke="#3b82f6" stroke-width="1.6"/>
+<text x="755.25" y="423" font-size="12.5" font-weight="800" fill="#14213d" text-anchor="start">memory.py</text>
+<text x="755.25" y="440" font-size="12" font-weight="400" fill="#475467" text-anchor="start">search, remember,</text>
+<text x="755.25" y="457" font-size="12" font-weight="400" fill="#475467" text-anchor="start">forget</text>
+<rect x="877.5" y="400" width="126.25" height="74" rx="10" fill="#ffffff" stroke="#3b82f6" stroke-width="1.6"/>
+<text x="891.5" y="423" font-size="10.859375" font-weight="800" fill="#14213d" text-anchor="start">openai_compat.py</text>
+<text x="891.5" y="440" font-size="12" font-weight="400" fill="#475467" text-anchor="start">/v1/models,</text>
+<text x="891.5" y="457" font-size="12" font-weight="400" fill="#475467" text-anchor="start">/v1/chat/...</text>
+<rect x="1013.75" y="400" width="126.25" height="74" rx="10" fill="#ffffff" stroke="#8b5cf6" stroke-width="1.6"/>
+<text x="1027.75" y="423" font-size="12.5" font-weight="800" fill="#14213d" text-anchor="start">mcp_http.py</text>
+<text x="1027.75" y="440" font-size="12" font-weight="400" fill="#475467" text-anchor="start">MCP at /mcp,</text>
+<text x="1027.75" y="457" font-size="12" font-weight="400" fill="#475467" text-anchor="start">same key</text>
+<text x="600" y="516" font-size="13" font-weight="500" fill="#5b6577" text-anchor="middle">routes are thin: they validate, then call the shared services below</text>
+<path d="M255,326 L255,360" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<rect x="193.0" y="332.5" width="124.0" height="20.5" rx="5" fill="#ffffff" stroke="#e3e9f5" stroke-width="1"/>
+<text x="255.0" y="348" font-size="12.5" font-weight="500" fill="#3557d6" text-anchor="middle">HTTP + X-API-Key</text>
+<path d="M600.0,178 L600.0,360" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<path d="M826.8000000000001,178 L826.8000000000001,360" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<rect x="754.3" y="326.5" width="145.0" height="20.5" rx="5" fill="#ffffff" stroke="#e3e9f5" stroke-width="1"/>
+<text x="826.8000000000001" y="342" font-size="12.5" font-weight="500" fill="#3557d6" text-anchor="middle">X-API-Key or bearer</text>
+<rect x="40" y="568" width="1120" height="196" rx="14" fill="#ecf8ef" stroke="#34a853" stroke-width="1.6" stroke-dasharray="6 5"/>
+<g transform="translate(54.0,582.0) scale(0.833)" fill="none" stroke="#1e7a37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l10 5-10 5L2 7z"/><path d="M2 12l10 5 10-5M2 17l10 5 10-5"/></g>
+<text x="82" y="598" font-size="15" font-weight="800" fill="#14213d" text-anchor="start">Shared service layer</text>
+<text x="264.0" y="598" font-size="12.5" font-weight="400" fill="#5b6577" text-anchor="start">the same Python functions for REST, /mcp and stdio MCP</text>
+<rect x="60.0" y="606" width="145.71428571428572" height="66" rx="10" fill="#ffffff" stroke="#34a853" stroke-width="1.6"/>
+<text x="74.0" y="629" font-size="12.5" font-weight="800" fill="#14213d" text-anchor="start">gem_service</text>
+<text x="74.0" y="646" font-size="12" font-weight="400" fill="#475467" text-anchor="start">resolver</text>
+<text x="74.0" y="663" font-size="12" font-weight="400" fill="#475467" text-anchor="start">blanks, examples</text>
+<rect x="215.71428571428572" y="606" width="145.71428571428572" height="66" rx="10" fill="#ffffff" stroke="#34a853" stroke-width="1.6"/>
+<text x="229.71428571428572" y="629" font-size="12.5" font-weight="800" fill="#14213d" text-anchor="start">router.py</text>
+<text x="229.71428571428572" y="646" font-size="12" font-weight="400" fill="#475467" text-anchor="start">which AI</text>
+<text x="229.71428571428572" y="663" font-size="12" font-weight="400" fill="#475467" text-anchor="start">and why</text>
+<rect x="371.42857142857144" y="606" width="145.71428571428572" height="66" rx="10" fill="#ffffff" stroke="#34a853" stroke-width="1.6"/>
+<text x="385.42857142857144" y="629" font-size="12.5" font-weight="800" fill="#14213d" text-anchor="start">llm_service</text>
+<text x="385.42857142857144" y="646" font-size="12" font-weight="400" fill="#475467" text-anchor="start">one adapter for</text>
+<text x="385.42857142857144" y="663" font-size="12" font-weight="400" fill="#475467" text-anchor="start">every provider</text>
+<rect x="527.1428571428571" y="606" width="145.71428571428572" height="66" rx="10" fill="#ffffff" stroke="#34a853" stroke-width="1.6"/>
+<text x="541.1428571428571" y="629" font-size="12.5" font-weight="800" fill="#14213d" text-anchor="start">version_service</text>
+<text x="541.1428571428571" y="646" font-size="12" font-weight="400" fill="#475467" text-anchor="start">every save</text>
+<text x="541.1428571428571" y="663" font-size="12" font-weight="400" fill="#475467" text-anchor="start">kept</text>
+<rect x="682.8571428571429" y="606" width="145.71428571428572" height="66" rx="10" fill="#ffffff" stroke="#34a853" stroke-width="1.6"/>
+<text x="696.8571428571429" y="629" font-size="12.5" font-weight="800" fill="#14213d" text-anchor="start">eval_service</text>
+<text x="696.8571428571429" y="646" font-size="12" font-weight="400" fill="#475467" text-anchor="start">tests,</text>
+<text x="696.8571428571429" y="663" font-size="12" font-weight="400" fill="#475467" text-anchor="start">judge</text>
+<rect x="838.5714285714287" y="606" width="145.71428571428572" height="66" rx="10" fill="#ffffff" stroke="#34a853" stroke-width="1.6"/>
+<text x="852.5714285714287" y="629" font-size="12.5" font-weight="800" fill="#14213d" text-anchor="start">compare_service</text>
+<text x="852.5714285714287" y="646" font-size="12" font-weight="400" fill="#475467" text-anchor="start">side by side</text>
+<text x="852.5714285714287" y="663" font-size="12" font-weight="400" fill="#475467" text-anchor="start">runs</text>
+<rect x="994.2857142857143" y="606" width="145.71428571428572" height="66" rx="10" fill="#ffffff" stroke="#34a853" stroke-width="1.6"/>
+<text x="1008.2857142857143" y="629" font-size="12.5" font-weight="800" fill="#14213d" text-anchor="start">memory_service</text>
+<text x="1008.2857142857143" y="646" font-size="12" font-weight="400" fill="#475467" text-anchor="start">recall,</text>
+<text x="1008.2857142857143" y="663" font-size="12" font-weight="400" fill="#475467" text-anchor="start">observe</text>
+<rect x="60.0" y="684" width="262.5" height="60" rx="10" fill="#ffffff" stroke="#34a853" stroke-width="1.6"/>
+<text x="74.0" y="707" font-size="12.5" font-weight="800" fill="#14213d" text-anchor="start">agents/runner.py</text>
+<text x="74.0" y="724" font-size="12" font-weight="400" fill="#475467" text-anchor="start">the run loop, approvals</text>
+<rect x="332.5" y="684" width="262.5" height="60" rx="10" fill="#ffffff" stroke="#34a853" stroke-width="1.6"/>
+<text x="346.5" y="707" font-size="12.5" font-weight="800" fill="#14213d" text-anchor="start">agents/tools.py</text>
+<text x="346.5" y="724" font-size="12" font-weight="400" fill="#475467" text-anchor="start">registry, builtin, MCP sources</text>
+<rect x="605.0" y="684" width="262.5" height="60" rx="10" fill="#ffffff" stroke="#34a853" stroke-width="1.6"/>
+<text x="619.0" y="707" font-size="12.5" font-weight="800" fill="#14213d" text-anchor="start">agents/run_service.py</text>
+<text x="619.0" y="724" font-size="12" font-weight="400" fill="#475467" text-anchor="start">runs and events</text>
+<rect x="877.5" y="684" width="262.5" height="60" rx="10" fill="#ffffff" stroke="#34a853" stroke-width="1.6"/>
+<text x="891.5" y="707" font-size="12.5" font-weight="800" fill="#14213d" text-anchor="start">agents/pipeline.py</text>
+<text x="891.5" y="724" font-size="12" font-weight="400" fill="#475467" text-anchor="start">builder, gates, accept</text>
+<path d="M600,536 L600,568" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<path d="M1160 270 H1180 V552 H760" stroke="#3557d6" stroke-width="2.2" fill="none"/>
+<path d="M760,552 L760,568" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<rect x="871.5" y="542.5" width="257.0" height="20.5" rx="5" fill="#ffffff" stroke="#e3e9f5" stroke-width="1"/>
+<text x="1000.0" y="558" font-size="12.5" font-weight="500" fill="#3557d6" text-anchor="middle">stdio MCP imports the same services</text>
+<path d="M200,764 L200,796" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<path d="M600,764 L600,796" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<path d="M1000,764 L1000,796" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<rect x="40" y="798" width="360" height="120" rx="14" fill="#f2f4f7" stroke="#9aa4b2" stroke-width="2" filter="url(#shadow)"/>
+<circle cx="70" cy="828" r="18.7" fill="#ffffff"/>
+<g transform="translate(59.0,817.0) scale(0.917)" fill="none" stroke="#475467" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></g>
+<text x="96" y="834" font-size="16" font-weight="700" fill="#14213d" text-anchor="start">Storage</text>
+<text x="62" y="854" font-size="13.5" font-weight="400" fill="#344054" text-anchor="start">storage/: one Store interface</text>
+<text x="62" y="874" font-size="13.5" font-weight="400" fill="#344054" text-anchor="start">SQLiteStore (default, this PC)</text>
+<text x="62" y="894" font-size="13.5" font-weight="400" fill="#344054" text-anchor="start">SupabaseStore (GEMS_STORAGE)</text>
+<rect x="420" y="798" width="360" height="120" rx="14" fill="#f5f0ff" stroke="#8b5cf6" stroke-width="2" filter="url(#shadow)"/>
+<circle cx="450" cy="828" r="18.7" fill="#ffffff"/>
+<g transform="translate(439.0,817.0) scale(0.917)" fill="none" stroke="#6d28d9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9.5" y="9.5" width="5" height="5"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></g>
+<text x="476" y="834" font-size="16" font-weight="700" fill="#14213d" text-anchor="start">AI providers</text>
+<text x="442" y="854" font-size="13.5" font-weight="400" fill="#344054" text-anchor="start">Anthropic and OpenAI SDKs</text>
+<text x="442" y="874" font-size="13.5" font-weight="400" fill="#344054" text-anchor="start">local: Ollama, LM Studio, oMLX</text>
+<text x="442" y="894" font-size="13.5" font-weight="400" fill="#344054" text-anchor="start">through llm_service only</text>
+<rect x="800" y="798" width="360" height="120" rx="14" fill="#fff0f2" stroke="#e8778b" stroke-width="2" filter="url(#shadow)"/>
+<circle cx="830" cy="828" r="18.7" fill="#ffffff"/>
+<g transform="translate(819.0,817.0) scale(0.917)" fill="none" stroke="#be123c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/></g>
+<text x="856" y="834" font-size="16" font-weight="700" fill="#14213d" text-anchor="start">Tools for agents</text>
+<text x="822" y="854" font-size="13.5" font-weight="400" fill="#344054" text-anchor="start">PowerShell 7 (asks first)</text>
+<text x="822" y="874" font-size="13.5" font-weight="400" fill="#344054" text-anchor="start">REA and any MCP server</text>
+<text x="822" y="894" font-size="13.5" font-weight="400" fill="#344054" text-anchor="start">from configs/mcp_servers.json</text>
+<rect x="40" y="940" width="1120" height="70" rx="12" fill="#f3faf5" stroke="#cfe9d6" stroke-width="1.5"/>
+<g transform="translate(59.0,962.0) scale(1.083)" fill="none" stroke="#1e7a37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M7 12l3.5 3.5L17 9"/></g>
+<text x="98" y="982" font-size="20" font-weight="800" fill="#14213d" text-anchor="start">Key points</text>
+<line x1="252.0" y1="954" x2="252.0" y2="996" stroke="#cfe9d6" stroke-width="1.5"/>
+<circle cx="282.0" cy="975" r="11" fill="#1e7a37"/>
+<path d="M276.0 975l4 4 7-7" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="300.0" y="971" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">MCP is a second door</text>
+<text x="300.0" y="988" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">to the same services</text>
+<line x1="474.5" y1="954" x2="474.5" y2="996" stroke="#cfe9d6" stroke-width="1.5"/>
+<circle cx="504.5" cy="975" r="11" fill="#1e7a37"/>
+<path d="M498.5 975l4 4 7-7" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="522.5" y="971" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">Keys checked at the</text>
+<text x="522.5" y="988" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">REST and /mcp edge</text>
+<line x1="697.0" y1="954" x2="697.0" y2="996" stroke="#cfe9d6" stroke-width="1.5"/>
+<circle cx="727.0" cy="975" r="11" fill="#1e7a37"/>
+<path d="M721.0 975l4 4 7-7" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="745.0" y="971" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">No route imports</text>
+<text x="745.0" y="988" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">a provider SDK</text>
+<line x1="919.5" y1="954" x2="919.5" y2="996" stroke="#cfe9d6" stroke-width="1.5"/>
+<circle cx="949.5" cy="975" r="11" fill="#1e7a37"/>
+<path d="M943.5 975l4 4 7-7" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="967.5" y="971" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">One store: SQLite</text>
+<text x="967.5" y="988" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">or Supabase</text></svg>
