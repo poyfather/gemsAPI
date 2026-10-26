@@ -11,7 +11,7 @@ Success is measured by three numbers (item 58): the share of visitors who create
 
 ### Repository presentation and consistent docs (52)
 - Goal: a visitor understands what Lapidary does for them from the top of the README, sees the product, and can pick an install path; every document agrees with the code.
-- Status: Partly done. Positioning, screenshots, install options, the doc reconciliation and the GitHub description and topics are in. Open: a 90-second demo video and a social preview image.
+- Status: Partly done. Positioning, screenshots, install options, the doc reconciliation and the GitHub description and topics are in. The 64-second demo video is in too. Open: a social preview image.
 - Owner: poyfather
 - Dependencies: None
 - Success Criteria: README shows the product above the fold; no document contradicts the code.

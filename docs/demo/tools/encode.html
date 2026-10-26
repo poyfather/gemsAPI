@@ -1,0 +1,49 @@
+<!doctype html><meta charset="utf-8"><title>encode</title>
+<script src="node_modules/mp4-muxer/build/mp4-muxer.js"></script>
+<script>
+// Encodes frames/f00000.jpg ... and music.wav into H.264 + AAC MP4 with WebCodecs and mp4-muxer.
+window.encode = async function (nFrames, fps, w, h, framesDir, audioUrl, bitrate = 9_000_000) {
+  let failure = null; const fail = (e) => { failure = e; };
+  const target = new Mp4Muxer.ArrayBufferTarget();
+  const muxer = new Mp4Muxer.Muxer({ target, fastStart: "in-memory",
+    video: { codec: "avc", width: w, height: h, frameRate: fps },
+    audio: audioUrl ? { codec: "aac", numberOfChannels: 2, sampleRate: 48000 } : undefined });
+  const venc = new VideoEncoder({ output: (c, m) => muxer.addVideoChunk(c, m), error: fail });
+  venc.configure({ codec: "avc1.640028", width: w, height: h, bitrate, framerate: fps, latencyMode: "quality", avc: { format: "avc" } });
+  for (let i = 0; i < nFrames; i++) {
+    const blob = await (await fetch(`${framesDir}/f${String(i).padStart(5, "0")}.jpg`)).blob();
+    const bmp = await createImageBitmap(blob, { resizeWidth: w, resizeHeight: h, resizeQuality: "high" });
+    const frame = new VideoFrame(bmp, { timestamp: Math.round(i * 1e6 / fps), duration: Math.round(1e6 / fps) });
+    venc.encode(frame, { keyFrame: i % (fps * 2) === 0 }); window.PROG = 'video ' + i + ' queue ' + venc.encodeQueueSize;
+    frame.close(); bmp.close();
+    if (venc.encodeQueueSize > 8) await new Promise((r) => setTimeout(r, 5));
+  }
+  if (failure) throw failure;
+  await venc.flush();
+  if (audioUrl) {
+    const buf = await (await fetch(audioUrl)).arrayBuffer();
+    const ctx = new OfflineAudioContext(2, 48000, 48000);
+    const audio = await ctx.decodeAudioData(buf);
+    const aenc = new AudioEncoder({ output: (c, m) => muxer.addAudioChunk(c, m), error: fail });
+    aenc.configure({ codec: "mp4a.40.2", sampleRate: 48000, numberOfChannels: 2, bitrate: 192000 });
+    const total = Math.min(audio.length, Math.round(nFrames / fps * 48000)), step = 4800;
+    const L = audio.getChannelData(0), R = audio.getChannelData(1);
+    for (let off = 0; off < total; off += step) {
+      const n = Math.min(step, total - off), data = new Float32Array(n * 2);
+      data.set(L.subarray(off, off + n), 0); data.set(R.subarray(off, off + n), n);
+      const ad = new AudioData({ format: "f32-planar", sampleRate: 48000, numberOfFrames: n, numberOfChannels: 2, timestamp: Math.round(off / 48 * 1000), data });
+      aenc.encode(ad); ad.close(); window.PROG = 'audio ' + off;
+    }
+    if (failure) throw failure;
+    await Promise.race([aenc.flush(), new Promise((_, j) => setTimeout(() => j(new Error('audio flush timed out: ' + (failure && failure.message))), 60000))]);
+  }
+  window.PROG = 'finalizing'; muxer.finalize(); window.PROG = 'done';
+  window.OUT = new Uint8Array(target.buffer);
+  return window.OUT.length;
+};
+window.chunk = function (i, size) {
+  const part = window.OUT.subarray(i * size, (i + 1) * size); let s = "";
+  for (let k = 0; k < part.length; k += 0x8000) s += String.fromCharCode.apply(null, part.subarray(k, k + 0x8000));
+  return btoa(s);
+};
+</script>

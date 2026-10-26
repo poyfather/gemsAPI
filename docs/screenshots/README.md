@@ -4,7 +4,7 @@ The pictures in the main README, and how to make them again. They are taken from
 
 | File | What it shows |
 |---|---|
-| `compare-answers.png` | The Compare page: version 1 and version 2 of `code_reviewer` answering one question side by side. The README's main picture. |
+| `compare-answers.png` | The Compare page: version 1 and version 2 of `code_reviewer` answering one question side by side. Its answers are the side by side moment of the demo video in `../demo/`. |
 | `compare-tests.png` | The same two versions through the four tests. In the run pictured, version 1 passed 1 of 4 and version 2 passed 3 of 4; the recorded runs on the prompt's page gave 2 of 4 and 4 of 4. A 4B model varies from run to run. |
 | `prompt-page.png` | `code_reviewer`'s page: its tests with past scores against the baseline, and its history with the diff from version 1 to version 2. |
 | `library.png` | The library of prompts and assistants. |
