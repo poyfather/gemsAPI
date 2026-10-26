@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="690" viewBox="0 0 1200 690" font-family="Segoe UI, -apple-system, BlinkMacSystemFont, Helvetica Neue, Arial, sans-serif" role="img" aria-labelledby="t d"><title id="t">Resolving engineering_lead</title><desc id="d">Load engineering_lead, expand code_reviewer and then base_assistant depth first, splice the text back up, collect the blanks and their specs, check and default them, fill every blank in one pass, swap in the worked examples, and return the prompt with the referenced gems.</desc><defs><marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#3557d6"/></marker><marker id="arrowStart" viewBox="0 0 10 10" refX="1.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#3557d6"/></marker><filter id="shadow" x="-5%" y="-5%" width="110%" height="120%"><feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#1e3a8a" flood-opacity="0.10"/></filter></defs><rect width="1200" height="690" fill="#ffffff"/><text x="600" y="52" font-size="34" font-weight="800" fill="#14213d" text-anchor="middle">Resolving engineering_lead</text>
+<text x="600" y="82" font-size="17" font-weight="500" fill="#5b6577" text-anchor="middle">with language = &quot;Python&quot; and team_size = &quot;4&quot;</text>
+<rect x="40" y="112" width="250" height="140" rx="14" fill="#eef4fe" stroke="#3b82f6" stroke-width="2" filter="url(#shadow)"/>
+<circle cx="66.0" cy="140.0" r="13" fill="#1d4ed8"/>
+<text x="66" y="144.3" font-size="12" font-weight="800" fill="#ffffff" text-anchor="middle">1</text>
+<text x="88" y="145" font-size="14.5" font-weight="800" fill="#14213d" text-anchor="start">Load engineering_lead</text>
+<text x="60" y="178" font-size="13" font-weight="400" fill="#344054" text-anchor="start">checks depth (10 at most)</text>
+<text x="60" y="199" font-size="13" font-weight="400" fill="#344054" text-anchor="start">and the chain for cycles</text>
+<text x="60" y="220" font-size="13" font-weight="400" fill="#344054" text-anchor="start">before any query</text>
+<path d="M292,182 L328,182" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<rect x="330" y="112" width="250" height="140" rx="14" fill="#eef4fe" stroke="#3b82f6" stroke-width="2" filter="url(#shadow)"/>
+<circle cx="356.0" cy="140.0" r="13" fill="#1d4ed8"/>
+<text x="356" y="144.3" font-size="12" font-weight="800" fill="#ffffff" text-anchor="middle">2</text>
+<text x="378" y="145" font-size="14.5" font-weight="800" fill="#14213d" text-anchor="start">Expand code_reviewer</text>
+<text x="350" y="178" font-size="13" font-weight="400" fill="#344054" text-anchor="start">found {{gem:code_reviewer}}:</text>
+<text x="350" y="199" font-size="13" font-weight="400" fill="#344054" text-anchor="start">recurse, depth 1; its</text>
+<text x="350" y="220" font-size="13" font-weight="400" fill="#344054" text-anchor="start">examples get a placeholder</text>
+<path d="M582,182 L618,182" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<rect x="620" y="112" width="250" height="140" rx="14" fill="#eef4fe" stroke="#3b82f6" stroke-width="2" filter="url(#shadow)"/>
+<circle cx="646.0" cy="140.0" r="13" fill="#1d4ed8"/>
+<text x="646" y="144.3" font-size="12" font-weight="800" fill="#ffffff" text-anchor="middle">3</text>
+<text x="668" y="145" font-size="14.5" font-weight="800" fill="#14213d" text-anchor="start">Expand base_assistant</text>
+<text x="640" y="178" font-size="13" font-weight="400" fill="#344054" text-anchor="start">found {{gem:base_assistant}}:</text>
+<text x="640" y="199" font-size="13" font-weight="400" fill="#344054" text-anchor="start">recurse, depth 2; it has</text>
+<text x="640" y="220" font-size="13" font-weight="400" fill="#344054" text-anchor="start">no references, so it returns</text>
+<path d="M872,182 L908,182" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<rect x="910" y="112" width="250" height="140" rx="14" fill="#eef4fe" stroke="#3b82f6" stroke-width="2" filter="url(#shadow)"/>
+<circle cx="936.0" cy="140.0" r="13" fill="#1d4ed8"/>
+<text x="936" y="144.3" font-size="12" font-weight="800" fill="#ffffff" text-anchor="middle">4</text>
+<text x="958" y="145" font-size="14.5" font-weight="800" fill="#14213d" text-anchor="start">Splice back up</text>
+<text x="930" y="178" font-size="13" font-weight="400" fill="#344054" text-anchor="start">base text into</text>
+<text x="930" y="199" font-size="13" font-weight="400" fill="#344054" text-anchor="start">code_reviewer, that into</text>
+<text x="930" y="220" font-size="13" font-weight="400" fill="#344054" text-anchor="start">engineering_lead</text>
+<rect x="910" y="298" width="250" height="140" rx="14" fill="#f5f0ff" stroke="#8b5cf6" stroke-width="2" filter="url(#shadow)"/>
+<circle cx="936.0" cy="326.0" r="13" fill="#6d28d9"/>
+<text x="936" y="330.3" font-size="12" font-weight="800" fill="#ffffff" text-anchor="middle">5</text>
+<text x="958" y="331" font-size="14.5" font-weight="800" fill="#14213d" text-anchor="start">Collect the blanks</text>
+<text x="930" y="364" font-size="13" font-weight="400" fill="#344054" text-anchor="start">{language}, {team_size}</text>
+<text x="930" y="385" font-size="13" font-weight="400" fill="#344054" text-anchor="start">specs from embedded gems,</text>
+<text x="930" y="406" font-size="13" font-weight="400" fill="#344054" text-anchor="start">the outer gem wins</text>
+<path d="M908,368 L872,368" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<rect x="620" y="298" width="250" height="140" rx="14" fill="#f5f0ff" stroke="#8b5cf6" stroke-width="2" filter="url(#shadow)"/>
+<circle cx="646.0" cy="326.0" r="13" fill="#6d28d9"/>
+<text x="646" y="330.3" font-size="12" font-weight="800" fill="#ffffff" text-anchor="middle">6</text>
+<text x="668" y="331" font-size="14.5" font-weight="800" fill="#14213d" text-anchor="start">Check and default</text>
+<text x="640" y="364" font-size="13" font-weight="400" fill="#344054" text-anchor="start">required, type, choices;</text>
+<text x="640" y="385" font-size="13" font-weight="400" fill="#344054" text-anchor="start">empty ones get defaults;</text>
+<text x="640" y="406" font-size="13" font-weight="400" fill="#344054" text-anchor="start">errors stop with a 400</text>
+<path d="M618,368 L582,368" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<rect x="330" y="298" width="250" height="140" rx="14" fill="#f5f0ff" stroke="#8b5cf6" stroke-width="2" filter="url(#shadow)"/>
+<circle cx="356.0" cy="326.0" r="13" fill="#6d28d9"/>
+<text x="356" y="330.3" font-size="12" font-weight="800" fill="#ffffff" text-anchor="middle">7</text>
+<text x="378" y="331" font-size="14.5" font-weight="800" fill="#14213d" text-anchor="start">Fill in one pass</text>
+<text x="350" y="364" font-size="13" font-weight="400" fill="#344054" text-anchor="start">every blank at every level</text>
+<text x="350" y="385" font-size="13" font-weight="400" fill="#344054" text-anchor="start">a value with braces</text>
+<text x="350" y="406" font-size="13" font-weight="400" fill="#344054" text-anchor="start">is never filled again</text>
+<path d="M328,368 L292,368" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<rect x="40" y="298" width="250" height="140" rx="14" fill="#ecf8ef" stroke="#34a853" stroke-width="2" filter="url(#shadow)"/>
+<circle cx="66.0" cy="326.0" r="13" fill="#1e7a37"/>
+<text x="66" y="330.3" font-size="12" font-weight="800" fill="#ffffff" text-anchor="middle">8</text>
+<text x="88" y="331" font-size="14.5" font-weight="800" fill="#14213d" text-anchor="start">Swap in examples</text>
+<text x="60" y="364" font-size="13" font-weight="400" fill="#344054" text-anchor="start">&lt;examples&gt; at each</text>
+<text x="60" y="385" font-size="13" font-weight="400" fill="#344054" text-anchor="start">{{examples}} marker,</text>
+<text x="60" y="406" font-size="13" font-weight="400" fill="#344054" text-anchor="start">as literal text</text>
+<path d="M1035.0,252 L1035.0,298" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<text x="70" y="104" font-size="11.5" font-weight="800" fill="#1d4ed8" text-anchor="start">REFERENCES FIRST</text>
+<text x="70" y="290" font-size="11.5" font-weight="800" fill="#6d28d9" text-anchor="start">THEN BLANKS AND EXAMPLES</text>
+<path d="M165.0,438 L165.0,478" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<rect x="40" y="480" width="1120" height="92" rx="14" fill="#ffffff" stroke="#34a853" stroke-width="2.2" filter="url(#shadow)"/>
+<circle cx="80" cy="526" r="16" fill="#34a853"/><path d="M72 526l5 5 10-10" stroke="#fff" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="108" y="516" font-size="19" font-weight="800" fill="#14213d" text-anchor="start">The resolved prompt</text>
+<text x="108" y="540" font-size="13.5" font-weight="400" fill="#5b6577" text-anchor="start">with referenced_gems [code_reviewer, base_assistant], and the blanks used, defaulted and missing</text>
+<text x="108" y="560" font-size="13.5" font-weight="400" fill="#5b6577" text-anchor="start">chat, runs, tests and MCP all start here; a past version from the history resolves the same way</text>
+<rect x="40" y="594" width="1120" height="70" rx="12" fill="#f3faf5" stroke="#cfe9d6" stroke-width="1.5"/>
+<g transform="translate(59.0,616.0) scale(1.083)" fill="none" stroke="#1e7a37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z"/><path d="M9 12l2 2 4-4"/></g>
+<text x="98" y="636" font-size="20" font-weight="800" fill="#14213d" text-anchor="start">Safety rails</text>
+<line x1="252.0" y1="608" x2="252.0" y2="650" stroke="#cfe9d6" stroke-width="1.5"/>
+<circle cx="282.0" cy="629" r="11" fill="#1e7a37"/>
+<path d="M276.0 629l4 4 7-7" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="300.0" y="634" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">At most 10 levels deep</text>
+<line x1="474.5" y1="608" x2="474.5" y2="650" stroke="#cfe9d6" stroke-width="1.5"/>
+<circle cx="504.5" cy="629" r="11" fill="#1e7a37"/>
+<path d="M498.5 629l4 4 7-7" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="522.5" y="625" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">A cycle stops</text>
+<text x="522.5" y="642" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">before any query</text>
+<line x1="697.0" y1="608" x2="697.0" y2="650" stroke="#cfe9d6" stroke-width="1.5"/>
+<circle cx="727.0" cy="629" r="11" fill="#1e7a37"/>
+<path d="M721.0 629l4 4 7-7" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="745.0" y="625" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">References first,</text>
+<text x="745.0" y="642" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">blanks last</text>
+<line x1="919.5" y1="608" x2="919.5" y2="650" stroke="#cfe9d6" stroke-width="1.5"/>
+<circle cx="949.5" cy="629" r="11" fill="#1e7a37"/>
+<path d="M943.5 629l4 4 7-7" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="967.5" y="625" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">Examples stay</text>
+<text x="967.5" y="642" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">literal text</text></svg>

@@ -1,0 +1,267 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1022" viewBox="0 0 1200 1022" font-family="Segoe UI, -apple-system, BlinkMacSystemFont, Helvetica Neue, Arial, sans-serif" role="img" aria-labelledby="t d"><title id="t">Data Model</title><desc id="d">gems is the centre: gem_versions, eval_cases, eval_runs and runs point at it; run_events belong to runs; memories link to runs and gems loosely; pipelines own pipeline_runs by name, whose attempts hold run ids.</desc><defs><marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#3557d6"/></marker><marker id="arrowStart" viewBox="0 0 10 10" refX="1.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#3557d6"/></marker><filter id="shadow" x="-5%" y="-5%" width="110%" height="120%"><feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#1e3a8a" flood-opacity="0.10"/></filter></defs><rect width="1200" height="1022" fill="#ffffff"/><text x="600" y="52" font-size="34" font-weight="800" fill="#14213d" text-anchor="middle">Data Model</text>
+<text x="600" y="82" font-size="17" font-weight="500" fill="#5b6577" text-anchor="middle">The same tables in SQLite on this PC and in Supabase Postgres • RLS on, no policies</text>
+<rect x="440" y="112" width="320" height="354" rx="12" fill="#ffffff" stroke="#3b82f6" stroke-width="1.8" filter="url(#shadow)"/>
+<path d="M440 150 V124 a12 12 0 0 1 12 -12 H748 a12 12 0 0 1 12 12 V150 Z" fill="#eef4fe"/>
+<line x1="440" y1="150" x2="760" y2="150" stroke="#3b82f6" stroke-width="1.2"/>
+<g transform="translate(453.0,122.0) scale(0.750)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l10 5-10 5L2 7z"/><path d="M2 12l10 5 10-5M2 17l10 5 10-5"/></g>
+<text x="478" y="137" font-size="15" font-weight="800" fill="#14213d" text-anchor="start">gems</text>
+<rect x="452" y="157" width="21.2" height="15" rx="4" fill="#1d4ed8"/>
+<text x="462.6" y="168" font-size="10" font-weight="800" fill="#ffffff" text-anchor="middle">PK</text>
+<text x="486" y="169" font-size="12.5" font-weight="600" fill="#14213d" text-anchor="start">id</text>
+<text x="748" y="169" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">uuid</text>
+<rect x="452" y="176" width="21.2" height="15" rx="4" fill="#1d4ed8"/>
+<text x="462.6" y="187" font-size="10" font-weight="800" fill="#ffffff" text-anchor="middle">UQ</text>
+<text x="486" y="188" font-size="12.5" font-weight="600" fill="#14213d" text-anchor="start">name</text>
+<text x="748" y="188" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">text, unique</text>
+<text x="486" y="207" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">description</text>
+<text x="748" y="207" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">text</text>
+<text x="486" y="226" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">system_prompt</text>
+<text x="748" y="226" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">{blanks}, {{gem:}}</text>
+<text x="486" y="245" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">model</text>
+<text x="748" y="245" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">text</text>
+<text x="486" y="264" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">provider</text>
+<text x="748" y="264" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">anthropic, openai, local, auto</text>
+<text x="486" y="283" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">kind</text>
+<text x="748" y="283" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">prompt or agent</text>
+<text x="486" y="302" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">tools</text>
+<text x="748" y="302" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">text[]</text>
+<text x="486" y="321" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">tags</text>
+<text x="748" y="321" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">text[], GIN index</text>
+<text x="486" y="340" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">variables</text>
+<text x="748" y="340" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">text[], derived</text>
+<text x="486" y="359" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">variable_specs</text>
+<text x="748" y="359" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">json</text>
+<text x="486" y="378" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">examples</text>
+<text x="748" y="378" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">json</text>
+<text x="486" y="397" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">memory</text>
+<text x="748" y="397" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">bool</text>
+<text x="486" y="416" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">is_active</text>
+<text x="748" y="416" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">bool, soft delete</text>
+<text x="486" y="435" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">created_at</text>
+<text x="748" y="435" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">timestamptz</text>
+<text x="486" y="454" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">updated_at</text>
+<text x="748" y="454" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">trigger</text>
+<rect x="40" y="112" width="320" height="203" rx="12" fill="#ffffff" stroke="#93b4f5" stroke-width="1.8" filter="url(#shadow)"/>
+<path d="M40 150 V124 a12 12 0 0 1 12 -12 H348 a12 12 0 0 1 12 12 V150 Z" fill="#f5f9ff"/>
+<line x1="40" y1="150" x2="360" y2="150" stroke="#93b4f5" stroke-width="1.2"/>
+<g transform="translate(53.0,122.0) scale(0.750)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></g>
+<text x="78" y="137" font-size="15" font-weight="800" fill="#14213d" text-anchor="start">gem_versions</text>
+<rect x="52" y="157" width="21.2" height="15" rx="4" fill="#1d4ed8"/>
+<text x="62.6" y="168" font-size="10" font-weight="800" fill="#ffffff" text-anchor="middle">PK</text>
+<text x="86" y="169" font-size="12.5" font-weight="600" fill="#14213d" text-anchor="start">id</text>
+<text x="348" y="169" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">uuid</text>
+<rect x="52" y="176" width="21.2" height="15" rx="4" fill="#1d4ed8"/>
+<text x="62.6" y="187" font-size="10" font-weight="800" fill="#ffffff" text-anchor="middle">FK</text>
+<text x="86" y="188" font-size="12.5" font-weight="600" fill="#14213d" text-anchor="start">gem_id</text>
+<text x="348" y="188" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">uuid</text>
+<text x="86" y="207" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">version</text>
+<text x="348" y="207" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">int, unique per gem</text>
+<text x="86" y="226" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">snapshot</text>
+<text x="348" y="226" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">json of the gem</text>
+<text x="86" y="245" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">note</text>
+<text x="348" y="245" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">text</text>
+<text x="86" y="264" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">source</text>
+<text x="348" y="264" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">api, mcp, revert, baseline</text>
+<text x="86" y="283" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">created_at</text>
+<text x="348" y="283" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">timestamptz</text>
+<text x="52" y="305" font-size="11.5" font-weight="400" fill="#1d4ed8" text-anchor="start" font-style="italic">append only; a revert is a new row</text>
+<rect x="40" y="337" width="320" height="183" rx="12" fill="#ffffff" stroke="#93b4f5" stroke-width="1.8" filter="url(#shadow)"/>
+<path d="M40 375 V349 a12 12 0 0 1 12 -12 H348 a12 12 0 0 1 12 12 V375 Z" fill="#f5f9ff"/>
+<line x1="40" y1="375" x2="360" y2="375" stroke="#93b4f5" stroke-width="1.2"/>
+<g transform="translate(53.0,347.0) scale(0.750)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M7 12l3.5 3.5L17 9"/></g>
+<text x="78" y="362" font-size="15" font-weight="800" fill="#14213d" text-anchor="start">eval_cases</text>
+<rect x="52" y="382" width="21.2" height="15" rx="4" fill="#1d4ed8"/>
+<text x="62.6" y="393" font-size="10" font-weight="800" fill="#ffffff" text-anchor="middle">PK</text>
+<text x="86" y="394" font-size="12.5" font-weight="600" fill="#14213d" text-anchor="start">id</text>
+<text x="348" y="394" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">uuid</text>
+<rect x="52" y="401" width="21.2" height="15" rx="4" fill="#1d4ed8"/>
+<text x="62.6" y="412" font-size="10" font-weight="800" fill="#ffffff" text-anchor="middle">FK</text>
+<text x="86" y="413" font-size="12.5" font-weight="600" fill="#14213d" text-anchor="start">gem_id</text>
+<text x="348" y="413" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">uuid</text>
+<text x="86" y="432" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">name</text>
+<text x="348" y="432" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">text</text>
+<text x="86" y="451" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">input</text>
+<text x="348" y="451" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">text</text>
+<text x="86" y="470" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">variables</text>
+<text x="348" y="470" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">json</text>
+<text x="86" y="489" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">check</text>
+<text x="348" y="489" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">contains ... judge</text>
+<text x="86" y="508" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">expected</text>
+<text x="348" y="508" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">text</text>
+<rect x="40" y="542" width="320" height="183" rx="12" fill="#ffffff" stroke="#93b4f5" stroke-width="1.8" filter="url(#shadow)"/>
+<path d="M40 580 V554 a12 12 0 0 1 12 -12 H348 a12 12 0 0 1 12 12 V580 Z" fill="#f5f9ff"/>
+<line x1="40" y1="580" x2="360" y2="580" stroke="#93b4f5" stroke-width="1.2"/>
+<g transform="translate(53.0,552.0) scale(0.750)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20v-7M12 20V5M19 20v-10"/></g>
+<text x="78" y="567" font-size="15" font-weight="800" fill="#14213d" text-anchor="start">eval_runs</text>
+<rect x="52" y="587" width="21.2" height="15" rx="4" fill="#1d4ed8"/>
+<text x="62.6" y="598" font-size="10" font-weight="800" fill="#ffffff" text-anchor="middle">PK</text>
+<text x="86" y="599" font-size="12.5" font-weight="600" fill="#14213d" text-anchor="start">id</text>
+<text x="348" y="599" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">uuid</text>
+<rect x="52" y="606" width="21.2" height="15" rx="4" fill="#1d4ed8"/>
+<text x="62.6" y="617" font-size="10" font-weight="800" fill="#ffffff" text-anchor="middle">FK</text>
+<text x="86" y="618" font-size="12.5" font-weight="600" fill="#14213d" text-anchor="start">gem_id</text>
+<text x="348" y="618" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">uuid</text>
+<text x="86" y="637" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">gem_version</text>
+<text x="348" y="637" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">int</text>
+<text x="86" y="656" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">provider, model</text>
+<text x="348" y="656" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">text</text>
+<text x="86" y="675" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">passed, total</text>
+<text x="348" y="675" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">int</text>
+<text x="86" y="694" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">results</text>
+<text x="348" y="694" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">json per case</text>
+<text x="86" y="713" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">baseline</text>
+<text x="348" y="713" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">bool</text>
+<rect x="840" y="112" width="320" height="221" rx="12" fill="#ffffff" stroke="#8b5cf6" stroke-width="1.8" filter="url(#shadow)"/>
+<path d="M840 150 V124 a12 12 0 0 1 12 -12 H1148 a12 12 0 0 1 12 12 V150 Z" fill="#f5f0ff"/>
+<line x1="840" y1="150" x2="1160" y2="150" stroke="#8b5cf6" stroke-width="1.2"/>
+<g transform="translate(853.0,122.0) scale(0.750)" fill="none" stroke="#6d28d9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 0 1-14.3 4.9M4 12a8 8 0 0 1 14.3-4.9M18.5 3v4.5H14M5.5 21v-4.5H10"/></g>
+<text x="878" y="137" font-size="15" font-weight="800" fill="#14213d" text-anchor="start">runs</text>
+<rect x="852" y="157" width="21.2" height="15" rx="4" fill="#6d28d9"/>
+<text x="862.6" y="168" font-size="10" font-weight="800" fill="#ffffff" text-anchor="middle">PK</text>
+<text x="886" y="169" font-size="12.5" font-weight="600" fill="#14213d" text-anchor="start">id</text>
+<text x="1148" y="169" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">uuid</text>
+<rect x="852" y="176" width="21.2" height="15" rx="4" fill="#6d28d9"/>
+<text x="862.6" y="187" font-size="10" font-weight="800" fill="#ffffff" text-anchor="middle">FK</text>
+<text x="886" y="188" font-size="12.5" font-weight="600" fill="#14213d" text-anchor="start">gem_id</text>
+<text x="1148" y="188" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">uuid</text>
+<text x="886" y="207" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">gem_name</text>
+<text x="1148" y="207" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">text</text>
+<text x="886" y="226" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">status</text>
+<text x="1148" y="226" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">running ... max_steps</text>
+<text x="886" y="245" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">model, provider</text>
+<text x="1148" y="245" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">text</text>
+<text x="886" y="264" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">input, output</text>
+<text x="1148" y="264" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">text</text>
+<text x="886" y="283" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">steps, tokens</text>
+<text x="1148" y="283" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">int</text>
+<text x="886" y="302" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">state</text>
+<text x="1148" y="302" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">json while waiting</text>
+<text x="886" y="321" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">created_at, finished_at</text>
+<text x="1148" y="321" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">timestamptz</text>
+<rect x="840" y="355" width="320" height="145" rx="12" fill="#ffffff" stroke="#8b5cf6" stroke-width="1.8" filter="url(#shadow)"/>
+<path d="M840 393 V367 a12 12 0 0 1 12 -12 H1148 a12 12 0 0 1 12 12 V393 Z" fill="#f5f0ff"/>
+<line x1="840" y1="393" x2="1160" y2="393" stroke="#8b5cf6" stroke-width="1.2"/>
+<g transform="translate(853.0,365.0) scale(0.750)" fill="none" stroke="#6d28d9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18v-6a4 4 0 0 1 4-4h11M15 4l4 4-4 4"/></g>
+<text x="878" y="380" font-size="15" font-weight="800" fill="#14213d" text-anchor="start">run_events</text>
+<rect x="852" y="400" width="21.2" height="15" rx="4" fill="#6d28d9"/>
+<text x="862.6" y="411" font-size="10" font-weight="800" fill="#ffffff" text-anchor="middle">PK</text>
+<text x="886" y="412" font-size="12.5" font-weight="600" fill="#14213d" text-anchor="start">id</text>
+<text x="1148" y="412" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">uuid</text>
+<rect x="852" y="419" width="21.2" height="15" rx="4" fill="#6d28d9"/>
+<text x="862.6" y="430" font-size="10" font-weight="800" fill="#ffffff" text-anchor="middle">FK</text>
+<text x="886" y="431" font-size="12.5" font-weight="600" fill="#14213d" text-anchor="start">run_id</text>
+<text x="1148" y="431" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">uuid, cascade</text>
+<text x="886" y="450" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">seq</text>
+<text x="1148" y="450" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">int, unique per run</text>
+<text x="886" y="469" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">type</text>
+<text x="1148" y="469" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">text</text>
+<text x="886" y="488" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">data</text>
+<text x="1148" y="488" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">json</text>
+<rect x="840" y="522" width="320" height="183" rx="12" fill="#ffffff" stroke="#34a853" stroke-width="1.8" filter="url(#shadow)"/>
+<path d="M840 560 V534 a12 12 0 0 1 12 -12 H1148 a12 12 0 0 1 12 12 V560 Z" fill="#ecf8ef"/>
+<line x1="840" y1="560" x2="1160" y2="560" stroke="#34a853" stroke-width="1.2"/>
+<g transform="translate(853.0,532.0) scale(0.750)" fill="none" stroke="#1e7a37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></g>
+<text x="878" y="547" font-size="15" font-weight="800" fill="#14213d" text-anchor="start">memories</text>
+<rect x="852" y="567" width="21.2" height="15" rx="4" fill="#1e7a37"/>
+<text x="862.6" y="578" font-size="10" font-weight="800" fill="#ffffff" text-anchor="middle">PK</text>
+<text x="886" y="579" font-size="12.5" font-weight="600" fill="#14213d" text-anchor="start">id</text>
+<text x="1148" y="579" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">uuid</text>
+<text x="886" y="598" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">kind</text>
+<text x="1148" y="598" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">observation ... note</text>
+<text x="886" y="617" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">text</text>
+<text x="1148" y="617" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">text</text>
+<text x="886" y="636" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">source</text>
+<text x="1148" y="636" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">run, chat, mcp, ...</text>
+<text x="886" y="655" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">gem_name, run_id</text>
+<text x="1148" y="655" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">loose links</text>
+<text x="886" y="674" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">tags, scope</text>
+<text x="1148" y="674" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">text</text>
+<text x="886" y="693" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">search</text>
+<text x="1148" y="693" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">FTS5 or tsvector</text>
+<rect x="440" y="506" width="320" height="164" rx="12" fill="#ffffff" stroke="#f08c2e" stroke-width="1.8" filter="url(#shadow)"/>
+<path d="M440 544 V518 a12 12 0 0 1 12 -12 H748 a12 12 0 0 1 12 12 V544 Z" fill="#fff5ea"/>
+<line x1="440" y1="544" x2="760" y2="544" stroke="#f08c2e" stroke-width="1.2"/>
+<g transform="translate(453.0,516.0) scale(0.750)" fill="none" stroke="#c2410c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18v-6a4 4 0 0 1 4-4h11M15 4l4 4-4 4"/></g>
+<text x="478" y="531" font-size="15" font-weight="800" fill="#14213d" text-anchor="start">pipelines</text>
+<rect x="452" y="551" width="21.2" height="15" rx="4" fill="#c2410c"/>
+<text x="462.6" y="562" font-size="10" font-weight="800" fill="#ffffff" text-anchor="middle">PK</text>
+<text x="486" y="563" font-size="12.5" font-weight="600" fill="#14213d" text-anchor="start">id</text>
+<text x="748" y="563" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">uuid</text>
+<rect x="452" y="570" width="21.2" height="15" rx="4" fill="#c2410c"/>
+<text x="462.6" y="581" font-size="10" font-weight="800" fill="#ffffff" text-anchor="middle">UQ</text>
+<text x="486" y="582" font-size="12.5" font-weight="600" fill="#14213d" text-anchor="start">name</text>
+<text x="748" y="582" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">text, unique</text>
+<text x="486" y="601" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">builder</text>
+<text x="748" y="601" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">gem name</text>
+<text x="486" y="620" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">gates</text>
+<text x="748" y="620" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">json</text>
+<text x="486" y="639" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">max_attempts</text>
+<text x="748" y="639" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">int</text>
+<text x="486" y="658" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">acceptance</text>
+<text x="748" y="658" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">bool</text>
+<rect x="440" y="710" width="320" height="164" rx="12" fill="#ffffff" stroke="#f08c2e" stroke-width="1.8" filter="url(#shadow)"/>
+<path d="M440 748 V722 a12 12 0 0 1 12 -12 H748 a12 12 0 0 1 12 12 V748 Z" fill="#fff5ea"/>
+<line x1="440" y1="748" x2="760" y2="748" stroke="#f08c2e" stroke-width="1.2"/>
+<g transform="translate(453.0,720.0) scale(0.750)" fill="none" stroke="#c2410c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 0 1-14.3 4.9M4 12a8 8 0 0 1 14.3-4.9M18.5 3v4.5H14M5.5 21v-4.5H10"/></g>
+<text x="478" y="735" font-size="15" font-weight="800" fill="#14213d" text-anchor="start">pipeline_runs</text>
+<rect x="452" y="755" width="21.2" height="15" rx="4" fill="#c2410c"/>
+<text x="462.6" y="766" font-size="10" font-weight="800" fill="#ffffff" text-anchor="middle">PK</text>
+<text x="486" y="767" font-size="12.5" font-weight="600" fill="#14213d" text-anchor="start">id</text>
+<text x="748" y="767" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">uuid</text>
+<text x="486" y="786" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">pipeline_name</text>
+<text x="748" y="786" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">by name</text>
+<text x="486" y="805" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">status</text>
+<text x="748" y="805" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">running ... passed</text>
+<text x="486" y="824" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">input, output</text>
+<text x="748" y="824" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">text</text>
+<text x="486" y="843" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">attempts</text>
+<text x="748" y="843" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">json: run ids, verdicts</text>
+<text x="486" y="862" font-size="12.5" font-weight="400" fill="#14213d" text-anchor="start">state, waiting_run_id</text>
+<text x="748" y="862" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="end">while it waits</text>
+<path d="M440 172 H418 M418 131 V561" stroke="#3557d6" stroke-width="1.9" fill="none"/>
+<path d="M418,131 L362,131" fill="none" stroke="#3557d6" stroke-width="1.9" marker-end="url(#arrow)"/>
+<rect x="369.6" y="109.0" width="42.8" height="19.0" rx="5" fill="#ffffff" stroke="#e3e9f5" stroke-width="1"/>
+<text x="391.0" y="123" font-size="11" font-weight="500" fill="#3557d6" text-anchor="middle">1 : n</text>
+<path d="M418,356 L362,356" fill="none" stroke="#3557d6" stroke-width="1.9" marker-end="url(#arrow)"/>
+<rect x="369.6" y="334.0" width="42.8" height="19.0" rx="5" fill="#ffffff" stroke="#e3e9f5" stroke-width="1"/>
+<text x="391.0" y="348" font-size="11" font-weight="500" fill="#3557d6" text-anchor="middle">1 : n</text>
+<path d="M418,561 L362,561" fill="none" stroke="#3557d6" stroke-width="1.9" marker-end="url(#arrow)"/>
+<rect x="369.6" y="539.0" width="42.8" height="19.0" rx="5" fill="#ffffff" stroke="#e3e9f5" stroke-width="1"/>
+<text x="391.0" y="553" font-size="11" font-weight="500" fill="#3557d6" text-anchor="middle">1 : n</text>
+<path d="M760,172 L800,172 L800,131 L842,131" fill="none" stroke="#3557d6" stroke-width="1.9" marker-end="url(#arrow)"/>
+<rect x="778.6" y="149.0" width="42.8" height="19.0" rx="5" fill="#ffffff" stroke="#e3e9f5" stroke-width="1"/>
+<text x="800.0" y="163" font-size="11" font-weight="500" fill="#3557d6" text-anchor="middle">1 : n</text>
+<path d="M1000.0,333 L1000.0,353" fill="none" stroke="#3557d6" stroke-width="1.9" marker-end="url(#arrow)"/>
+<rect x="1012.6" y="337.0" width="42.8" height="19.0" rx="5" fill="#ffffff" stroke="#e3e9f5" stroke-width="1"/>
+<text x="1034.0" y="351" font-size="11" font-weight="500" fill="#3557d6" text-anchor="middle">1 : n</text>
+<path d="M1160 541 H1180 V172" stroke="#6b84d9" stroke-width="1.6" stroke-dasharray="6 5" fill="none"/>
+<path d="M1180,172 L1162,172" fill="none" stroke="#6b84d9" stroke-width="1.6" marker-end="url(#arrow)"/>
+<path d="M600.0,670 L600.0,708" fill="none" stroke="#6b84d9" stroke-width="1.6" stroke-dasharray="6 5" marker-end="url(#arrow)"/>
+<rect x="614.9" y="686.0" width="98.2" height="19.0" rx="5" fill="#ffffff" stroke="#e3e9f5" stroke-width="1"/>
+<text x="664.0" y="700" font-size="11" font-weight="500" fill="#3557d6" text-anchor="middle">1 : n, by name</text>
+<path d="M760 855 H818 V212" stroke="#6b84d9" stroke-width="1.6" stroke-dasharray="6 5" fill="none"/>
+<path d="M818,212 L838,212" fill="none" stroke="#6b84d9" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="600.0" y="896" font-size="12" font-weight="500" fill="#6b84d9" text-anchor="middle">dashed: a link by name or inside JSON, no foreign key</text>
+<rect x="40" y="930" width="1120" height="70" rx="12" fill="#f3faf5" stroke="#cfe9d6" stroke-width="1.5"/>
+<g transform="translate(59.0,952.0) scale(1.083)" fill="none" stroke="#1e7a37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M7 12l3.5 3.5L17 9"/></g>
+<text x="98" y="972" font-size="20" font-weight="800" fill="#14213d" text-anchor="start">Key points</text>
+<line x1="252.0" y1="944" x2="252.0" y2="986" stroke="#cfe9d6" stroke-width="1.5"/>
+<circle cx="282.0" cy="965" r="11" fill="#1e7a37"/>
+<path d="M276.0 965l4 4 7-7" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="300.0" y="961" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">References between gems</text>
+<text x="300.0" y="978" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">are text</text>
+<line x1="474.5" y1="944" x2="474.5" y2="986" stroke="#cfe9d6" stroke-width="1.5"/>
+<circle cx="504.5" cy="965" r="11" fill="#1e7a37"/>
+<path d="M498.5 965l4 4 7-7" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="522.5" y="961" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">Deletes are</text>
+<text x="522.5" y="978" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">soft: is_active</text>
+<line x1="697.0" y1="944" x2="697.0" y2="986" stroke="#cfe9d6" stroke-width="1.5"/>
+<circle cx="727.0" cy="965" r="11" fill="#1e7a37"/>
+<path d="M721.0 965l4 4 7-7" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="745.0" y="961" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">Versions are</text>
+<text x="745.0" y="978" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">never edited</text>
+<line x1="919.5" y1="944" x2="919.5" y2="986" stroke="#cfe9d6" stroke-width="1.5"/>
+<circle cx="949.5" cy="965" r="11" fill="#1e7a37"/>
+<path d="M943.5 965l4 4 7-7" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="967.5" y="961" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">Service role only,</text>
+<text x="967.5" y="978" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">no anon access</text></svg>

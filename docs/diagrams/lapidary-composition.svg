@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="768" viewBox="0 0 1200 768" font-family="Segoe UI, -apple-system, BlinkMacSystemFont, Helvetica Neue, Arial, sans-serif" role="img" aria-labelledby="t d"><title id="t">Gems Compose by Reference</title><desc id="d">engineering_lead embeds code_reviewer; six prompt gems and five assistant gems embed base_assistant; summarizer, prompt_enhancer, memory_summarizer and build_and_check stand alone.</desc><defs><marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#3557d6"/></marker><marker id="arrowStart" viewBox="0 0 10 10" refX="1.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#3557d6"/></marker><filter id="shadow" x="-5%" y="-5%" width="110%" height="120%"><feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#1e3a8a" flood-opacity="0.10"/></filter></defs><rect width="1200" height="768" fill="#ffffff"/><text x="600" y="52" font-size="34" font-weight="800" fill="#14213d" text-anchor="middle">Gems Compose by Reference</text>
+<text x="600" y="82" font-size="17" font-weight="500" fill="#5b6577" text-anchor="middle">A {{gem:name}} tag pastes another gem in; the seed library leans on base_assistant</text>
+<rect x="40" y="108" width="175.0" height="58" rx="10" fill="#ffffff" stroke="#93b4f5" stroke-width="1.6" filter="url(#shadow)"/>
+<text x="127.5" y="131" font-size="13.5" font-weight="800" fill="#14213d" text-anchor="middle">engineering_lead</text>
+<text x="127.5" y="148" font-size="12" font-weight="400" fill="#475467" text-anchor="middle">{team_size}</text>
+<path d="M127.5,166 L127.5,206" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<rect x="142.9" y="179.0" width="153.1" height="20.0" rx="5" fill="#ffffff" stroke="#e3e9f5" stroke-width="1"/>
+<text x="219.5" y="194" font-size="12" font-weight="500" fill="#3557d6" text-anchor="middle">{{gem:code_reviewer}}</text>
+<rect x="870" y="118" width="22" height="16" rx="4" fill="#ffffff" stroke="#93b4f5" stroke-width="1.8"/>
+<text x="902" y="131" font-size="13" font-weight="500" fill="#14213d" text-anchor="start">prompt: answers once</text>
+<rect x="870" y="144" width="22" height="16" rx="4" fill="#ffffff" stroke="#8b5cf6" stroke-width="1.8"/>
+<text x="902" y="157" font-size="13" font-weight="500" fill="#14213d" text-anchor="start">assistant: uses tools step by step</text>
+<rect x="40.0" y="208" width="175.0" height="58" rx="10" fill="#ffffff" stroke="#93b4f5" stroke-width="1.6" filter="url(#shadow)"/>
+<text x="127.5" y="231" font-size="13.5" font-weight="800" fill="#14213d" text-anchor="middle">code_reviewer</text>
+<text x="127.5" y="248" font-size="12" font-weight="400" fill="#475467" text-anchor="middle">{language}</text>
+<path d="M127.5 266 V292" stroke="#3557d6" stroke-width="2" fill="none"/>
+<rect x="229.0" y="208" width="175.0" height="58" rx="10" fill="#ffffff" stroke="#93b4f5" stroke-width="1.6" filter="url(#shadow)"/>
+<text x="316.5" y="231" font-size="13.5" font-weight="800" fill="#14213d" text-anchor="middle">creative_writer</text>
+<text x="316.5" y="248" font-size="12" font-weight="400" fill="#475467" text-anchor="middle">{style} {tone} {genre}</text>
+<path d="M316.5 266 V292" stroke="#3557d6" stroke-width="2" fill="none"/>
+<rect x="418.0" y="208" width="175.0" height="58" rx="10" fill="#ffffff" stroke="#93b4f5" stroke-width="1.6" filter="url(#shadow)"/>
+<text x="505.5" y="231" font-size="13.5" font-weight="800" fill="#14213d" text-anchor="middle">study_buddy</text>
+<text x="505.5" y="248" font-size="12" font-weight="400" fill="#475467" text-anchor="middle">{subject} {level}</text>
+<path d="M505.5 266 V292" stroke="#3557d6" stroke-width="2" fill="none"/>
+<rect x="607.0" y="208" width="175.0" height="58" rx="10" fill="#ffffff" stroke="#93b4f5" stroke-width="1.6" filter="url(#shadow)"/>
+<text x="694.5" y="231" font-size="13.5" font-weight="800" fill="#14213d" text-anchor="middle">writing_coach</text>
+<text x="694.5" y="248" font-size="12" font-weight="400" fill="#475467" text-anchor="middle">{audience}</text>
+<path d="M694.5 266 V292" stroke="#3557d6" stroke-width="2" fill="none"/>
+<rect x="796.0" y="208" width="175.0" height="58" rx="10" fill="#ffffff" stroke="#93b4f5" stroke-width="1.6" filter="url(#shadow)"/>
+<text x="883.5" y="231" font-size="13.5" font-weight="800" fill="#14213d" text-anchor="middle">research_assistant</text>
+<text x="883.5" y="248" font-size="12" font-weight="400" fill="#475467" text-anchor="middle">{goal}</text>
+<path d="M883.5 266 V292" stroke="#3557d6" stroke-width="2" fill="none"/>
+<rect x="985.0" y="208" width="175.0" height="58" rx="10" fill="#ffffff" stroke="#93b4f5" stroke-width="1.6" filter="url(#shadow)"/>
+<text x="1072.5" y="231" font-size="13.5" font-weight="800" fill="#14213d" text-anchor="middle">adversarial_reviewer</text>
+<text x="1072.5" y="248" font-size="12" font-weight="400" fill="#475467" text-anchor="middle">a gate, no blanks</text>
+<path d="M1072.5 266 V292" stroke="#3557d6" stroke-width="2" fill="none"/>
+<path d="M127.5 292 H1072.5" stroke="#3557d6" stroke-width="2" fill="none"/>
+<path d="M600,292 L600,318" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<rect x="390" y="320" width="420" height="74" rx="14" fill="#eef4fe" stroke="#3b82f6" stroke-width="2.2" filter="url(#shadow)"/>
+<circle cx="424" cy="357" r="22.1" fill="#ffffff"/>
+<g transform="translate(411.0,344.0) scale(1.083)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l10 5-10 5L2 7z"/><path d="M2 12l10 5 10-5M2 17l10 5 10-5"/></g>
+<text x="452" y="352" font-size="19" font-weight="800" fill="#14213d" text-anchor="start">base_assistant</text>
+<text x="452" y="374" font-size="12.5" font-weight="400" fill="#5b6577" text-anchor="start">the shared voice and rules • no blanks, no references</text>
+<rect x="620.1" y="295.0" width="159.8" height="20.0" rx="5" fill="#ffffff" stroke="#e3e9f5" stroke-width="1"/>
+<text x="700.0" y="310" font-size="12" font-weight="500" fill="#3557d6" text-anchor="middle">{{gem:base_assistant}}</text>
+<path d="M600,434 L600,396" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<path d="M146.4 434 H1053.6" stroke="#3557d6" stroke-width="2" fill="none"/>
+<path d="M146.4 460 V434" stroke="#3557d6" stroke-width="2" fill="none"/>
+<rect x="40.0" y="460" width="212.8" height="58" rx="10" fill="#ffffff" stroke="#8b5cf6" stroke-width="1.6" filter="url(#shadow)"/>
+<text x="146.4" y="483" font-size="13.5" font-weight="800" fill="#14213d" text-anchor="middle">gem_librarian</text>
+<text x="146.4" y="500" font-size="12" font-weight="400" fill="#475467" text-anchor="middle">no blanks</text>
+<path d="M373.2 460 V434" stroke="#3557d6" stroke-width="2" fill="none"/>
+<rect x="266.8" y="460" width="212.8" height="58" rx="10" fill="#ffffff" stroke="#8b5cf6" stroke-width="1.6" filter="url(#shadow)"/>
+<text x="373.20000000000005" y="483" font-size="13.5" font-weight="800" fill="#14213d" text-anchor="middle">windows_operator</text>
+<text x="373.20000000000005" y="500" font-size="12" font-weight="400" fill="#475467" text-anchor="middle">{task}</text>
+<path d="M600.0 460 V434" stroke="#3557d6" stroke-width="2" fill="none"/>
+<rect x="493.6" y="460" width="212.8" height="58" rx="10" fill="#ffffff" stroke="#8b5cf6" stroke-width="1.6" filter="url(#shadow)"/>
+<text x="600.0" y="483" font-size="13.5" font-weight="800" fill="#14213d" text-anchor="middle">rea_analyst</text>
+<text x="600.0" y="500" font-size="12" font-weight="400" fill="#475467" text-anchor="middle">{target_app} {feature}</text>
+<path d="M826.8 460 V434" stroke="#3557d6" stroke-width="2" fill="none"/>
+<rect x="720.4000000000001" y="460" width="212.8" height="58" rx="10" fill="#ffffff" stroke="#8b5cf6" stroke-width="1.6" filter="url(#shadow)"/>
+<text x="826.8000000000001" y="483" font-size="13.5" font-weight="800" fill="#14213d" text-anchor="middle">program_builder</text>
+<text x="826.8000000000001" y="500" font-size="12" font-weight="400" fill="#475467" text-anchor="middle">{description} {folder}</text>
+<path d="M1053.6 460 V434" stroke="#3557d6" stroke-width="2" fill="none"/>
+<rect x="947.2" y="460" width="212.8" height="58" rx="10" fill="#ffffff" stroke="#8b5cf6" stroke-width="1.6" filter="url(#shadow)"/>
+<text x="1053.6000000000001" y="483" font-size="13.5" font-weight="800" fill="#14213d" text-anchor="middle">test_runner</text>
+<text x="1053.6000000000001" y="500" font-size="12" font-weight="400" fill="#475467" text-anchor="middle">a gate, no blanks</text>
+<rect x="40" y="546" width="1120" height="112" rx="14" fill="#f2f4f7" stroke="#9aa4b2" stroke-width="1.6" stroke-dasharray="6 5"/>
+<g transform="translate(54.0,560.0) scale(0.833)" fill="none" stroke="#475467" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/></g>
+<text x="82" y="576" font-size="15" font-weight="800" fill="#14213d" text-anchor="start">Stand alone</text>
+<text x="188.4" y="576" font-size="12.5" font-weight="400" fill="#5b6577" text-anchor="start">no references, used as they are</text>
+<rect x="60.0" y="590" width="259.5" height="54" rx="10" fill="#ffffff" stroke="#9aa4b2" stroke-width="1.6"/>
+<text x="189.75" y="613" font-size="13.5" font-weight="800" fill="#14213d" text-anchor="middle">summarizer</text>
+<text x="189.75" y="630" font-size="12" font-weight="400" fill="#475467" text-anchor="middle">{depth} {target_length}</text>
+<rect x="333.5" y="590" width="259.5" height="54" rx="10" fill="#ffffff" stroke="#9aa4b2" stroke-width="1.6"/>
+<text x="463.25" y="613" font-size="13.5" font-weight="800" fill="#14213d" text-anchor="middle">prompt_enhancer</text>
+<text x="463.25" y="630" font-size="12" font-weight="400" fill="#475467" text-anchor="middle">rewrites a prompt</text>
+<rect x="607.0" y="590" width="259.5" height="54" rx="10" fill="#ffffff" stroke="#9aa4b2" stroke-width="1.6"/>
+<text x="736.75" y="613" font-size="13.5" font-weight="800" fill="#14213d" text-anchor="middle">memory_summarizer</text>
+<text x="736.75" y="630" font-size="12" font-weight="400" fill="#475467" text-anchor="middle">digests a run for memory</text>
+<rect x="880.5" y="590" width="259.5" height="54" rx="10" fill="#ffffff" stroke="#9aa4b2" stroke-width="1.6"/>
+<text x="1010.25" y="613" font-size="13.5" font-weight="800" fill="#14213d" text-anchor="middle">build_and_check</text>
+<text x="1010.25" y="630" font-size="12" font-weight="400" fill="#475467" text-anchor="middle">builder for a pipeline</text>
+<rect x="40" y="678" width="1120" height="70" rx="12" fill="#f3faf5" stroke="#cfe9d6" stroke-width="1.5"/>
+<g transform="translate(59.0,700.0) scale(1.083)" fill="none" stroke="#1e7a37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M7 12l3.5 3.5L17 9"/></g>
+<text x="98" y="720" font-size="20" font-weight="800" fill="#14213d" text-anchor="start">Key points</text>
+<line x1="252.0" y1="692" x2="252.0" y2="734" stroke="#cfe9d6" stroke-width="1.5"/>
+<circle cx="282.0" cy="713" r="11" fill="#1e7a37"/>
+<path d="M276.0 713l4 4 7-7" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="300.0" y="709" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">A reference is plain</text>
+<text x="300.0" y="726" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">text in the prompt</text>
+<line x1="474.5" y1="692" x2="474.5" y2="734" stroke="#cfe9d6" stroke-width="1.5"/>
+<circle cx="504.5" cy="713" r="11" fill="#1e7a37"/>
+<path d="M498.5 713l4 4 7-7" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="522.5" y="709" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">Resolved by name when</text>
+<text x="522.5" y="726" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">it is used</text>
+<line x1="697.0" y1="692" x2="697.0" y2="734" stroke="#cfe9d6" stroke-width="1.5"/>
+<circle cx="727.0" cy="713" r="11" fill="#1e7a37"/>
+<path d="M721.0 713l4 4 7-7" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="745.0" y="709" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">Edit base_assistant: 12</text>
+<text x="745.0" y="726" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">gems change</text>
+<line x1="919.5" y1="692" x2="919.5" y2="734" stroke="#cfe9d6" stroke-width="1.5"/>
+<circle cx="949.5" cy="713" r="11" fill="#1e7a37"/>
+<path d="M943.5 713l4 4 7-7" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="967.5" y="709" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">Blanks from every</text>
+<text x="967.5" y="726" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">level fill together</text></svg>

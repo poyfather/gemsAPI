@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="810" viewBox="0 0 1200 810" font-family="Segoe UI, -apple-system, BlinkMacSystemFont, Helvetica Neue, Arial, sans-serif" role="img" aria-labelledby="t d"><title id="t">Trust Boundaries</title><desc id="d">The browser holds no secrets; the Next.js proxy adds the API key; FastAPI checks it on every route and at /mcp and holds the database and AI keys; the stdio MCP process has no key check and trusts whoever starts it; the console keeps keys in Windows safeStorage and runs the backend on 127.0.0.1; the helper service only runs allowlisted installs; Supabase allows only the service role.</desc><defs><marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#3557d6"/></marker><marker id="arrowStart" viewBox="0 0 10 10" refX="1.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#3557d6"/></marker><filter id="shadow" x="-5%" y="-5%" width="110%" height="120%"><feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#1e3a8a" flood-opacity="0.10"/></filter></defs><rect width="1200" height="810" fill="#ffffff"/><text x="600" y="52" font-size="34" font-weight="800" fill="#14213d" text-anchor="middle">Trust Boundaries</text>
+<text x="600" y="82" font-size="17" font-weight="500" fill="#5b6577" text-anchor="middle">Where each secret lives, and where a request is checked</text>
+<rect x="40" y="104" width="250" height="596" rx="14" fill="#ffffff" stroke="#c9d3e3" stroke-width="1.6" stroke-dasharray="6 5"/>
+<g transform="translate(54.0,118.0) scale(0.833)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7.5" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></g>
+<text x="82" y="134" font-size="15" font-weight="800" fill="#14213d" text-anchor="start">Callers</text>
+<rect x="310" y="104" width="250" height="596" rx="14" fill="#f5f9ff" stroke="#93b4f5" stroke-width="1.6" stroke-dasharray="6 5"/>
+<g transform="translate(324.0,118.0) scale(0.833)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M6 15.5V9a3 3 0 0 1 3-3h6.5M8.5 18h7"/></g>
+<text x="352" y="134" font-size="15" font-weight="800" fill="#14213d" text-anchor="start">Edge</text>
+<rect x="580" y="104" width="300" height="596" rx="14" fill="#eef4fe" stroke="#3b82f6" stroke-width="1.6" stroke-dasharray="6 5"/>
+<g transform="translate(594.0,118.0) scale(0.833)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1"/></g>
+<text x="622" y="134" font-size="15" font-weight="800" fill="#14213d" text-anchor="start">Backend processes</text>
+<rect x="900" y="104" width="260" height="596" rx="14" fill="#f2f4f7" stroke="#9aa4b2" stroke-width="1.6" stroke-dasharray="6 5"/>
+<g transform="translate(914.0,118.0) scale(0.833)" fill="none" stroke="#475467" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></g>
+<text x="942" y="134" font-size="15" font-weight="800" fill="#14213d" text-anchor="start">Data and AI</text>
+<rect x="56" y="160" width="218" height="76" rx="10" fill="#ffffff" stroke="#c9d3e3" stroke-width="1.6" filter="url(#shadow)"/>
+<text x="70" y="183" font-size="14" font-weight="800" fill="#14213d" text-anchor="start">Web UI</text>
+<text x="70" y="200" font-size="12" font-weight="400" fill="#475467" text-anchor="start">holds no secrets</text>
+<text x="70" y="217" font-size="12" font-weight="400" fill="#475467" text-anchor="start">calls /api on its own origin</text>
+<rect x="326" y="160" width="218" height="76" rx="10" fill="#ffffff" stroke="#93b4f5" stroke-width="1.6" filter="url(#shadow)"/>
+<text x="340" y="183" font-size="14" font-weight="800" fill="#14213d" text-anchor="start">Next.js server</text>
+<text x="340" y="200" font-size="12" font-weight="400" fill="#475467" text-anchor="start">proxy.ts adds GEMS_API_KEY</text>
+<text x="340" y="217" font-size="12" font-weight="400" fill="#475467" text-anchor="start">holds that key only</text>
+<rect x="596" y="160" width="268" height="96" rx="10" fill="#ffffff" stroke="#3b82f6" stroke-width="1.6" filter="url(#shadow)"/>
+<text x="610" y="183" font-size="14" font-weight="800" fill="#14213d" text-anchor="start">FastAPI service</text>
+<text x="610" y="200" font-size="12" font-weight="400" fill="#475467" text-anchor="start">checks the key on every route</text>
+<text x="610" y="217" font-size="12" font-weight="400" fill="#475467" text-anchor="start">but / and /health; per-client keys</text>
+<text x="610" y="234" font-size="12" font-weight="400" fill="#475467" text-anchor="start">holds DB and AI keys</text>
+<path d="M274,198 L326,198" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<path d="M544,198 L596,198" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<circle cx="570" cy="198" r="17.0" fill="#ecf8ef"/>
+<g transform="translate(560.0,188.0) scale(0.833)" fill="none" stroke="#1e7a37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z"/><path d="M9 12l2 2 4-4"/></g>
+<rect x="56" y="290" width="218" height="76" rx="10" fill="#ffffff" stroke="#c9d3e3" stroke-width="1.6" filter="url(#shadow)"/>
+<text x="70" y="313" font-size="14" font-weight="800" fill="#14213d" text-anchor="start">MCP client over HTTP</text>
+<text x="70" y="330" font-size="12" font-weight="400" fill="#475467" text-anchor="start">Claude, ChatGPT connectors</text>
+<text x="70" y="347" font-size="12" font-weight="400" fill="#475467" text-anchor="start">sends its own key</text>
+<rect x="596" y="290" width="268" height="76" rx="10" fill="#ffffff" stroke="#8b5cf6" stroke-width="1.6" filter="url(#shadow)"/>
+<text x="610" y="313" font-size="14" font-weight="800" fill="#14213d" text-anchor="start">/mcp on the same API</text>
+<text x="610" y="330" font-size="12" font-weight="400" fill="#475467" text-anchor="start">same key check</text>
+<text x="610" y="347" font-size="12" font-weight="400" fill="#475467" text-anchor="start">allowed hosts for a tunnel</text>
+<path d="M274,328 L596,328" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<rect x="365.2" y="307.0" width="139.7" height="20.0" rx="5" fill="#ffffff" stroke="#e3e9f5" stroke-width="1"/>
+<text x="435.0" y="322" font-size="12" font-weight="500" fill="#3557d6" text-anchor="middle">X-API-Key or bearer</text>
+<circle cx="570" cy="328" r="17.0" fill="#ecf8ef"/>
+<g transform="translate(560.0,318.0) scale(0.833)" fill="none" stroke="#1e7a37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z"/><path d="M9 12l2 2 4-4"/></g>
+<rect x="56" y="420" width="218" height="76" rx="10" fill="#ffffff" stroke="#c9d3e3" stroke-width="1.6" filter="url(#shadow)"/>
+<text x="70" y="443" font-size="14" font-weight="800" fill="#14213d" text-anchor="start">MCP client over stdio</text>
+<text x="70" y="460" font-size="12" font-weight="400" fill="#475467" text-anchor="start">Claude Desktop, Cursor</text>
+<text x="70" y="477" font-size="12" font-weight="400" fill="#475467" text-anchor="start">starts the process itself</text>
+<rect x="326" y="420" width="218" height="76" rx="10" fill="#ffffff" stroke="#93b4f5" stroke-width="1.6"/>
+<text x="340" y="443" font-size="14" font-weight="800" fill="#14213d" text-anchor="start">stdin and stdout</text>
+<text x="340" y="460" font-size="12" font-weight="400" fill="#475467" text-anchor="start">no network port</text>
+<text x="340" y="477" font-size="12" font-weight="400" fill="#475467" text-anchor="start">nothing to intercept</text>
+<rect x="596" y="420" width="268" height="92" rx="10" fill="#ffffff" stroke="#e8778b" stroke-width="1.6" filter="url(#shadow)"/>
+<text x="610" y="443" font-size="14" font-weight="800" fill="#14213d" text-anchor="start">mcp_server.py</text>
+<text x="610" y="460" font-size="12" font-weight="400" fill="#475467" text-anchor="start">no key check: trusts whoever</text>
+<text x="610" y="477" font-size="12" font-weight="400" fill="#475467" text-anchor="start">can start it on this machine</text>
+<text x="610" y="494" font-size="12" font-weight="400" fill="#475467" text-anchor="start">reads backend/.env</text>
+<path d="M274,458 L326,458" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<path d="M544,458 L596,458" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<rect x="56" y="545" width="218" height="96" rx="10" fill="#ffffff" stroke="#c9d3e3" stroke-width="1.6" filter="url(#shadow)"/>
+<text x="70" y="568" font-size="14" font-weight="800" fill="#14213d" text-anchor="start">Lapidary Console</text>
+<text x="70" y="585" font-size="12" font-weight="400" fill="#475467" text-anchor="start">your keys encrypted with</text>
+<text x="70" y="602" font-size="12" font-weight="400" fill="#475467" text-anchor="start">Windows safeStorage</text>
+<text x="70" y="619" font-size="12" font-weight="400" fill="#475467" text-anchor="start">in your profile</text>
+<rect x="326" y="545" width="218" height="96" rx="10" fill="#ffffff" stroke="#93b4f5" stroke-width="1.6"/>
+<text x="340" y="568" font-size="14" font-weight="800" fill="#14213d" text-anchor="start">127.0.0.1 only</text>
+<text x="340" y="585" font-size="12" font-weight="400" fill="#475467" text-anchor="start">backend and UI run as</text>
+<text x="340" y="602" font-size="12" font-weight="400" fill="#475467" text-anchor="start">sidecars with a key made</text>
+<text x="340" y="619" font-size="12" font-weight="400" fill="#475467" text-anchor="start">on first start</text>
+<rect x="596" y="545" width="268" height="96" rx="10" fill="#ffffff" stroke="#f08c2e" stroke-width="1.6" filter="url(#shadow)"/>
+<text x="610" y="568" font-size="14" font-weight="800" fill="#14213d" text-anchor="start">Lapidary Helper (SYSTEM)</text>
+<text x="610" y="585" font-size="12" font-weight="400" fill="#475467" text-anchor="start">local pipe, no remote clients</text>
+<text x="610" y="602" font-size="12" font-weight="400" fill="#475467" text-anchor="start">allowlisted installs only</text>
+<text x="610" y="619" font-size="12" font-weight="400" fill="#475467" text-anchor="start">verified console updates</text>
+<path d="M274,585 L326,585" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<path d="M165 641 V667 H730" stroke="#6b84d9" stroke-width="1.6" stroke-dasharray="6 5" fill="none"/>
+<path d="M730,667 L730,643" fill="none" stroke="#6b84d9" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="302.0" y="658.5" width="276.0" height="19.5" rx="5" fill="#ffffff" stroke="#e3e9f5" stroke-width="1"/>
+<text x="440.0" y="673" font-size="11.5" font-weight="500" fill="#3557d6" text-anchor="middle">install and update requests over the pipe</text>
+<rect x="916" y="160" width="228" height="96" rx="10" fill="#ffffff" stroke="#9aa4b2" stroke-width="1.6" filter="url(#shadow)"/>
+<text x="930" y="183" font-size="14" font-weight="800" fill="#14213d" text-anchor="start">Supabase Postgres</text>
+<text x="930" y="200" font-size="12" font-weight="400" fill="#475467" text-anchor="start">RLS on, no policies:</text>
+<text x="930" y="217" font-size="12" font-weight="400" fill="#475467" text-anchor="start">only the service role key</text>
+<text x="930" y="234" font-size="12" font-weight="400" fill="#475467" text-anchor="start">reads or writes</text>
+<rect x="916" y="320" width="228" height="76" rx="10" fill="#ffffff" stroke="#9aa4b2" stroke-width="1.6" filter="url(#shadow)"/>
+<text x="930" y="343" font-size="14" font-weight="800" fill="#14213d" text-anchor="start">SQLite file</text>
+<text x="930" y="360" font-size="12" font-weight="400" fill="#475467" text-anchor="start">on this PC, in your</text>
+<text x="930" y="377" font-size="12" font-weight="400" fill="#475467" text-anchor="start">profile when the console runs</text>
+<rect x="916" y="450" width="228" height="96" rx="10" fill="#ffffff" stroke="#8b5cf6" stroke-width="1.6" filter="url(#shadow)"/>
+<text x="930" y="473" font-size="14" font-weight="800" fill="#14213d" text-anchor="start">AI providers</text>
+<text x="930" y="490" font-size="12" font-weight="400" fill="#475467" text-anchor="start">Anthropic, OpenAI: your keys</text>
+<text x="930" y="507" font-size="12" font-weight="400" fill="#475467" text-anchor="start">local models: no key,</text>
+<text x="930" y="524" font-size="12" font-weight="400" fill="#475467" text-anchor="start">nothing leaves the PC</text>
+<path d="M864 208 H886 M864 328 H886 M864 466 H886 M886 208 V498" stroke="#3557d6" stroke-width="2" fill="none"/>
+<path d="M886,208 L914,208" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<path d="M886,358 L914,358" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<path d="M886,498 L914,498" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<rect x="40" y="720" width="1120" height="70" rx="12" fill="#f3faf5" stroke="#cfe9d6" stroke-width="1.5"/>
+<g transform="translate(59.0,742.0) scale(1.083)" fill="none" stroke="#1e7a37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z"/><path d="M9 12l2 2 4-4"/></g>
+<text x="98" y="762" font-size="20" font-weight="800" fill="#14213d" text-anchor="start">Key points</text>
+<line x1="252.0" y1="734" x2="252.0" y2="776" stroke="#cfe9d6" stroke-width="1.5"/>
+<circle cx="282.0" cy="755" r="11" fill="#1e7a37"/>
+<path d="M276.0 755l4 4 7-7" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="300.0" y="751" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">The browser never</text>
+<text x="300.0" y="768" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">sees a key</text>
+<line x1="474.5" y1="734" x2="474.5" y2="776" stroke="#cfe9d6" stroke-width="1.5"/>
+<circle cx="504.5" cy="755" r="11" fill="#1e7a37"/>
+<path d="M498.5 755l4 4 7-7" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="522.5" y="751" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">Every REST and /mcp</text>
+<text x="522.5" y="768" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">call needs a key</text>
+<line x1="697.0" y1="734" x2="697.0" y2="776" stroke="#cfe9d6" stroke-width="1.5"/>
+<circle cx="727.0" cy="755" r="11" fill="#1e7a37"/>
+<path d="M721.0 755l4 4 7-7" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="745.0" y="751" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">stdio MCP trusts</text>
+<text x="745.0" y="768" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">who starts it</text>
+<line x1="919.5" y1="734" x2="919.5" y2="776" stroke="#cfe9d6" stroke-width="1.5"/>
+<circle cx="949.5" cy="755" r="11" fill="#1e7a37"/>
+<path d="M943.5 755l4 4 7-7" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="967.5" y="751" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">The helper runs</text>
+<text x="967.5" y="768" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">only allowlisted installs</text></svg>
