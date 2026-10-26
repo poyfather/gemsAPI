@@ -173,3 +173,9 @@ def test_new_gems_default_to_the_configured_model_and_provider(monkeypatch) -> N
     monkeypatch.setattr(settings, "DEFAULT_MODEL", "auto")
     monkeypatch.setattr(settings, "DEFAULT_PROVIDER", "auto")
     assert GemCreate(name="y").provider == "auto"
+
+
+def test_a_local_server_that_answers_lists_its_models_sorted(monkeypatch) -> None:
+    import asyncio
+    monkeypatch.setattr(llm_service, "_get_local", lambda: _FakeClient(["qwen3:4b", "llama3.2", "gemma3"]))
+    assert asyncio.run(_models())["local"] == ["gemma3", "llama3.2", "qwen3:4b"]
