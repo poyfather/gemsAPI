@@ -1,0 +1,5 @@
+node_modules/
+frames*/
+*.wav
+*.mp4
+package*.json

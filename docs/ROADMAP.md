@@ -532,7 +532,7 @@ These items carry the growth plan. They come first, in phase order. Each says wh
 
 ### 52. Repository presentation: positioning, screenshots, demo video, install options, consistent docs
 
-**Status: partly done** with ADR-013: the README leads with the positioning and real screenshots, the install options are side by side, and `CONTEXT.md`, `SECURITY.md`, `CONTRIBUTING.md`, `SUPPORT.md`, `STANDARDS.md`, the root roadmap and the architecture prose now agree with the code; the GitHub description leads with the positioning and the topics cover local models, testing, Windows and self-hosting. Still open: a 90-second demo video at the top of the README, and a social preview image (uploaded in the repository settings).
+**Status: partly done** with ADR-013: the README leads with the positioning and real screenshots, the install options are side by side, and `CONTEXT.md`, `SECURITY.md`, `CONTRIBUTING.md`, `SUPPORT.md`, `STANDARDS.md`, the root roadmap and the architecture prose now agree with the code; the GitHub description leads with the positioning and the topics cover local models, testing, Windows and self-hosting. A 64-second demo video sits at the top of the README as a loop that opens the full video with sound (`docs/demo/`). Still open: a social preview image (uploaded in the repository settings).
 
 - **Why**: the repository is the storefront. It showed no picture of the product, and some documents contradicted the code, which costs trust for a tool that holds AI credentials and runs tools on people's computers. From now on a document that disagrees with the code is a bug.
 - **Size**: S to M.

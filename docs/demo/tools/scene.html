@@ -1,0 +1,233 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Lapidary demo</title>
+<style>
+  html, body { margin: 0; background: #080810; }
+  #stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: #080810;
+           font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", system-ui, sans-serif; color: #f4f3ff; }
+  .glow { position: absolute; inset: 0; background:
+          radial-gradient(1100px 700px at 50% 38%, rgba(124, 58, 237, 0.20), transparent 70%),
+          radial-gradient(900px 600px at 85% 95%, rgba(59, 130, 246, 0.08), transparent 70%); }
+  .abs { position: absolute; will-change: transform, opacity; }
+  .caption { left: 160px; right: 160px; bottom: 74px; text-align: center; font-size: 46px; font-weight: 650; line-height: 1.22;
+             letter-spacing: -0.4px; text-wrap: balance; text-shadow: 0 2px 18px rgba(0,0,0,0.85); }
+  .title { left: 160px; right: 160px; top: 120px; text-align: center; font-size: 66px; font-weight: 700; letter-spacing: -1px; line-height: 1.15; text-wrap: balance; }
+  .shade { left: 0; right: 0; bottom: 0; height: 330px; background: linear-gradient(to top, rgba(8,8,16,0.96) 35%, rgba(8,8,16,0)); }
+  .win { left: 0; top: 0; transform-origin: 0 0; border-radius: 16px; overflow: hidden; box-shadow: 0 0 0 1px #2a2a44, 0 50px 140px rgba(0,0,0,0.65); }
+  .win img { display: block; }
+  .hl { position: absolute; border-radius: 10px; box-sizing: border-box; border: 3px solid #a78bfa;
+        box-shadow: 0 0 0 9999px rgba(8,8,16,0), 0 0 40px rgba(167, 139, 250, 0.55); }
+  .chip { position: absolute; padding: 10px 18px; border-radius: 12px; background: #7c3aed; color: #fff; font-size: 26px; font-weight: 650;
+          white-space: nowrap; box-shadow: 0 10px 30px rgba(124,58,237,0.45); }
+  .badge { right: 60px; top: 36px; padding: 12px 20px; border-radius: 999px; background: rgba(19,19,31,0.92); border: 1px solid #2a2a44;
+           font-size: 24px; color: #c4b5fd; }
+  .card { width: 520px; padding: 22px 26px; border-radius: 16px; background: #13131f; border: 1px solid #2a2a44; box-shadow: 0 30px 80px rgba(0,0,0,0.5); }
+  .card .app { font-size: 20px; font-weight: 700; color: #a78bfa; margin-bottom: 10px; letter-spacing: 0.3px; }
+  .card .txt { font-size: 25px; line-height: 1.35; color: #d8d6ee; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+  .appchip { padding: 16px 26px; border-radius: 14px; background: #13131f; border: 1px solid #3b2a6b; font-size: 30px; font-weight: 600; color: #ede9fe; white-space: nowrap; }
+  .gem svg { width: 100%; height: 100%; }
+  .endname { left: 0; right: 0; text-align: center; font-size: 96px; font-weight: 750; letter-spacing: -2px; }
+  .endline { left: 220px; right: 220px; text-align: center; font-size: 50px; font-weight: 600; line-height: 1.25; color: #ede9fe; text-wrap: balance; }
+  .endurl { left: 0; right: 0; text-align: center; font-size: 32px; color: #a78bfa; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="glow"></div>
+
+  <!-- scene 1: scattered copies -->
+  <div id="c0" class="abs card"><div class="app">ChatGPT chat</div><div class="txt">You are a careful code reviewer. Check for bugs first, then style.</div></div>
+  <div id="c1" class="abs card"><div class="app">notes.txt</div><div class="txt">You're a careful code reviewer: bugs first, style second, keep it short.</div></div>
+  <div id="c2" class="abs card"><div class="app">Slack message</div><div class="txt">use this: careful code reviewer, bugs then style (newer one?)</div></div>
+  <div id="c3" class="abs card"><div class="app">Cursor rules</div><div class="txt">You are a strict code reviewer. Style first, then bugs.</div></div>
+  <div id="gem" class="abs gem" style="width:150px;height:150px">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#c4b5fd" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M6 3h12l4 6-10 13L2 9Z"/><path d="M11 3 8 9l4 13 4-13-3-6"/><path d="M2 9h20"/></svg>
+  </div>
+
+  <!-- screenshot windows (image coordinates inside) -->
+  <div id="w-library" class="abs win"><img src="../../screenshots/library.png" width="1400" height="900"></div>
+  <div id="w-compare" class="abs win"><img src="../../screenshots/compare-answers.png" width="1400" height="964">
+    <div id="h-v1" class="hl"></div><div id="h-v2" class="hl"></div>
+    <div id="k-v1" class="chip">Version 1: a long report</div><div id="k-v2" class="chip">Version 2: one line</div>
+  </div>
+  <div id="w-prompt" class="abs win"><img src="../../screenshots/prompt-page.png" width="1100" height="850">
+    <div id="h-r1" class="hl"></div><div id="h-r2" class="hl"></div><div id="h-diff" class="hl"></div>
+  </div>
+  <div id="w-chat" class="abs win"><img src="../../screenshots/chat.png" width="1400" height="900">
+    <div id="h-model" class="hl"></div><div id="h-answer" class="hl"></div>
+  </div>
+  <div id="w-start" class="abs win"><img src="../../screenshots/console-start.png" width="1280" height="820"></div>
+  <div id="w-doctor" class="abs win"><img src="../../screenshots/console-doctor.png" width="1280" height="820">
+    <div id="h-fix" class="hl"></div>
+  </div>
+
+  <div id="apps" class="abs" style="left:0;right:0;top:0;height:0">
+    <div id="a0" class="abs appchip">Claude Desktop</div>
+    <div id="a1" class="abs appchip">ChatGPT</div>
+    <div id="a2" class="abs appchip">Cursor</div>
+    <div id="a3" class="abs appchip">Open WebUI</div>
+    <div id="a4" class="abs appchip">A free model on this PC</div>
+  </div>
+
+  <div id="shade" class="abs shade"></div>
+  <div id="badge" class="abs badge">Real answers from qwen3:4b running on this PC</div>
+
+  <div id="t1" class="abs title">You wrote a great prompt for your AI.</div>
+  <div id="t2" class="abs title">Now there are four copies, and nobody knows which one is best.</div>
+  <div id="t3" class="abs title">Lapidary keeps them in one library.</div>
+
+  <div id="cap0" class="abs caption">Make one edit, then compare the versions side by side.</div>
+  <div id="cap1" class="abs caption">Version 1 writes a long report. Version 2 names the bug, the fix and the test in one line.</div>
+  <div id="cap2" class="abs caption">Its tests scored version 1 at 2 of 4 and version 2 at 4 of 4.</div>
+  <div id="cap3" class="abs caption">Every save is kept, so you can see what changed and go back.</div>
+  <div id="cap4" class="abs caption">Use the same prompt from the apps you already have.</div>
+  <div id="cap5" class="abs caption">On Windows 11, the console asks two questions and sets the rest up for you.</div>
+
+  <div id="egem" class="abs gem" style="width:120px;height:120px;left:900px;top:250px">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#c4b5fd" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M6 3h12l4 6-10 13L2 9Z"/><path d="M11 3 8 9l4 13 4-13-3-6"/><path d="M2 9h20"/></svg>
+  </div>
+  <div id="ename" class="abs endname" style="top:390px">Lapidary</div>
+  <div id="eline" class="abs endline" style="top:540px">Keep your best AI instructions in one place and use them in every app.</div>
+  <div id="eurl" class="abs endurl" style="top:735px">github.com/poyfather/lapidary  ·  free and open source</div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const ease = (x) => { x = clamp(x); return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+const out = (x) => { x = clamp(x); return 1 - Math.pow(1 - x, 3); };
+const lerp = (a, b, k) => a + (b - a) * k;
+// visibility ramp: 0 before a, rises over `inn`, holds, falls over `outd` ending at b
+function vis(t, a, b, inn = 0.45, outd = 0.4) { return Math.min(out((t - a) / inn), 1 - ease((t - (b - outd)) / outd)); }
+
+function show(id, op, dy = 0, extra = "") {
+  const el = $(id); el.style.opacity = op; el.style.display = op <= 0.001 ? "none" : "block";
+  el.style.transform = `translateY(${dy}px) ${extra}`;
+}
+function text(id, t, a, b) { const v = vis(t, a, b); show(id, v, (1 - out((t - a) / 0.5)) * 18); }
+
+// Camera: image point (cx, cy) at screen (960, cyScreen), scale s. Window keeps its frame.
+const IMG = { library: [1400, 900], compare: [1400, 964], prompt: [1100, 850], chat: [1400, 900], start: [1280, 820], doctor: [1280, 820] };
+function fit(name, rect, box = [1640, 720], center = [960, 470]) {
+  const [w, h] = IMG[name]; const r = rect || [0, 0, w, h];
+  const s = Math.min(box[0] / r[2], box[1] / r[3]);
+  return { cx: r[0] + r[2] / 2, cy: r[1] + r[3] / 2, s, sx: center[0], sy: center[1] };
+}
+function cam(a, b, k) { return { cx: lerp(a.cx, b.cx, k), cy: lerp(a.cy, b.cy, k), s: lerp(a.s, b.s, k), sx: lerp(a.sx, b.sx, k), sy: lerp(a.sy, b.sy, k) }; }
+function place(name, c, op, rise = 0) {
+  const el = $("w-" + name);
+  el.style.opacity = op; el.style.display = op <= 0.001 ? "none" : "block";
+  el.style.transform = `translate(${c.sx - c.cx * c.s}px, ${c.sy - c.cy * c.s + rise}px) scale(${c.s})`;
+  return c.s;
+}
+function hl(id, rect, s, k, glow = 1) {
+  const el = $(id); const [x, y, w, h] = rect; const p = 8 / s;
+  el.style.display = k <= 0.001 ? "none" : "block"; el.style.opacity = k;
+  el.style.left = (x - p) + "px"; el.style.top = (y - p) + "px"; el.style.width = (w + 2 * p) + "px"; el.style.height = (h + 2 * p) + "px";
+  el.style.borderWidth = (3.5 / s) + "px"; el.style.borderRadius = (12 / s) + "px";
+  el.style.boxShadow = `0 0 ${40 / s}px rgba(167,139,250,${0.6 * glow})`;
+}
+function chip(id, x, y, s, k) {
+  const el = $(id); el.style.display = k <= 0.001 ? "none" : "block"; el.style.opacity = k;
+  el.style.left = x + "px"; el.style.top = y + "px";
+  el.style.transform = `scale(${1 / s}) translateY(${(1 - out(k)) * 14}px)`; el.style.transformOrigin = "0 0";
+}
+
+window.render = function (t) {
+  // ---------- scene 1: scattered copies (0 to 6.6)
+  text("t1", t, 0.3, 2.9);
+  text("t2", t, 3.1, 6.3);
+  const pos = [[150, 420], [1250, 380], [260, 720], [1140, 700]];
+  const tilt = [-3, 2.5, 2, -2.2];
+  for (let i = 0; i < 4; i++) {
+    const a = 1.0 + i * 0.35;
+    let op = out((t - a) / 0.5);
+    let [x, y] = pos[i];
+    x += Math.sin(t * 0.6 + i) * 10; y += Math.cos(t * 0.5 + i * 2) * 8;
+    let sc = 1, rot = tilt[i];
+    const f = ease((t - 6.3) / 0.9);               // fly into the gem
+    if (f > 0) { x = lerp(x, 960 - 260, f); y = lerp(y, 470 - 60, f); sc = lerp(1, 0.08, f); rot = lerp(rot, 0, f); op *= 1 - f; }
+    const el = $("c" + i); el.style.opacity = op; el.style.display = op <= 0.001 ? "none" : "block";
+    el.style.left = x + "px"; el.style.top = y + "px"; el.style.transform = `rotate(${rot}deg) scale(${sc})`;
+  }
+  // gem appears as the cards land, then lifts out of the way
+  { const g = $("gem"); const a = out((t - 6.9) / 0.5) * (1 - ease((t - 8.0) / 0.6));
+    g.style.display = a <= 0.001 ? "none" : "block"; g.style.opacity = a;
+    const pulse = 1 + 0.08 * Math.sin(clamp((t - 6.9) / 0.6) * Math.PI);
+    g.style.left = "885px"; g.style.top = "395px"; g.style.transform = `scale(${pulse})`; }
+
+  // ---------- scene 2: library (6.6 to 12.6)
+  text("t3", t, 7.2, 12.3);
+  { const k = out((t - 7.8) / 0.9), o = vis(t, 7.8, 12.6, 0.6, 0.45);
+    const a = fit("library", null, [1720, 700], [960, 640]), b = fit("library", [60, 180, 1280, 560], [1740, 690], [960, 650]);
+    place("library", cam(a, b, ease((t - 8.6) / 4.0)), o, (1 - k) * 260); }
+
+  // ---------- scene 3: compare answers (12.6 to 27.6)
+  text("cap0", t, 13.0, 17.2);
+  text("cap1", t, 17.8, 27.3);
+  { const o = vis(t, 12.7, 27.6, 0.5, 0.45);
+    const A = fit("compare", null, [1560, 720], [960, 470]);
+    const B = fit("compare", [85, 590, 1230, 350], [1720, 640], [960, 455]);
+    const s = place("compare", cam(A, B, ease((t - 16.0) / 1.6)), o, (1 - out((t - 12.7) / 0.6)) * 60);
+    const k1 = out((t - 18.3) / 0.5) * (1 - ease((t - 27.1) / 0.4)), k2 = out((t - 21.2) / 0.5) * (1 - ease((t - 27.1) / 0.4));
+    hl("h-v1", [92, 597, 601, 335], s, k1, 0.6); hl("h-v2", [706, 597, 601, 335], s, k2, 1.0);
+    chip("k-v1", 100, 560 - 44 / s, s, k1); chip("k-v2", 714, 560 - 44 / s, s, k2); }
+  { const b = vis(t, 18.0, 27.4, 0.5, 0.4); show("badge", b); }
+
+  // ---------- scene 4: tests and history (27.6 to 39.6)
+  text("cap2", t, 29.2, 34.6);
+  text("cap3", t, 35.2, 39.4);
+  { const o = vis(t, 27.7, 39.6, 0.5, 0.45);
+    const A = fit("prompt", null, [1400, 700], [960, 470]);
+    const B = fit("prompt", [336, 246, 592, 304], [1500, 610], [960, 450]);
+    const C = fit("prompt", [336, 566, 592, 284], [1500, 610], [960, 450]);
+    const k = ease((t - 28.4) / 1.4), m = ease((t - 34.6) / 1.3);
+    const s = place("prompt", m > 0 ? cam(B, C, m) : cam(A, B, k), o, (1 - out((t - 27.7) / 0.6)) * 60);
+    const r1 = out((t - 30.6) / 0.45) * (1 - ease((t - 34.5) / 0.4)), r2 = out((t - 32.0) / 0.45) * (1 - ease((t - 34.5) / 0.4));
+    hl("h-r1", [350, 519, 570, 20], s, r1, 0.5); hl("h-r2", [350, 499, 570, 20], s, r2, 1.0);
+    hl("h-diff", [590, 657, 320, 180], s, out((t - 36.2) / 0.5) * (1 - ease((t - 39.2) / 0.35)), 0.9); }
+
+  // ---------- scene 5: chat and apps (39.6 to 50.1)
+  text("cap4", t, 40.3, 49.8);
+  { const o = vis(t, 39.7, 50.1, 0.5, 0.45);
+    const A = fit("chat", null, [1500, 660], [960, 430]);
+    const B = fit("chat", [395, 86, 915, 330], [1500, 560], [960, 360]);
+    const s = place("chat", cam(A, B, ease((t - 40.6) / 1.6)), o, (1 - out((t - 39.7) / 0.6)) * 60);
+    hl("h-answer", [413, 305, 701, 93], s, out((t - 42.6) / 0.5) * (1 - ease((t - 49.6) / 0.4)), 0.8);
+    hl("h-model", [1218, 100, 74, 22], s, out((t - 43.4) / 0.5) * (1 - ease((t - 49.6) / 0.4)), 1.0); }
+  { const xs = [], gap = 22, widths = [262, 182, 148, 214, 400];
+    let total = widths.reduce((a, b) => a + b, 0) + gap * 4, x = 960 - total / 2;
+    for (let i = 0; i < 5; i++) { xs.push(x); x += widths[i] + gap; }
+    for (let i = 0; i < 5; i++) { const a = 44.0 + i * 0.42; const k = out((t - a) / 0.45) * (1 - ease((t - 49.7) / 0.4));
+      const el = $("a" + i); el.style.display = k <= 0.001 ? "none" : "block"; el.style.opacity = k;
+      el.style.left = xs[i] + "px"; el.style.top = (800 + (1 - out((t - a) / 0.45)) * 24) + "px"; } }
+
+  // ---------- scene 6: console (50.1 to 58.1)
+  text("cap5", t, 50.7, 57.8);
+  { const A = fit("start", null, [1760, 780], [960, 450]);
+    const o1 = vis(t, 50.2, 54.3, 0.5, 0.35), o2 = vis(t, 54.4, 58.1, 0.4, 0.45);
+    const z = ease((t - 50.6) / 3.6);
+    place("start", cam(A, fit("start", [0, 70, 1280, 560], [1800, 760], [960, 440]), z), o1, (1 - out((t - 50.2) / 0.6)) * 60);
+    const s = place("doctor", fit("doctor", [0, 70, 1280, 420], [1800, 760], [960, 430]), o2, (1 - out((t - 54.4) / 0.5)) * 30);
+    hl("h-fix", [1103, 367, 116, 22], s, out((t - 55.4) / 0.5) * (1 - ease((t - 57.8) / 0.3)), 1.0); }
+
+  // ---------- scene 7: end card (58.1 to 64)
+  { const g = out((t - 58.3) / 0.6); const el = $("egem");
+    el.style.display = g <= 0.001 ? "none" : "block"; el.style.opacity = g; el.style.transform = `scale(${0.6 + 0.4 * g}) rotate(${(1 - g) * -20}deg)`; }
+  show("ename", out((t - 58.6) / 0.6), (1 - out((t - 58.6) / 0.6)) * 20);
+  show("eline", out((t - 59.2) / 0.6), (1 - out((t - 59.2) / 0.6)) * 20);
+  show("eurl", out((t - 60.0) / 0.6), (1 - out((t - 60.0) / 0.6)) * 14);
+
+  // the bottom shade sits under captions whenever a screenshot is up
+  show("shade", clamp(Math.max(vis(t, 12.7, 27.6), vis(t, 27.7, 39.6), vis(t, 39.7, 50.1), vis(t, 50.2, 58.1))));
+};
+window.DURATION = 64;
+window.ready = Promise.all([...document.images].map((im) => im.decode().catch(() => null))).then(() => document.fonts.ready);
+const qp = new URLSearchParams(location.search); if (qp.has("t")) window.ready.then(() => render(parseFloat(qp.get("t"))));
+</script>
+</body>
+</html>
