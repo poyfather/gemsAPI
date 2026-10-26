@@ -164,3 +164,59 @@ def fake_memory(monkeypatch):
     monkeypatch.setattr(memory_service, "_store", lambda: store)
     monkeypatch.setattr(settings, "MEMORY_SUMMARIZE", False)
     return rows
+
+
+@pytest.fixture
+def fake_pipelines(monkeypatch):
+    """In-memory pipelines and pipeline_runs, replacing the store the pipeline runner and routes use."""
+    import uuid
+
+    from app.agents import pipeline as pipeline_mod
+    from app.models import Pipeline, PipelineCreate, PipelineRun
+    from app.routes import pipelines as pipelines_route
+
+    data = {"pipelines": {}, "runs": {}, "state": {}}
+    now = datetime(2026, 1, 3, tzinfo=timezone.utc)
+
+    class FakePipelineStore:
+        async def list_pipelines(self):
+            return sorted(data["pipelines"].values(), key=lambda p: p.name)
+
+        async def get_pipeline(self, name):
+            return data["pipelines"].get(name)
+
+        async def create_pipeline(self, pc: PipelineCreate):
+            p = Pipeline(id=str(uuid.uuid4()), created_at=now, updated_at=now, **pc.model_dump())
+            data["pipelines"][p.name] = p
+            return p
+
+        async def update_pipeline(self, name, updates):
+            p = data["pipelines"][name].model_copy(update=updates)
+            data["pipelines"][name] = p
+            return p
+
+        async def delete_pipeline(self, name):
+            return data["pipelines"].pop(name, None) is not None
+
+        async def create_pipeline_run(self, pipeline_name, input_text):
+            r = PipelineRun(id=f"prun-{len(data['runs']) + 1}", pipeline_name=pipeline_name, status="running", input=input_text, created_at=now)
+            data["runs"][r.id] = r
+            return r
+
+        async def update_pipeline_run(self, run_id, **fields):
+            if "state" in fields:
+                data["state"][run_id] = fields.pop("state")
+            r = PipelineRun(**{**data["runs"][run_id].model_dump(), **fields})   # validated, as a real store would re-read it
+            data["runs"][run_id] = r
+            return r
+
+        async def get_pipeline_run(self, run_id):
+            return data["runs"].get(run_id)
+
+        async def get_pipeline_run_state(self, run_id):
+            return data["state"].get(run_id)
+
+    store = FakePipelineStore()
+    monkeypatch.setattr(pipeline_mod, "_store", lambda: store)
+    monkeypatch.setattr(pipelines_route, "get_store", lambda: store)
+    return data

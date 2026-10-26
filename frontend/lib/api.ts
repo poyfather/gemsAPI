@@ -249,6 +249,93 @@ export const gems = {
     }),
 };
 
+// ─── Pipelines and gates (ADR-011) ─────────────────────────────────────────────
+
+export interface PipelineGate {
+  gem: string;
+  role: "test" | "visual" | "review" | "custom" | string;
+  provider_override?: string | null;
+  model_override?: string | null;
+  instructions?: string;
+}
+
+export interface Pipeline {
+  id: string;
+  name: string;
+  description: string;
+  builder: string;
+  gates: PipelineGate[];
+  max_attempts: number;
+  acceptance: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface GateResult {
+  gem: string;
+  role: string;
+  run_id?: string | null;
+  verdict: "pass" | "fail" | "waiting" | string;
+  findings: string;
+}
+
+export interface Attempt {
+  number: number;
+  builder_run_id?: string | null;
+  builder_status: string;
+  output?: string | null;
+  gates: GateResult[];
+  feedback: string;
+}
+
+export type PipelineStatus = "running" | "waiting_approval" | "waiting_acceptance" | "passed" | "failed" | "max_attempts";
+
+export interface PipelineRun {
+  id: string;
+  pipeline_name: string;
+  status: PipelineStatus | string;
+  input: string;
+  output?: string | null;
+  attempts: Attempt[];
+  waiting_run_id?: string | null;
+  error?: string | null;
+  created_at: string;
+  finished_at?: string | null;
+}
+
+export interface PipelineResult {
+  run: PipelineRun;
+  events: RunEvent[];
+}
+
+export const pipelines = {
+  list: (): Promise<Pipeline[]> => request<Pipeline[]>("/pipelines/"),
+  get: (name: string): Promise<Pipeline> => request<Pipeline>(`/pipelines/${encodeURIComponent(name)}`),
+  getRun: (id: string): Promise<PipelineRun> => request<PipelineRun>(`/pipelines/runs/${encodeURIComponent(id)}`),
+
+  /** Run a pipeline with its events delivered as they happen. Resolves when it finishes or pauses. */
+  stream: async (name: string, data: { message: string; variables?: Record<string, string>; allow_risky?: boolean; memory_scope?: string }, onEvent: (event: RunEvent) => void): Promise<void> => {
+    for await (const msg of sse(`/pipelines/${encodeURIComponent(name)}/runs`, { ...data, stream: true })) {
+      if (msg.event === "error") {
+        const payload = JSON.parse(msg.data) as { error?: string };
+        throw new ApiError(500, payload.error || "Pipeline failed");
+      }
+      onEvent(JSON.parse(msg.data) as RunEvent);
+    }
+  },
+
+  /** Continue a paused pipeline run: accept or reject at acceptance, or carry on after an approval. */
+  resume: async (id: string, data: { accept?: boolean; note?: string }, onEvent: (event: RunEvent) => void): Promise<void> => {
+    for await (const msg of sse(`/pipelines/runs/${encodeURIComponent(id)}/resume`, { ...data, stream: true })) {
+      if (msg.event === "error") {
+        const payload = JSON.parse(msg.data) as { error?: string };
+        throw new ApiError(409, payload.error || "Could not continue the pipeline");
+      }
+      onEvent(JSON.parse(msg.data) as RunEvent);
+    }
+  },
+};
+
 // ─── Memory API ────────────────────────────────────────────────────────────────
 
 export const memory = {

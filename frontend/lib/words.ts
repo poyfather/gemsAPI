@@ -32,6 +32,19 @@ export function statusLabel(status: string): string {
   }
 }
 
+/** How a pipeline run stands, in words. */
+export function pipelineStatusLabel(status: string): string {
+  switch (status) {
+    case "passed": return "passed";
+    case "waiting_acceptance": return "waiting for you to accept";
+    case "waiting_approval": return "waiting for an approval";
+    case "failed": return "stopped with an error";
+    case "max_attempts": return "gave up after the last attempt";
+    case "running": return "running";
+    default: return status;
+  }
+}
+
 /** The error's message followed by what to do next, from the status code and the message. */
 export function explain(e: unknown, fallback = "Something went wrong."): string {
   const message = e instanceof Error && e.message ? e.message : fallback;

@@ -14,8 +14,8 @@ import threading
 import uuid
 from datetime import datetime, timezone
 
-from app.models import Gem, GemCreate, Memory, MemoryCreate, Run, RunEvent
-from app.storage.seeds import load_seed_gems
+from app.models import Gem, GemCreate, Memory, MemoryCreate, Pipeline, PipelineCreate, PipelineRun, Run, RunEvent
+from app.storage.seeds import load_seed_gems, load_seed_pipelines
 
 logger = logging.getLogger(__name__)
 _SCHEMA = pathlib.Path(__file__).with_name("sqlite_schema.sql").read_text()
@@ -55,6 +55,20 @@ def _fts_query(query: str) -> str:
 
 
 _STOPWORDS = {"the", "and", "for", "with", "that", "this", "from", "what", "how", "was", "are", "did", "you", "about", "into", "when", "where", "which", "have", "has", "can", "not", "but", "all", "any", "our", "your", "its", "will", "should", "could", "would", "does", "them", "then", "than", "also", "just", "more", "some", "one", "two"}
+
+
+def _pipeline(row: sqlite3.Row) -> Pipeline:
+    d = dict(row)
+    d["gates"] = json.loads(d["gates"] or "[]")
+    d["acceptance"] = bool(d["acceptance"])
+    return Pipeline(**d)
+
+
+def _pipeline_run(row: sqlite3.Row) -> PipelineRun:
+    d = dict(row)
+    d.pop("state", None)
+    d["attempts"] = json.loads(d["attempts"] or "[]")
+    return PipelineRun(**d)
 
 
 def _event(row: sqlite3.Row) -> RunEvent:
@@ -103,6 +117,18 @@ class SQLiteStore:
                      json.dumps(g["tags"]), json.dumps(g["variables"]), g["kind"], json.dumps(g["tools"]), now, now),
                 )
         logger.info("Seeded %d gems from %s", len(gems), seed_sql_file)
+        self._seed_pipelines(seed_sql_file)
+
+    def _seed_pipelines(self, seed_sql_file: str | None) -> None:
+        if self._db.execute("SELECT COUNT(*) FROM pipelines").fetchone()[0] or not seed_sql_file:
+            return
+        now = _now()
+        with self._lock, self._db:
+            for p in load_seed_pipelines(seed_sql_file):
+                self._db.execute(
+                    "INSERT OR IGNORE INTO pipelines (id, name, description, builder, gates, max_attempts, acceptance, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    (str(uuid.uuid4()), p["name"], p.get("description", ""), p["builder"], json.dumps(p.get("gates", [])), int(p.get("max_attempts", 3)), int(bool(p.get("acceptance", True))), now, now),
+                )
 
     # ---- gems
     async def list_gems(self) -> list[Gem]:
@@ -223,3 +249,61 @@ class SQLiteStore:
         with self._lock, self._db:
             cur = self._db.execute("DELETE FROM memories WHERE id = ?", (memory_id,))
         return cur.rowcount > 0
+
+    # ---- pipelines (ADR-011)
+    async def list_pipelines(self) -> list[Pipeline]:
+        return [_pipeline(r) for r in self._db.execute("SELECT * FROM pipelines ORDER BY name").fetchall()]
+
+    async def get_pipeline(self, name: str) -> Pipeline | None:
+        row = self._db.execute("SELECT * FROM pipelines WHERE name = ?", (name,)).fetchone()
+        return _pipeline(row) if row else None
+
+    async def create_pipeline(self, data: PipelineCreate) -> Pipeline:
+        pid, now = str(uuid.uuid4()), _now()
+        d = data.model_dump()
+        with self._lock, self._db:
+            self._db.execute(
+                "INSERT INTO pipelines (id, name, description, builder, gates, max_attempts, acceptance, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (pid, d["name"], d["description"], d["builder"], json.dumps(d["gates"]), d["max_attempts"], int(d["acceptance"]), now, now),
+            )
+        return await self.get_pipeline(d["name"])
+
+    async def update_pipeline(self, name: str, updates: dict) -> Pipeline:
+        cols, vals = [], []
+        for k, v in updates.items():
+            cols.append(f"{k} = ?")
+            vals.append(json.dumps(v) if k == "gates" else (int(v) if k == "acceptance" else v))
+        cols.append("updated_at = ?")
+        vals.append(_now())
+        with self._lock, self._db:
+            self._db.execute(f"UPDATE pipelines SET {', '.join(cols)} WHERE name = ?", (*vals, name))
+        return await self.get_pipeline(name)
+
+    async def delete_pipeline(self, name: str) -> bool:
+        with self._lock, self._db:
+            cur = self._db.execute("DELETE FROM pipelines WHERE name = ?", (name,))
+        return cur.rowcount > 0
+
+    async def create_pipeline_run(self, pipeline_name: str, input_text: str) -> PipelineRun:
+        rid, now = str(uuid.uuid4()), _now()
+        with self._lock, self._db:
+            self._db.execute("INSERT INTO pipeline_runs (id, pipeline_name, status, input, created_at) VALUES (?, ?, 'running', ?, ?)", (rid, pipeline_name, input_text, now))
+        return await self.get_pipeline_run(rid)
+
+    async def update_pipeline_run(self, run_id: str, **fields) -> PipelineRun:
+        for k in ("attempts", "state"):
+            if k in fields and fields[k] is not None:
+                fields[k] = json.dumps(fields[k], default=str)
+        if fields:
+            cols = ", ".join(f"{k} = ?" for k in fields)
+            with self._lock, self._db:
+                self._db.execute(f"UPDATE pipeline_runs SET {cols} WHERE id = ?", (*fields.values(), run_id))
+        return await self.get_pipeline_run(run_id)
+
+    async def get_pipeline_run(self, run_id: str) -> PipelineRun | None:
+        row = self._db.execute("SELECT * FROM pipeline_runs WHERE id = ?", (run_id,)).fetchone()
+        return _pipeline_run(row) if row else None
+
+    async def get_pipeline_run_state(self, run_id: str) -> dict | None:
+        row = self._db.execute("SELECT state FROM pipeline_runs WHERE id = ?", (run_id,)).fetchone()
+        return json.loads(row["state"]) if row and row["state"] else None

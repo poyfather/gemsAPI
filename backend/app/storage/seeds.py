@@ -60,12 +60,34 @@ class _Scanner:
         return items
 
     def value(self):
-        return self.array() if self.peek("ARRAY[") else self.string()
+        if self.peek("ARRAY["):
+            return self.array()
+        if self.peek("'"):
+            s = self.string()
+            self.skip_ws()
+            if self.s.startswith("::", self.i):          # a cast such as ::jsonb; the text is what matters
+                self.i += 2
+                while self.i < len(self.s) and (self.s[self.i].isalnum() or self.s[self.i] in "_[]"):
+                    self.i += 1
+            return s
+        self.skip_ws()
+        for word, val in (("true", True), ("false", False), ("NULL", None)):
+            if self.s.startswith(word, self.i):
+                self.i += len(word)
+                return val
+        j = self.i
+        while j < len(self.s) and (self.s[j].isdigit() or self.s[j] == "-"):
+            j += 1
+        if j == self.i:
+            raise ValueError(f"unexpected value at {self.i}: {self.s[self.i:self.i + 30]!r}")
+        n = int(self.s[self.i:j])
+        self.i = j
+        return n
 
 
-def parse_seed_gems(sql: str) -> list[dict]:
-    """Every VALUES tuple of the gems INSERT in schema.sql, as dicts keyed by COLUMNS."""
-    marker = "INSERT INTO gems ("
+def parse_seed_rows(sql: str, table: str) -> list[dict]:
+    """Every VALUES tuple of `INSERT INTO <table> (...)` in schema.sql, as dicts keyed by the column list."""
+    marker = f"INSERT INTO {table} ("
     start = sql.find(marker)
     if start == -1:
         return []
@@ -73,7 +95,7 @@ def parse_seed_gems(sql: str) -> list[dict]:
     cols = [c.strip() for c in sql[start + len(marker):cols_end].split(",")]
     sc = _Scanner(sql)
     sc.i = sql.find("VALUES", cols_end) + len("VALUES")
-    gems: list[dict] = []
+    rows: list[dict] = []
     while True:
         sc.skip_ws()
         if sc.peek("ON CONFLICT") or sc.i >= len(sql) or not sc.peek("("):
@@ -85,13 +107,31 @@ def parse_seed_gems(sql: str) -> list[dict]:
             if sc.peek(","):
                 sc.expect(",")
         sc.expect(")")
-        row = dict(zip(cols, values))
-        row.setdefault("kind", "prompt")
-        row.setdefault("tools", [])
-        gems.append(row)
+        rows.append(dict(zip(cols, values)))
         if sc.peek(","):
             sc.expect(",")
+    return rows
+
+
+def parse_seed_gems(sql: str) -> list[dict]:
+    """Every VALUES tuple of the gems INSERT in schema.sql, as dicts keyed by COLUMNS."""
+    gems = parse_seed_rows(sql, "gems")
+    for row in gems:
+        row.setdefault("kind", "prompt")
+        row.setdefault("tools", [])
     return gems
+
+
+def load_seed_pipelines(path: str | pathlib.Path) -> list[dict]:
+    """The pipelines INSERT in schema.sql (ADR-011 gates); gates arrive as a JSON string."""
+    import json
+
+    p = pathlib.Path(path)
+    rows = parse_seed_rows(p.read_text(), "pipelines") if p.exists() else []
+    for r in rows:
+        if isinstance(r.get("gates"), str):
+            r["gates"] = json.loads(r["gates"])
+    return rows
 
 
 def load_seed_gems(path: str | pathlib.Path) -> list[dict]:

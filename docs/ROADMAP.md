@@ -63,7 +63,7 @@ These were found during the audit and fixed because CI could not pass without th
 | 42 | Windows installer, CI build and smoke test, REA bundling, first run | Console | M | Next |
 | 43 | Lapidary Memory: observations across runs, chats and clients | Memory, product | L | Now, done |
 | 44 | Local models as a provider, and the model policy (local, online, mix, auto, hand pick) | Providers, hybrid | M | Now, done |
-| 45 | Gates: builder, tests, visual review, adversarial review, acceptance | Agents, quality | L | Next |
+| 45 | Gates: builder, tests, visual review, adversarial review, acceptance | Agents, quality | L | Now, done |
 | 46 | Workbench: parallel runs on worktrees; Codex and OpenCode as clients | Console, agents | L | Later |
 | 47 | Guided first run and recipes: outcomes in one click | Console, newcomers | L | Now, done |
 | 48 | Plain-language pass over the console and the web UI | Console, newcomers | M | Now, done |
@@ -397,6 +397,8 @@ A Windows 11 application that installs, connects and manages the AI tools on a m
 - **Depends on**: 17 (done). Unlocks 47's no-key default path.
 
 ### 45. Gates: builder, tests, visual review, adversarial review, acceptance
+
+**Status: done** (`pipelines` and `pipeline_runs` in both stores; `backend/app/agents/pipeline.py` runs the builder, then each gate with the task and the output, parses `VERDICT: PASS` or `FAIL`, feeds a failure back as findings and a memory lesson, retries up to `max_attempts`, pauses for a risky call or for acceptance and resumes from the saved state; routes under `/pipelines`, MCP tools `list_pipelines`, `run_pipeline`, `resume_pipeline`; the gate gems `test_runner` and `adversarial_reviewer` and the seed pipeline `build_and_check`; a Pipelines page and a run page in the web UI; `supabase/add_pipelines.sql`; 9 tests). A visual gate is a gate gem with a screenshot tool from an MCP server (item 32); none is shipped yet.
 
 - **Why**: ADR-011, modelled on Ratchet Loop. A pipeline is an ordered list of gems with roles. The builder runs first; then each gate gem (a tester with `run_powershell` or a test tool, a visual reviewer with a vision model and screenshots from Playwright, an adversarial reviewer on a different model or provider) returns pass or fail with findings; a failure goes back to the builder with the findings and the pipeline retries up to a cap; acceptance is the existing approval gate. Every attempt is a run, and a failed gate's findings become a memory `lesson` (43). Surfaces: `POST /pipelines/{name}/runs`, a pipeline view in the UI, an MCP tool.
 - **Size**: L.
