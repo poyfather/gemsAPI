@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 from app import settings
 from app.mcp_http import build_mcp_app
-from app.routes import agents, chat, gems, memory, openai_compat, pipelines
+from app.routes import agents, chat, evals, gems, memory, openai_compat, pipelines
 from app.version import __version__
 
 load_dotenv()
@@ -47,6 +47,7 @@ app.add_middleware(
 )
 
 app.include_router(gems.router)
+app.include_router(evals.router)
 app.include_router(chat.router)
 app.include_router(agents.router)
 app.include_router(agents.runs_router)

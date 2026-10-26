@@ -14,7 +14,7 @@ import threading
 import uuid
 from datetime import datetime, timezone
 
-from app.models import Gem, GemCreate, GemVersion, Memory, MemoryCreate, Pipeline, PipelineCreate, PipelineRun, Run, RunEvent
+from app.models import EvalCase, EvalCaseCreate, EvalRun, Gem, GemCreate, GemVersion, Memory, MemoryCreate, Pipeline, PipelineCreate, PipelineRun, Run, RunEvent
 from app.storage.seeds import load_seed_gems, load_seed_pipelines
 
 logger = logging.getLogger(__name__)
@@ -181,6 +181,63 @@ class SQLiteStore:
     async def list_gem_versions(self, gem_id) -> list[GemVersion]:
         rows = self._db.execute("SELECT * FROM gem_versions WHERE gem_id = ? ORDER BY version", (gem_id,)).fetchall()
         return [GemVersion(gem_id=r["gem_id"], version=r["version"], snapshot=json.loads(r["snapshot"]), note=r["note"], source=r["source"], created_at=r["created_at"]) for r in rows]
+
+    # ---- evals (roadmap 28)
+    @staticmethod
+    def _case(r: sqlite3.Row) -> EvalCase:
+        d = dict(r)
+        d["variables"] = json.loads(d["variables"] or "{}")
+        return EvalCase(**d)
+
+    @staticmethod
+    def _eval_run(r: sqlite3.Row) -> EvalRun:
+        d = dict(r)
+        d["results"] = json.loads(d["results"] or "[]")
+        d["baseline"] = bool(d["baseline"])
+        return EvalRun(**d)
+
+    async def list_eval_cases(self, gem_id) -> list[EvalCase]:
+        return [self._case(r) for r in self._db.execute("SELECT * FROM eval_cases WHERE gem_id = ? ORDER BY created_at, rowid", (gem_id,)).fetchall()]
+
+    async def add_eval_case(self, gem_id, data: EvalCaseCreate) -> EvalCase:
+        cid, now = str(uuid.uuid4()), _now()
+        d = data.model_dump()
+        with self._lock, self._db:
+            self._db.execute('INSERT INTO eval_cases (id, gem_id, name, input, variables, "check", expected, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                             (cid, gem_id, d["name"], d["input"], json.dumps(d["variables"]), d["check"], d["expected"], now))
+        return self._case(self._db.execute("SELECT * FROM eval_cases WHERE id = ?", (cid,)).fetchone())
+
+    async def update_eval_case(self, case_id, updates) -> EvalCase | None:
+        if updates:
+            cols = ", ".join(f'"{k}" = ?' for k in updates)
+            vals = [json.dumps(v) if k == "variables" else v for k, v in updates.items()]
+            with self._lock, self._db:
+                self._db.execute(f"UPDATE eval_cases SET {cols} WHERE id = ?", (*vals, case_id))
+        row = self._db.execute("SELECT * FROM eval_cases WHERE id = ?", (case_id,)).fetchone()
+        return self._case(row) if row else None
+
+    async def delete_eval_case(self, case_id) -> bool:
+        with self._lock, self._db:
+            cur = self._db.execute("DELETE FROM eval_cases WHERE id = ?", (case_id,))
+        return cur.rowcount > 0
+
+    async def add_eval_run(self, run: EvalRun) -> EvalRun:
+        d = run.model_dump(mode="json")
+        with self._lock, self._db:
+            self._db.execute("INSERT INTO eval_runs (id, gem_id, gem_version, provider, model, passed, total, results, baseline, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                             (d["id"], d["gem_id"], d["gem_version"], d["provider"], d["model"], d["passed"], d["total"], json.dumps(d["results"]), int(d["baseline"]), d["created_at"]))
+        return run
+
+    async def list_eval_runs(self, gem_id, limit=50) -> list[EvalRun]:
+        rows = self._db.execute("SELECT * FROM eval_runs WHERE gem_id = ? ORDER BY created_at DESC, rowid DESC LIMIT ?", (gem_id, limit)).fetchall()
+        return [self._eval_run(r) for r in rows]
+
+    async def set_eval_baseline(self, gem_id, run_id) -> EvalRun | None:
+        if not self._db.execute("SELECT 1 FROM eval_runs WHERE id = ? AND gem_id = ?", (run_id, gem_id)).fetchone():
+            return None
+        with self._lock, self._db:
+            self._db.execute("UPDATE eval_runs SET baseline = (id = ?) WHERE gem_id = ?", (run_id, gem_id))
+        return self._eval_run(self._db.execute("SELECT * FROM eval_runs WHERE id = ?", (run_id,)).fetchone())
 
     # ---- runs
     async def create_run(self, gem_id, gem_name, model, provider, input_text) -> Run:
