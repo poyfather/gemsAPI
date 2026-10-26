@@ -372,3 +372,51 @@ class EvalRunReport(BaseModel):
     baseline: Optional[EvalRun] = None
     regressions: list[str] = Field(default=[], description="Cases that passed in the baseline and fail now")
     fixed: list[str] = Field(default=[], description="Cases that failed in the baseline and pass now")
+
+
+# ─── Side-by-side runs (roadmap 30) ───────────────────────────────────────────
+
+class CompareVariant(BaseModel):
+    label: str = Field(default="", description="Shown above the column; made up from the version and AI when empty")
+    version: Optional[int] = Field(default=None, description="A version from the gem's history; the current one when empty")
+    provider_override: Optional[str] = None
+    model_override: Optional[str] = None
+
+
+class CompareRequest(BaseModel):
+    message: str = Field(default="", description="The question every column answers; not needed when comparing on the tests")
+    variables: dict[str, str] = Field(default={})
+    variants: list[CompareVariant] = Field(..., min_length=2, max_length=4)
+
+
+class CompareColumn(BaseModel):
+    label: str
+    version: int
+    provider: str
+    model: str
+    reason: str = ""
+    output: str = ""
+    error: str = ""
+    seconds: float = 0
+    run_id: Optional[str] = Field(default=None, description="The agent run, for an assistant")
+
+
+class CompareResult(BaseModel):
+    gem_name: str
+    message: str
+    columns: list[CompareColumn]
+
+
+class CompareEstimate(BaseModel):
+    calls: int
+    tests: int
+    columns: list[dict] = Field(default=[], description="label, version, provider, model and free for each column")
+    free: bool = Field(..., description="True when every column runs on this PC")
+    max_calls: int
+
+
+class CompareTestsResult(BaseModel):
+    gem_name: str
+    columns: list[CompareColumn] = Field(default=[], description="Which version and AI each column used; output is empty")
+    cases: list[dict] = Field(default=[], description="name, then for each column: passed and detail")
+    totals: list[int] = Field(default=[], description="Tests passed per column")

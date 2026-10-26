@@ -9,7 +9,7 @@ import GemHistory from "@/components/GemHistory";
 import GemEvals from "@/components/GemEvals";
 import {
   ArrowLeft, Edit, Trash2, MessageSquare, Loader2,
-  AlertTriangle, Variable, LinkIcon, Cpu, ChevronDown, ChevronUp, Bot
+  AlertTriangle, Variable, LinkIcon, Cpu, ChevronDown, ChevronUp, Bot, Columns2
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -107,6 +107,13 @@ export default function GemDetailPage() {
           >
             <MessageSquare className="w-4 h-4" />
             {gem.kind === "agent" ? "Run it" : "Try it"}
+          </Link>
+          <Link
+            href={`/gems/${encodeURIComponent(gem.name)}/compare`}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-600/20 hover:bg-violet-600/30 text-violet-300 text-sm transition-colors"
+          >
+            <Columns2 className="w-4 h-4" />
+            Compare
           </Link>
           <Link
             href={`/gems/${gem.id}/edit`}

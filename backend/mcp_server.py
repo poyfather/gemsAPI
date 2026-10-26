@@ -35,6 +35,7 @@ TOOLS
   revert_gem           — restore an earlier version as a new one
   add_gem_eval         — add a test case to a gem
   run_gem_evals        — score a gem against its test cases, or estimate the cost
+  compare_gem          — two to four versions or AIs side by side, on a question or the tests
   search_gems          — filter gems by tag or keyword
   run_agent            — run an agent gem: a tool-using loop, with the run record
   approve_run          — continue a run that paused at a risky tool call
@@ -504,6 +505,31 @@ async def run_gem_evals(name: str, provider_override: str | None = None, model_o
     try:
         return (await eval_service.run(gem, provider_override, model_override)).model_dump(mode="json")
     except eval_service.EvalError as exc:
+        return {"error": str(exc)}
+
+
+@mcp.tool()
+async def compare_gem(name: str, variants: list[dict], message: str = "", variables: dict[str, str] | None = None,
+                      on_tests: bool = False, estimate_only: bool = False) -> dict:
+    """
+    Side by side (roadmap 30): run a gem in two to four columns and compare. Each variant is
+    {"version": n or null for the current one, "provider_override": ..., "model_override": ..., "label": ...}.
+    With a message, every column answers it; with on_tests, the gem's tests run in every column and
+    you get a pass and fail grid. estimate_only says how many model calls it takes and whether it is free.
+    """
+    from app.models import CompareRequest
+    from app.services import compare_service
+    gem = await get_gem_by_name(name)
+    if not gem:
+        return {"error": f"Gem '{name}' not found."}
+    try:
+        req = CompareRequest(message=message, variables=variables or {}, variants=variants)
+        if estimate_only:
+            return (await compare_service.estimate(gem, req, on_tests=on_tests)).model_dump(mode="json")
+        if on_tests:
+            return (await compare_service.compare_tests(gem, req)).model_dump(mode="json")
+        return (await compare_service.compare(gem, req)).model_dump(mode="json")
+    except (compare_service.CompareError, ValueError) as exc:
         return {"error": str(exc)}
 
 

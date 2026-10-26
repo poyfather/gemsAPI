@@ -22,7 +22,7 @@ Two tricks make the drawer more than a list:
 - **Prompts can contain other prompts.** Write a short `base_assistant` once ("be direct, be honest about uncertainty"), then start `code_reviewer` with `{{gem:base_assistant}}` and add only the review rules. Improve the base, and everything built on it improves too.
 - **Prompts can have blanks.** Leave `{language}` or `{tone}` in the text and fill it in at the moment you use it, so one prompt serves many situations.
 
-Who it is for: anyone who writes prompts as part of their work and uses them from more than one place. Who it is not for yet: a casual user with three prompts in a notes app, since setting up a database and two services is more than that problem needs. [docs/ROADMAP.md](docs/ROADMAP.md) lists what would change that; version history and per-prompt tests are done, side-by-side runs are next.
+Who it is for: anyone who writes prompts as part of their work and uses them from more than one place. Who it is not for yet: a casual user with three prompts in a notes app, since setting up a database and two services is more than that problem needs. [docs/ROADMAP.md](docs/ROADMAP.md) lists what would change that; version history, per-prompt tests and side-by-side runs are done; typed blanks are next.
 
 ## How it fits together
 
@@ -68,7 +68,7 @@ Every surface hands the gem to the same resolver, which expands `{{gem:name}}` r
 |---|---|
 | **Web UI** (Next.js 16, port 3000) | Browse, search and tag gems, edit them with a live resolved preview, test any gem in a chat view with streamed replies, run agent gems and watch each tool call as it happens, and open any past run by id |
 | **REST API** (FastAPI, port 8000) | CRUD on `/gems`, `POST /gems/resolve` to expand a gem, `POST /chat` with optional SSE streaming, Swagger at `/docs` |
-| **MCP server** (FastMCP, stdio or HTTP at `/mcp`) | Tools `list_gems`, `search_gems`, `get_gem`, `resolve_gem_prompt`, `chat_with_gem`, `create_gem`, `run_agent`, `approve_run`, `list_agent_tools`, `list_available_models`, `search_memory`, `get_memories`, `remember`, `forget`, `list_pipelines`, `run_pipeline`, `resume_pipeline`, `update_gem`, `gem_history`, `diff_gem_versions`, `revert_gem`, `add_gem_eval`, `run_gem_evals`, plus `gems://list`, `gems://{name}` and `runs://{id}` resources |
+| **MCP server** (FastMCP, stdio or HTTP at `/mcp`) | Tools `list_gems`, `search_gems`, `get_gem`, `resolve_gem_prompt`, `chat_with_gem`, `create_gem`, `run_agent`, `approve_run`, `list_agent_tools`, `list_available_models`, `search_memory`, `get_memories`, `remember`, `forget`, `list_pipelines`, `run_pipeline`, `resume_pipeline`, `update_gem`, `gem_history`, `diff_gem_versions`, `revert_gem`, `add_gem_eval`, `run_gem_evals`, `compare_gem`, plus `gems://list`, `gems://{name}` and `runs://{id}` resources |
 | **Agent runs** | A gem of kind `agent` lists tools it may call; `POST /agents/{name}/runs` runs the loop (model turn, tool calls, results, repeat) and records every step in `runs` and `run_events` |
 | **Seed gems** | `base_assistant`, `code_reviewer`, `creative_writer`, `summarizer`, `engineering_lead`, `prompt_enhancer`, the newcomer prompts `study_buddy`, `writing_coach` and `research_assistant`, `memory_summarizer`, the gate gems `test_runner` and `adversarial_reviewer`, and the agents `gem_librarian`, `rea_analyst`, `windows_operator` and `program_builder`, each also kept as a reviewable file in [`prompts/`](prompts/) |
 
@@ -213,6 +213,8 @@ curl -s -X POST http://localhost:8000/gems/summarizer/evals/run -H "X-API-Key: $
 ```
 
 Over MCP the same is `add_gem_eval` and `run_gem_evals` (with `estimate_only` to see the cost first).
+
+**Side by side** (roadmap item 30). The Compare button on a prompt opens two to four columns, each a version from the history and an AI. Ask one question and read the answers next to each other, or run the prompt's tests in every column and get a pass and fail grid with totals. Over REST it is `POST /gems/{id}/compare` and `/compare/tests` with `{"message": "...", "variants": [{"version": 1}, {"provider_override": "local"}]}`, and over MCP `compare_gem`.
 
 ## Memory
 

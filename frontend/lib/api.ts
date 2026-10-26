@@ -87,6 +87,24 @@ export interface EvalRun {
 
 export interface EvalRunReport { run: EvalRun; baseline?: EvalRun | null; regressions: string[]; fixed: string[] }
 
+// ─── Side-by-side runs (roadmap 30) ────────────────────────────────────────────
+
+export interface CompareVariant { label?: string; version?: number | null; provider_override?: string; model_override?: string }
+export interface CompareRequest { message?: string; variables?: Record<string, string>; variants: CompareVariant[] }
+export interface CompareColumn {
+  label: string; version: number; provider: string; model: string; reason: string;
+  output: string; error: string; seconds: number; run_id?: string | null;
+}
+export interface CompareResult { gem_name: string; message: string; columns: CompareColumn[] }
+export interface CompareEstimate {
+  calls: number; tests: number; free: boolean; max_calls: number;
+  columns: { label: string; version: number; provider: string; model: string; free: boolean }[];
+}
+export interface CompareTestsResult {
+  gem_name: string; columns: CompareColumn[]; totals: number[];
+  cases: { name: string; results: { passed: boolean; detail: string }[] }[];
+}
+
 export interface GemDiff {
   gem_name: string;
   from_version: number;
@@ -332,6 +350,15 @@ export const gems = {
     runs: (idOrName: string): Promise<EvalRun[]> => request<EvalRun[]>(`/gems/${encodeURIComponent(idOrName)}/evals/runs`),
     setBaseline: (idOrName: string, runId: string): Promise<EvalRun> =>
       request<EvalRun>(`/gems/${encodeURIComponent(idOrName)}/evals/runs/${encodeURIComponent(runId)}/baseline`, { method: "POST" }),
+  },
+
+  compare: {
+    estimate: (idOrName: string, data: CompareRequest, tests = false): Promise<CompareEstimate> =>
+      request<CompareEstimate>(`/gems/${encodeURIComponent(idOrName)}/compare/estimate${tests ? "?tests=true" : ""}`, { method: "POST", body: JSON.stringify(data) }),
+    run: (idOrName: string, data: CompareRequest): Promise<CompareResult> =>
+      request<CompareResult>(`/gems/${encodeURIComponent(idOrName)}/compare`, { method: "POST", body: JSON.stringify(data) }),
+    tests: (idOrName: string, data: CompareRequest): Promise<CompareTestsResult> =>
+      request<CompareTestsResult>(`/gems/${encodeURIComponent(idOrName)}/compare/tests`, { method: "POST", body: JSON.stringify(data) }),
   },
 
   resolve: (name: string, variables: Record<string, string> = {}): Promise<ResolveResponse> =>

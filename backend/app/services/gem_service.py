@@ -137,6 +137,20 @@ def fill_variables(prompt: str, variables: dict[str, str]) -> str:
     return _VAR_RE.sub(lambda m: variables.get(m.group(1), m.group(0)), prompt)
 
 
+async def resolve_text(name: str, text: str, variables: dict[str, str] | None = None) -> str:
+    """
+    Resolve `text` as if it were gem `name`'s prompt, e.g. an earlier version from its history.
+    Its {{gem:...}} references expand against the library as it is now; a reference back to
+    `name` itself is a cycle, as it would be for the live gem.
+    """
+    prompt = text
+    visited = frozenset({name})
+    for ref_name in _GEM_RE.findall(text):
+        expanded_ref, _ = await _expand(ref_name, visited, 1)
+        prompt = prompt.replace(f"{{{{gem:{ref_name}}}}}", expanded_ref)
+    return fill_variables(prompt, variables or {})
+
+
 async def resolve_gem_detailed(name: str, variables: dict[str, str] | None = None) -> ResolvedGem:
     """
     Resolve a gem and report which variables it expected, used and is missing.

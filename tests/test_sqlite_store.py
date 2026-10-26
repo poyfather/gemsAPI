@@ -2,9 +2,8 @@
 import asyncio
 import pathlib
 
-import pytest
 
-from app import settings, storage
+from app import settings
 from app.models import GemCreate, GemUpdate
 from app.services import gem_service
 from app.storage.seeds import parse_seed_gems
@@ -13,17 +12,6 @@ from conftest import TEST_API_KEY
 
 KEY = {"X-API-Key": TEST_API_KEY}
 SEEDS = pathlib.Path(__file__).resolve().parents[1] / "supabase" / "schema.sql"
-
-
-@pytest.fixture
-def sqlite(tmp_path, monkeypatch):
-    """Point the app at a fresh SQLite file seeded from schema.sql."""
-    monkeypatch.setattr(settings, "STORAGE", "sqlite")
-    monkeypatch.setattr(settings, "SQLITE_PATH", str(tmp_path / "lapidary.db"))
-    monkeypatch.setattr(settings, "SEED_SQL_FILE", str(SEEDS))
-    storage.reset_store()
-    yield storage.get_store()
-    storage.reset_store()
 
 
 def run(coro):

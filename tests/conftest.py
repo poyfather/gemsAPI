@@ -220,3 +220,19 @@ def fake_pipelines(monkeypatch):
     monkeypatch.setattr(pipeline_mod, "_store", lambda: store)
     monkeypatch.setattr(pipelines_route, "get_store", lambda: store)
     return data
+
+
+@pytest.fixture
+def sqlite(tmp_path, monkeypatch):
+    """Point the app at a fresh SQLite file seeded from supabase/schema.sql, and yield the store."""
+    import pathlib
+
+    from app import storage
+
+    seeds = pathlib.Path(__file__).resolve().parents[1] / "supabase" / "schema.sql"
+    monkeypatch.setattr(settings, "STORAGE", "sqlite")
+    monkeypatch.setattr(settings, "SQLITE_PATH", str(tmp_path / "lapidary.db"))
+    monkeypatch.setattr(settings, "SEED_SQL_FILE", str(seeds))
+    storage.reset_store()
+    yield storage.get_store()
+    storage.reset_store()
