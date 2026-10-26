@@ -1,8 +1,10 @@
 # Lapidary
 
-A self-hosted prompt library and agent harness. Store reusable LLM system prompts ("gems") in Supabase, compose them with `{{gem:name}}`, fill `{variable}` placeholders at call time, give a gem tools and run it as an agent, and serve all of it over a REST API, a web UI and an MCP server, over stdio or HTTP, that Claude Desktop, ChatGPT, Cursor and other MCP clients can call directly.
+**Your own home for the instructions you give AI, and for the assistants you build from them.** Write a prompt once, improve it safely, and use it from Claude, ChatGPT, Cursor, Open WebUI or your own scripts, with a free model on your own PC or an online one with your own key.
 
-A lapidary is the craftsperson who cuts and polishes rough stones into gems. That is the job here: rough prompts become named, composable, versioned gems, and the polished ones get to act. The project was called gemsAPI until October 2026; the repository URL and the `GEMS_*` environment variables are unchanged.
+Lapidary keeps every prompt (a "gem") in one place you control: a single file on your machine by default, or a Supabase database if you host it. A gem can build on other gems, leave blanks to fill in when you use it, and carry its own worked examples, tests and full history. Give a gem tools and it becomes an assistant that works step by step, asks before anything risky, and records what it did. On Windows 11, Lapidary Console installs and connects the whole set in plain words, for people who have never set up an AI tool before.
+
+A lapidary is the craftsperson who cuts and polishes rough stones into gems. That is the job here: rough prompts become named, tested, versioned gems, and the polished ones get to act. The project was called gemsAPI until October 2026; the repository URL and the `GEMS_*` environment variables are unchanged.
 
 [![CI](https://github.com/poyfather/lapidary/actions/workflows/ci.yml/badge.svg)](https://github.com/poyfather/lapidary/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/poyfather/lapidary/actions/workflows/codeql.yml/badge.svg)](https://github.com/poyfather/lapidary/actions/workflows/codeql.yml)
@@ -13,16 +15,24 @@ A lapidary is the craftsperson who cuts and polishes rough stones into gems. Tha
 
 ## Why
 
-If you use AI tools a lot, you end up writing instructions for them: "you are a careful code reviewer, check for bugs first, then style." Good ones are worth keeping. The trouble is where they end up: one in a chat window, one in a text file, one pasted into Slack, three slightly different copies of the same thing. When you improve one, the others stay stale.
+If you use AI tools a lot, you end up writing instructions for them: "you are a careful code reviewer, check for bugs first, then style." Good ones are worth keeping. The trouble is where they end up: one in a chat window, one in a text file, one pasted into Slack, three slightly different copies of the same thing. When you improve one, the others stay stale, and you cannot tell whether your change made it better or worse.
 
-Lapidary is a labelled drawer for those instructions. Each one gets a name, a description and tags, and lives in one database. You can fetch it from a web page, from your own code, or straight from Claude Desktop and Cursor, which can open the drawer themselves and pull out the right prompt instead of you pasting it in.
+Lapidary gives those instructions one home and makes them worth improving:
 
-Two tricks make the drawer more than a list:
+- **One home, every app.** Claude Desktop, ChatGPT, Cursor and other MCP clients open the library themselves, over stdio or over HTTP at `/mcp`. Open WebUI, and anything else that speaks the OpenAI API, sees every gem as a model. Scripts use the REST API, and you browse and edit in the web UI.
+- **Write once, reuse everywhere.** A gem can embed another with `{{gem:name}}`, so a shared `base_assistant` written once improves everything built on it. Blanks like `{language}` are filled in when you use the gem, and can have a type, choices, a default and a required flag. Worked examples sit next to the prompt as data.
+- **Change it without guessing.** Every save is a version you can diff and restore. A gem carries its own tests, from "the answer mentions this" to an AI judge with your criteria, scored against a baseline. Compare runs two to four versions or AIs side by side on the same question.
+- **From prompt to assistant.** A gem with tools runs as an agent that can use PowerShell 7, REA or any MCP server, pauses for your approval before risky tools, and records every step. Pipelines send a builder's work through test, visual and adversarial gates before you accept it. Memory carries lessons from one run to the next, shared by every app that connects.
+- **Free and private when you want it.** Local models through Ollama, LM Studio or oMLX cost nothing and keep your data on your PC. Claude and ChatGPT work with your own keys. A model policy (local, online, a mix, decide for me, or hand pick) chooses for each call and says why.
+- **Easy on Windows.** Lapidary Console asks "Which AI should we use?" and "What would you like?", then installs and connects only what the answer needs. After the installer's one administrator prompt, its helper service installs tools and updates without asking again.
 
-- **Prompts can contain other prompts.** Write a short `base_assistant` once ("be direct, be honest about uncertainty"), then start `code_reviewer` with `{{gem:base_assistant}}` and add only the review rules. Improve the base, and everything built on it improves too.
-- **Prompts can have blanks.** Leave `{language}` or `{tone}` in the text and fill it in at the moment you use it, so one prompt serves many situations.
+### Who it is for
 
-Who it is for: anyone who writes prompts as part of their work and uses them from more than one place. Who it is not for yet: a casual user with three prompts in a notes app, since setting up a database and two services is more than that problem needs. [docs/ROADMAP.md](docs/ROADMAP.md) lists what would change that; version history, per-prompt tests, side-by-side runs, typed blanks and examples as data are done; import and export are next.
+- **Anyone who writes prompts as part of their work** and uses them from more than one app: developers, writers, marketers, analysts, teachers.
+- **Newcomers on Windows 11** who want a private assistant, help with homework and writing, or their prompts inside Claude and ChatGPT, without learning all the parts first. The console's first run is made for them.
+- **System administrators** who want an assistant that runs PowerShell but asks first, an Advanced path that shows every choice and file, and a console that installs Windows management tools from their publishers.
+
+Not for yet: several people sharing one instance, since there is one API key and no user accounts ([roadmap](docs/ROADMAP.md) item 21), or a desktop app on macOS and Linux, where the web UI and the API work but the console does not. Importing and exporting gems (22) and a workbench for parallel agent runs (46) are the next planned features.
 
 ## How it fits together
 
