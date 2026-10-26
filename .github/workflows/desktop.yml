@@ -193,6 +193,7 @@ jobs:
           $sd = (sc.exe sdshow LapidaryHelper) -join ""
           "access list: $sd"
           if ($sd -notmatch "\(A;;CCLCSWRPLOCRRC;;;IU\)") { throw "signed-in users cannot start the helper" }
+          if ($sd -notmatch "\(A;;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;BA\)") { throw "administrators lost the right to remove or change the helper" }
 
           function Ask($json) {
             $c = New-Object System.IO.Pipes.NamedPipeClientStream(".", "LapidaryHelper", [System.IO.Pipes.PipeDirection]::InOut)
