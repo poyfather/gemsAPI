@@ -96,3 +96,15 @@ CREATE TABLE IF NOT EXISTS pipeline_runs (
   finished_at    TEXT
 );
 CREATE INDEX IF NOT EXISTS pipeline_runs_created_at_idx ON pipeline_runs (created_at DESC);
+
+-- Version history (roadmap 14): one row per save, the gem's fields as JSON.
+CREATE TABLE IF NOT EXISTS gem_versions (
+  id         TEXT PRIMARY KEY,
+  gem_id     TEXT NOT NULL,
+  version    INTEGER NOT NULL,
+  snapshot   TEXT NOT NULL,
+  note       TEXT NOT NULL DEFAULT '',
+  source     TEXT NOT NULL DEFAULT 'api',
+  created_at TEXT NOT NULL,
+  UNIQUE (gem_id, version)
+);

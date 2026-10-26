@@ -5,8 +5,12 @@ All notable changes to Lapidary are documented here. The format follows [Keep a 
 ## [Unreleased]
 
 ### Added
+- Prompt version history (roadmap item 14). Every create and every save that changes something is kept as a numbered version in a new `gem_versions` table in both stores (`supabase/add_gem_versions.sql` for existing installs), with an optional note and where the change came from (saved here, from an AI app over MCP, a restore). Gems saved before this existed get their old state as version 1 on their first change. `GET /gems/{id}/versions`, `GET /gems/{id}/versions/{n}`, `GET /gems/{id}/diff` (the prompt as a unified diff, other fields as from and to) and `POST /gems/{id}/versions/{n}/revert`, which writes an old version back as a new one and keeps the name. MCP tools `update_gem`, `gem_history`, `diff_gem_versions` and `revert_gem`. The prompt page has a History panel with each version, what changed, a coloured diff and Restore; the editor asks what changed. 7 tests.
 - The MCP server over HTTP (roadmap item 41). The backend mounts the same FastMCP server at `/mcp` (streamable HTTP, stateless) behind the API key as `X-API-Key` or a bearer token, so Claude Desktop and Claude Code connectors, Cursor, VS Code and, through a public HTTPS address, ChatGPT reach the gems, agents, memory and pipelines with no local process. `GEMS_MCP_HTTP_PATH` and `GEMS_MCP_ALLOWED_HOSTS` (a tunnel's host). The console's Connections view shows the address with copy buttons for the address, the key, a URL entry and an mcp-remote bridge entry.
 - Per-client API keys (roadmap item 10): `GEMS_CLIENT_KEYS=name:key,name:key` adds accepted keys that can be rotated or revoked one at a time; every check returns the client's name.
+
+### Changed
+- Lapidary Console runs on Electron 42 (from 38; Dependabot PR 43). None of the breaking changes in 39 to 42 touch the APIs the console uses.
 
 ### Planned
 - The installer's first run on a real Windows machine (roadmap item 42), the workbench (46), prompt version history (`gem_versions`).

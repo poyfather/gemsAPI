@@ -48,15 +48,27 @@ async def get_gem_by_id(gem_id: str) -> Optional[Gem]:
     return await get_store().get_gem_by_id(gem_id)
 
 
-async def create_gem(data: GemCreate) -> Gem:
-    return await get_store().create_gem(data, extract_variables(data.system_prompt))
+async def create_gem(data: GemCreate, *, source: str = "api") -> Gem:
+    from app.services import version_service
+
+    gem = await get_store().create_gem(data, extract_variables(data.system_prompt))
+    await version_service.record(gem, note="created", source=source)
+    return gem
 
 
-async def update_gem(gem_id: str, data: GemUpdate) -> Gem:
-    updates = {k: v for k, v in data.model_dump().items() if v is not None}
+async def update_gem(gem_id: str, data: GemUpdate, *, source: str = "api") -> Gem:
+    """Apply the fields that are set, then record the result as a new version (roadmap 14)."""
+    from app.services import version_service
+
+    updates = {k: v for k, v in data.model_dump().items() if v is not None and k != "note"}
     if "system_prompt" in updates:
         updates["variables"] = extract_variables(updates["system_prompt"])
-    return await get_store().update_gem(gem_id, updates)
+    before = await get_store().get_gem_by_id(gem_id)
+    if before is not None:
+        await version_service.ensure_baseline(before)
+    gem = await get_store().update_gem(gem_id, updates)
+    await version_service.record(gem, note=data.note or "", source=source)
+    return gem
 
 
 async def soft_delete_gem(gem_id: str) -> bool:

@@ -32,7 +32,7 @@ These were found during the audit and fixed because CI could not pass without th
 | 11 | Rate limits and spend guards on chat | Security, cost | M | Next |
 | 12 | API consistency and versioning | API, MCP | M | Next |
 | 13 | Streaming in the chat UI | Product | M | Next, done |
-| 14 | Prompt version history | Product | L | Next |
+| 14 | Prompt version history | Product | L | Now, done |
 | 15 | Supabase CLI migrations instead of hand-run SQL | DX, data | M | Next |
 | 16 | Make `prompts/` the single source of shipped gems | DX, data | S to M | Next |
 | 17 | One place for model defaults, drop retired models | Correctness | S | Next, done |
@@ -54,13 +54,13 @@ These were found during the audit and fixed because CI could not pass without th
 | 33 | Approval gates with pause and resume | Agents, security | M | Next, done |
 | 34 | Run viewer in the UI | Agents, product | M | Next, done |
 | 35 | Managed Agents as an execution backend | Agents | M | Later |
-| 36 | OpenAI-compatible API: gems and agents as models for Open WebUI | Console, API | M | Next |
-| 37 | Console shell: Electron app, detection, config writers, sidecars | Console | L | Next |
+| 36 | OpenAI-compatible API: gems and agents as models for Open WebUI | Console, API | M | Now, done |
+| 37 | Console shell: Electron app, detection, config writers, sidecars | Console | L | Now, done |
 | 38 | Storage layer with a SQLite backend | Console, data | L | Next, done |
-| 39 | Installers and updates through winget and Docker; Open WebUI management | Console | L | Next |
-| 40 | Settings and connections: keys, MCP servers, client configs | Console | M | Next |
+| 39 | Installers and updates through winget and Docker; Open WebUI management | Console | L | Now, done |
+| 40 | Settings and connections: keys, MCP servers, client configs | Console | M | Now, done |
 | 41 | Lapidary's MCP server over HTTP for Claude Desktop and ChatGPT | Console, MCP | M | Now, done |
-| 42 | Windows installer, CI build and smoke test, REA bundling, first run | Console | M | Next |
+| 42 | Windows installer, CI build and smoke test, REA bundling, first run | Console | M | Now, partly done |
 | 43 | Lapidary Memory: observations across runs, chats and clients | Memory, product | L | Now, done |
 | 44 | Local models as a provider, and the model policy (local, online, mix, auto, hand pick) | Providers, hybrid | M | Now, done |
 | 45 | Gates: builder, tests, visual review, adversarial review, acceptance | Agents, quality | L | Now, done |
@@ -187,6 +187,8 @@ Design and security decisions that shape everything after them.
 - **Depends on**: nothing.
 
 ### 14. Prompt version history
+
+**Status: done** (a `gem_versions` table in both stores; `backend/app/services/version_service.py` records a version on every create and every save that changes something, written by the app rather than a Postgres trigger so SQLite and Supabase keep the same history; a gem from before history was kept gets its old state as version 1 on its first change; a note on each save; `GET /gems/{id}/versions`, `GET /gems/{id}/versions/{n}`, `GET /gems/{id}/diff` with a unified diff of the prompt, `POST /gems/{id}/versions/{n}/revert`, which saves the old fields as a new version and keeps the name; MCP tools `update_gem`, `gem_history`, `diff_gem_versions`, `revert_gem`; a History panel with diffs and Restore on the prompt page and a "what changed" note in the editor; `supabase/add_gem_versions.sql`; 7 tests). Not done: diffs between any two chosen versions in the UI (the API takes any pair).
 
 - **Why**: the whole point of a prompt library is being able to see what changed and go back. Today the only trace is `updated_at`. For someone who edits prompts daily this is the single most valuable missing feature: the question is always "what changed between the version that worked and the one that stopped working", and nothing here can answer it. A `gem_versions` table filled by a trigger on `gems`, a `GET /gems/{id}/versions` route, a revert route, and a diff view in `app/gems/[id]/page.tsx`. Already on the root roadmap.
 - **Size**: L.
@@ -340,11 +342,15 @@ A Windows 11 application that installs, connects and manages the AI tools on a m
 
 ### 36. OpenAI-compatible API: gems and agents as models for Open WebUI
 
+**Status: done** (PR 42: `GET /v1/models` and `POST /v1/chat/completions` with bearer auth; prompt gems stream, agent gems run the loop and stream status lines).
+
 - **Why**: Open WebUI, and most desktop and editor clients, speak the OpenAI chat completions API and nothing else. If Lapidary answers `GET /v1/models` with its gems and `POST /v1/chat/completions` with the gem's resolved prompt in front of the conversation, every gem and agent is a model in Open WebUI's picker, with Claude or GPT behind it as the gem says. The same bearer key as the REST API. Streaming in OpenAI's chunk format. Agent gems run the loop and stream their answer; their tool calls are visible in the run record.
 - **Size**: M.
 - **Depends on**: nothing. Done in `backend/app/routes/openai_compat.py`.
 
 ### 37. Console shell: Electron app, detection, config writers, sidecars
+
+**Status: done** (PRs 42 and 46 to 49: the Electron shell, detection over an injected io, config writers, sidecars, the PowerShell view, the toolbox, the first run, the Doctor and the explainers).
 
 - **Why**: the management surface. `desktop/` holds an Electron app whose main process detects what is installed (winget, Docker Desktop, Node, Claude Desktop, ChatGPT, Ollama, Open WebUI), writes client configs (Claude Desktop and ChatGPT MCP entries, an Open WebUI compose file with Lapidary, OpenAI and Ollama as providers), and starts the backend and the UI as sidecars; a console page shows status and offers the actions; the Lapidary UI is embedded for gems, chat and runs. The pure logic (paths, detection, config merging) lives in `desktop/lib/` with Node tests so it is checked on every platform.
 - **Size**: L.
@@ -360,11 +366,15 @@ A Windows 11 application that installs, connects and manages the AI tools on a m
 
 ### 39. Installers and updates through winget and Docker; Open WebUI management
 
+**Status: done** (installs and updates through winget, Docker and npm from the Components view and the recipes; Open WebUI started from a generated compose file).
+
 - **Why**: the Kaseya part. Install, update, start and stop from the console: Claude Desktop and ChatGPT through winget, Docker Desktop through winget, Ollama through winget, Open WebUI as a Docker container (or `pip install open-webui` where Docker is unwanted), REA through the bundled npm package, with versions and health shown on the dashboard and logs a click away.
 - **Size**: L.
 - **Depends on**: 37.
 
 ### 40. Settings and connections: keys, MCP servers, client configs
+
+**Status: done** (the Settings view with keys in safeStorage, the model policy and local model; Connections writes the Claude Desktop and ChatGPT configs and, since item 41, shows the HTTP address).
 
 - **Why**: keys for Anthropic and OpenAI entered once, stored with safeStorage, handed to the backend; the MCP server list edited in the UI; one button to register REA and Lapidary in Claude Desktop and ChatGPT and to point Open WebUI at Lapidary, OpenAI and Ollama; a connection test for each.
 - **Size**: M.
@@ -379,6 +389,8 @@ A Windows 11 application that installs, connects and manages the AI tools on a m
 - **Depends on**: 37.
 
 ### 42. Windows installer, CI build and smoke test, REA bundling, first run
+
+**Status: partly done** (PR 52: the installer is built and the packaged backend is smoke-tested on every push to main; REA comes through npx on first use; the first run exists (item 47)). Still open: installing and running the console on a real Windows machine.
 
 - **Why**: an NSIS installer from electron-builder, built on `windows-latest` with the backend as a PyInstaller single file, smoke-tested by launching and hitting `/health`; `rea-agents` bundled; a first-run screen that takes the keys, creates the database with the seed gems and opens the console.
 - **Size**: M.
@@ -454,7 +466,7 @@ The person this is for does not know much about AI, installs the console, and sh
 
 The engineering items make the project safe to run. These are the ones that would make it worth recommending to someone who writes prompts for a living and has never heard of it, in the order they pay off:
 
-1. Version history with diffs and rollback (14).
+1. Version history with diffs and rollback (14), done.
 2. Evals per gem, run from the UI, with a recorded baseline (28).
 3. Side-by-side runs across versions and models (30).
 4. Typed variables with descriptions and defaults, exposed over MCP (29).

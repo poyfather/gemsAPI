@@ -31,7 +31,27 @@ export interface GemCreate {
   memory?: boolean;
 }
 
-export type GemUpdate = Partial<GemCreate>;
+export type GemUpdate = Partial<GemCreate> & { note?: string };
+
+// ─── Version history (roadmap 14) ──────────────────────────────────────────────
+
+export interface GemVersionSummary {
+  version: number;
+  note: string;
+  source: "api" | "mcp" | "revert" | "baseline" | string;
+  created_at: string;
+  changed: string[];
+  current: boolean;
+}
+
+export interface GemDiff {
+  gem_name: string;
+  from_version: number;
+  to_version: number;
+  changed: string[];
+  fields: Record<string, { from: unknown; to: unknown }>;
+  prompt_diff: string;
+}
 
 // ─── Memory (ADR-010) ──────────────────────────────────────────────────────────
 
@@ -241,6 +261,19 @@ export const gems = {
 
   delete: (id: string): Promise<{ message: string }> =>
     request(`/gems/${id}`, { method: "DELETE" }),
+
+  versions: (idOrName: string): Promise<GemVersionSummary[]> =>
+    request<GemVersionSummary[]>(`/gems/${encodeURIComponent(idOrName)}/versions`),
+
+  diff: (idOrName: string, fromVersion?: number, toVersion?: number): Promise<GemDiff> => {
+    const params = new URLSearchParams();
+    if (fromVersion) params.set("from_version", String(fromVersion));
+    if (toVersion) params.set("to_version", String(toVersion));
+    return request<GemDiff>(`/gems/${encodeURIComponent(idOrName)}/diff?${params.toString()}`);
+  },
+
+  revert: (idOrName: string, version: number, note = ""): Promise<Gem> =>
+    request<Gem>(`/gems/${encodeURIComponent(idOrName)}/versions/${version}/revert`, { method: "POST", body: JSON.stringify({ note }) }),
 
   resolve: (name: string, variables: Record<string, string> = {}): Promise<ResolveResponse> =>
     request<ResolveResponse>("/gems/resolve", {

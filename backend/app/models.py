@@ -37,6 +37,7 @@ class GemUpdate(BaseModel):
     kind: Optional[str] = None
     tools: Optional[list[str]] = None
     memory: Optional[bool] = None
+    note: Optional[str] = Field(default=None, description="What changed and why; kept with the new version in the gem's history")
 
 
 class Gem(GemBase):
@@ -262,3 +263,40 @@ class PipelineRun(BaseModel):
 class PipelineResult(BaseModel):
     run: PipelineRun
     events: list[RunEvent] = []
+
+
+# ─── Version history (roadmap 14) ─────────────────────────────────────────────
+
+VERSIONED_FIELDS = ("name", "description", "system_prompt", "model", "provider", "tags", "variables", "kind", "tools", "memory")
+
+
+class GemVersion(BaseModel):
+    """A gem as it was after one save. `snapshot` holds VERSIONED_FIELDS."""
+    gem_id: str
+    version: int
+    snapshot: dict
+    note: str = ""
+    source: str = Field(default="api", description="api, mcp, revert or baseline")
+    created_at: datetime
+
+
+class GemVersionSummary(BaseModel):
+    version: int
+    note: str = ""
+    source: str = "api"
+    created_at: datetime
+    changed: list[str] = Field(default=[], description="Fields that differ from the version before")
+    current: bool = False
+
+
+class GemDiff(BaseModel):
+    gem_name: str
+    from_version: int
+    to_version: int
+    changed: list[str] = []
+    fields: dict[str, dict] = Field(default={}, description="Every changed field except the prompt, as {from, to}")
+    prompt_diff: str = Field(default="", description="Unified diff of system_prompt; empty when the prompt did not change")
+
+
+class RevertRequest(BaseModel):
+    note: str = Field(default="", description="Why; added to the new version's note")
