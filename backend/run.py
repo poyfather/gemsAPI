@@ -20,7 +20,8 @@ def main() -> None:
         mcp_server.mcp.run()
         return
     import uvicorn
-    uvicorn.run("app.main:app", host=os.environ.get("HOST", "127.0.0.1"), port=int(os.environ.get("PORT", "8000")))
+    from app.main import app   # imported by name, not as a string, so PyInstaller bundles the routes
+    uvicorn.run(app, host=os.environ.get("HOST", "127.0.0.1"), port=int(os.environ.get("PORT", "8000")))
 
 
 if __name__ == "__main__":
