@@ -108,3 +108,29 @@ CREATE TABLE IF NOT EXISTS gem_versions (
   created_at TEXT NOT NULL,
   UNIQUE (gem_id, version)
 );
+
+-- Evals per gem (roadmap 28): test cases, and the scored runs against them.
+CREATE TABLE IF NOT EXISTS eval_cases (
+  id         TEXT PRIMARY KEY,
+  gem_id     TEXT NOT NULL,
+  name       TEXT NOT NULL DEFAULT '',
+  input      TEXT NOT NULL,
+  variables  TEXT NOT NULL DEFAULT '{}',
+  "check"    TEXT NOT NULL DEFAULT 'contains' CHECK ("check" IN ('contains', 'not_contains', 'all_of', 'equals', 'json', 'judge')),
+  expected   TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS eval_cases_gem_idx ON eval_cases (gem_id);
+CREATE TABLE IF NOT EXISTS eval_runs (
+  id          TEXT PRIMARY KEY,
+  gem_id      TEXT NOT NULL,
+  gem_version INTEGER NOT NULL,
+  provider    TEXT NOT NULL,
+  model       TEXT NOT NULL,
+  passed      INTEGER NOT NULL,
+  total       INTEGER NOT NULL,
+  results     TEXT NOT NULL DEFAULT '[]',
+  baseline    INTEGER NOT NULL DEFAULT 0,
+  created_at  TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS eval_runs_gem_idx ON eval_runs (gem_id, created_at DESC);

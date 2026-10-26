@@ -46,7 +46,7 @@ These were found during the audit and fixed because CI could not pass without th
 | 25 | One version source and a tidy release process | Release | S | Later, done |
 | 26 | Screenshots, API reference, resolution guide | Docs | S to M | Later |
 | 27 | Split-deploy guide | Docs | S | Later |
-| 28 | Evals per gem, runnable from the UI | Product, quality | M | Next |
+| 28 | Evals per gem, runnable from the UI | Product, quality | M | Now, done |
 | 29 | Typed variables with descriptions and defaults | Product, MCP | M | Next |
 | 30 | Side-by-side runs | Product | M | Later |
 | 31 | Few-shot examples as first-class data | Product | M | Later |
@@ -223,6 +223,8 @@ Design and security decisions that shape everything after them.
 - **Depends on**: nothing.
 
 ### 28. Evals per gem, runnable from the UI
+
+**Status: done** (`eval_cases` and `eval_runs` in both stores; `backend/app/services/eval_service.py` with six checks: contains, not_contains, all_of, equals, json against a small schema subset, and an AI judge that ends with a verdict; there is deliberately no regex check, since a pattern typed into the UI and run on the server is an injection risk. Every run is recorded with the gem's version from item 14 and compared with a baseline (the first run until another is chosen), listing regressions and fixes. Spend guard: an estimate before every run (model calls, rough tokens, free when the AI runs on this PC), a per-run call cap `GEMS_EVAL_MAX_CALLS` that a request cannot raise, and a per-answer cap `GEMS_EVAL_MAX_TOKENS`. Agent gems are answered by a full run; one that stops for approval fails its case. Routes under `/gems/{id}/evals`, MCP tools `add_gem_eval` and `run_gem_evals`, a Tests panel on the prompt page, `supabase/add_evals.sql`; 11 tests). The rate limits and spend guards for chat in item 11 are still open.
 
 - **Why**: `evals/eval_prompt_enhancer.py` is one script for one gem, run by hand with an API key in the environment. A prompt library earns its keep when every gem can carry a handful of input and expected-output pairs and a change can be scored before it is saved. That turns "I think this version is better" into a number, and it is the check that makes 14 (history) and 30 (side-by-side) useful rather than decorative. Store cases in a `gem_evals` table (input, expected, check type: contains, regex, JSON schema, LLM judge), add `POST /gems/{id}/evals/run`, show the score on the detail page, and record the baseline so a regression is visible. Keep live-API runs explicit and costed, as `STANDARDS.md` already requires.
 - **Size**: M.
@@ -467,7 +469,7 @@ The person this is for does not know much about AI, installs the console, and sh
 The engineering items make the project safe to run. These are the ones that would make it worth recommending to someone who writes prompts for a living and has never heard of it, in the order they pay off:
 
 1. Version history with diffs and rollback (14), done.
-2. Evals per gem, run from the UI, with a recorded baseline (28).
+2. Evals per gem, run from the UI, with a recorded baseline (28), done.
 3. Side-by-side runs across versions and models (30).
 4. Typed variables with descriptions and defaults, exposed over MCP (29).
 5. Few-shot examples as data rather than prose (31).

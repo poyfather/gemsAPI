@@ -36,6 +36,7 @@
 
 ## Evaluation Standards
 - Evals live in `evals/` and are separate from unit tests — they may make real API calls.
+- For most gems, prefer tests stored with the gem (roadmap 28, the Tests panel and `/gems/{id}/evals`): they are recorded against the gem's version and compared with a baseline. Keep a script in `evals/` only for checks those cannot express.
 - Each eval file targets one gem and measures a specific quality dimension.
 - Record baseline scores in the eval file itself so regressions are visible in diffs.
 - Run evals manually before merging changes to any gem in `prompts/`.

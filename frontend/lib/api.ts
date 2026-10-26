@@ -44,6 +44,49 @@ export interface GemVersionSummary {
   current: boolean;
 }
 
+// ─── Evals per gem (roadmap 28) ────────────────────────────────────────────────
+
+export type EvalCheck = "contains" | "not_contains" | "all_of" | "equals" | "json" | "judge";
+
+export interface EvalCase {
+  id: string;
+  gem_id: string;
+  name: string;
+  input: string;
+  variables: Record<string, string>;
+  check: EvalCheck;
+  expected: string;
+  created_at: string;
+}
+
+export interface EvalCaseResult { case_id: string; name: string; passed: boolean; output: string; detail: string }
+
+export interface EvalEstimate {
+  cases: number;
+  calls: number;
+  provider: string;
+  model: string;
+  free: boolean;
+  input_tokens: number;
+  max_output_tokens: number;
+  max_calls: number;
+}
+
+export interface EvalRun {
+  id: string;
+  gem_id: string;
+  gem_version: number;
+  provider: string;
+  model: string;
+  passed: number;
+  total: number;
+  results: EvalCaseResult[];
+  baseline: boolean;
+  created_at: string;
+}
+
+export interface EvalRunReport { run: EvalRun; baseline?: EvalRun | null; regressions: string[]; fixed: string[] }
+
 export interface GemDiff {
   gem_name: string;
   from_version: number;
@@ -274,6 +317,22 @@ export const gems = {
 
   revert: (idOrName: string, version: number, note = ""): Promise<Gem> =>
     request<Gem>(`/gems/${encodeURIComponent(idOrName)}/versions/${version}/revert`, { method: "POST", body: JSON.stringify({ note }) }),
+
+  evals: {
+    list: (idOrName: string): Promise<EvalCase[]> => request<EvalCase[]>(`/gems/${encodeURIComponent(idOrName)}/evals`),
+    add: (idOrName: string, data: Omit<EvalCase, "id" | "gem_id" | "created_at">): Promise<EvalCase> =>
+      request<EvalCase>(`/gems/${encodeURIComponent(idOrName)}/evals`, { method: "POST", body: JSON.stringify(data) }),
+    remove: async (idOrName: string, caseId: string): Promise<void> => {
+      const res = await fetch(`/api/gems/${encodeURIComponent(idOrName)}/evals/${encodeURIComponent(caseId)}`, { method: "DELETE" });
+      if (!res.ok) throw new ApiError(res.status, `HTTP ${res.status}`);
+    },
+    estimate: (idOrName: string): Promise<EvalEstimate> => request<EvalEstimate>(`/gems/${encodeURIComponent(idOrName)}/evals/estimate`),
+    run: (idOrName: string): Promise<EvalRunReport> =>
+      request<EvalRunReport>(`/gems/${encodeURIComponent(idOrName)}/evals/run`, { method: "POST", body: JSON.stringify({}) }),
+    runs: (idOrName: string): Promise<EvalRun[]> => request<EvalRun[]>(`/gems/${encodeURIComponent(idOrName)}/evals/runs`),
+    setBaseline: (idOrName: string, runId: string): Promise<EvalRun> =>
+      request<EvalRun>(`/gems/${encodeURIComponent(idOrName)}/evals/runs/${encodeURIComponent(runId)}/baseline`, { method: "POST" }),
+  },
 
   resolve: (name: string, variables: Record<string, string> = {}): Promise<ResolveResponse> =>
     request<ResolveResponse>("/gems/resolve", {

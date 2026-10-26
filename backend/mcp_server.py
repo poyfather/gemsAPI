@@ -33,6 +33,8 @@ TOOLS
   gem_history          — a gem's versions, newest first
   diff_gem_versions    — what changed between two versions
   revert_gem           — restore an earlier version as a new one
+  add_gem_eval         — add a test case to a gem
+  run_gem_evals        — score a gem against its test cases, or estimate the cost
   search_gems          — filter gems by tag or keyword
   run_agent            — run an agent gem: a tool-using loop, with the run record
   approve_run          — continue a run that paused at a risky tool call
@@ -463,6 +465,46 @@ async def resume_pipeline(run_id: str, accept: bool | None = None, note: str = "
     except (LookupError, ValueError) as exc:
         return {"error": str(exc)}
     return result.run.model_dump(mode="json")
+
+
+@mcp.tool()
+async def add_gem_eval(name: str, input: str, check: str = "contains", expected: str = "", case_name: str = "",
+                       variables: dict[str, str] | None = None) -> dict:
+    """
+    Add a test case to a gem (roadmap 28): the input it is given, values for its blanks, and a check on
+    the answer: contains, not_contains, all_of (one phrase per line), equals, json (a JSON schema, or
+    empty for any valid JSON), or judge (criteria an AI checks the answer against).
+    """
+    from app.models import EvalCaseCreate
+    from app.services import eval_service
+    gem = await get_gem_by_name(name)
+    if not gem:
+        return {"error": f"Gem '{name}' not found."}
+    try:
+        case = await eval_service.add_case(gem, EvalCaseCreate(name=case_name, input=input, variables=variables or {}, check=check, expected=expected))
+    except ValueError as exc:
+        return {"error": str(exc)}
+    return case.model_dump(mode="json")
+
+
+@mcp.tool()
+async def run_gem_evals(name: str, provider_override: str | None = None, model_override: str | None = None, estimate_only: bool = False) -> dict:
+    """
+    Run a gem's test cases and score it, or with estimate_only just say what a run would cost (model
+    calls, rough tokens, whether it is free on this PC). A run is recorded against the gem's version
+    and lists regressions and fixes against the baseline. Running calls the model, so it costs money
+    unless the AI runs on this PC.
+    """
+    from app.services import eval_service
+    gem = await get_gem_by_name(name)
+    if not gem:
+        return {"error": f"Gem '{name}' not found."}
+    if estimate_only:
+        return (await eval_service.estimate(gem, provider_override, model_override)).model_dump(mode="json")
+    try:
+        return (await eval_service.run(gem, provider_override, model_override)).model_dump(mode="json")
+    except eval_service.EvalError as exc:
+        return {"error": str(exc)}
 
 
 @mcp.tool()

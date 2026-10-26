@@ -300,3 +300,75 @@ class GemDiff(BaseModel):
 
 class RevertRequest(BaseModel):
     note: str = Field(default="", description="Why; added to the new version's note")
+
+
+# ─── Evals per gem (roadmap 28) ───────────────────────────────────────────────
+
+EVAL_CHECKS = ("contains", "not_contains", "all_of", "equals", "json", "judge")
+
+
+class EvalCaseCreate(BaseModel):
+    name: str = Field(default="", description="A short label, e.g. 'vague request'")
+    input: str = Field(..., description="The user message the gem is given")
+    variables: dict[str, str] = Field(default={}, description="Values for the gem's {variable} blanks")
+    check: str = Field(default="contains", description="contains, not_contains, all_of (one phrase per line), equals, json (a JSON schema subset), judge (criteria for an AI judge)")
+    expected: str = Field(default="", description="The phrase, phrases, exact text, JSON schema or judging criteria")
+
+
+class EvalCaseUpdate(BaseModel):
+    name: Optional[str] = None
+    input: Optional[str] = None
+    variables: Optional[dict[str, str]] = None
+    check: Optional[str] = None
+    expected: Optional[str] = None
+
+
+class EvalCase(EvalCaseCreate):
+    id: str
+    gem_id: str
+    created_at: datetime
+
+
+class EvalCaseResult(BaseModel):
+    case_id: str
+    name: str = ""
+    passed: bool
+    output: str = ""
+    detail: str = Field(default="", description="Why it passed or failed, in a sentence")
+
+
+class EvalEstimate(BaseModel):
+    cases: int
+    calls: int = Field(..., description="Model calls the run would make: one per case, plus one per judge case")
+    provider: str
+    model: str
+    free: bool = Field(..., description="True when the AI runs on this PC, so the run costs nothing")
+    input_tokens: int = Field(..., description="Rough estimate, characters divided by four")
+    max_output_tokens: int
+    max_calls: int = Field(..., description="The cap per run (GEMS_EVAL_MAX_CALLS)")
+
+
+class EvalRunRequest(BaseModel):
+    provider_override: Optional[str] = None
+    model_override: Optional[str] = None
+    max_calls: Optional[int] = Field(default=None, description="Refuse the run if it needs more calls than this; never above GEMS_EVAL_MAX_CALLS")
+
+
+class EvalRun(BaseModel):
+    id: str
+    gem_id: str
+    gem_version: int = Field(..., description="The gem's version in its history when the run happened")
+    provider: str
+    model: str
+    passed: int
+    total: int
+    results: list[EvalCaseResult] = []
+    baseline: bool = False
+    created_at: datetime
+
+
+class EvalRunReport(BaseModel):
+    run: EvalRun
+    baseline: Optional[EvalRun] = None
+    regressions: list[str] = Field(default=[], description="Cases that passed in the baseline and fail now")
+    fixed: list[str] = Field(default=[], description="Cases that failed in the baseline and pass now")

@@ -72,6 +72,11 @@ LLM_MAX_TOKENS: int = int(_env("LLM_MAX_TOKENS", "4096"))
 MCP_HTTP_PATH: str = _env("GEMS_MCP_HTTP_PATH", "/mcp")
 MCP_ALLOWED_HOSTS: list[str] = _env_list("GEMS_MCP_ALLOWED_HOSTS")
 
+# Evals per gem (roadmap 28): the most model calls one run may make, and the
+# longest answer each case may produce. Every run shows its estimate first.
+EVAL_MAX_CALLS: int = int(_env("GEMS_EVAL_MAX_CALLS", "50"))
+EVAL_MAX_TOKENS: int = int(_env("GEMS_EVAL_MAX_TOKENS", "1024"))
+
 # Lapidary Memory (ADR-010). Capture stores an observation when a run finishes;
 # summarize asks the memory_summarizer gem to write it (the plain digest is the
 # fallback and the only option without a model). Recall is what a gem with

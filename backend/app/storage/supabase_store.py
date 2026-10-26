@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from app.database import get_supabase
-from app.models import Gem, GemCreate, GemVersion, Memory, MemoryCreate, Pipeline, PipelineCreate, PipelineRun, Run, RunEvent
+from app.models import EvalCase, EvalCaseCreate, EvalRun, Gem, GemCreate, GemVersion, Memory, MemoryCreate, Pipeline, PipelineCreate, PipelineRun, Run, RunEvent
 
 
 class SupabaseStore:
@@ -41,6 +41,37 @@ class SupabaseStore:
     async def list_gem_versions(self, gem_id) -> list[GemVersion]:
         result = get_supabase().table("gem_versions").select("gem_id, version, snapshot, note, source, created_at").eq("gem_id", gem_id).order("version").execute()
         return [GemVersion(**r) for r in result.data]
+
+    # ---- evals (roadmap 28)
+    async def list_eval_cases(self, gem_id) -> list[EvalCase]:
+        result = get_supabase().table("eval_cases").select("*").eq("gem_id", gem_id).order("created_at").execute()
+        return [EvalCase(**r) for r in result.data]
+
+    async def add_eval_case(self, gem_id, data: EvalCaseCreate) -> EvalCase:
+        result = get_supabase().table("eval_cases").insert({**data.model_dump(), "gem_id": gem_id}).execute()
+        return EvalCase(**result.data[0])
+
+    async def update_eval_case(self, case_id, updates) -> EvalCase | None:
+        result = get_supabase().table("eval_cases").update(updates).eq("id", case_id).execute()
+        return EvalCase(**result.data[0]) if result.data else None
+
+    async def delete_eval_case(self, case_id) -> bool:
+        return bool(get_supabase().table("eval_cases").delete().eq("id", case_id).execute().data)
+
+    async def add_eval_run(self, run: EvalRun) -> EvalRun:
+        result = get_supabase().table("eval_runs").insert(run.model_dump(mode="json")).execute()
+        return EvalRun(**result.data[0])
+
+    async def list_eval_runs(self, gem_id, limit=50) -> list[EvalRun]:
+        result = get_supabase().table("eval_runs").select("*").eq("gem_id", gem_id).order("created_at", desc=True).limit(limit).execute()
+        return [EvalRun(**r) for r in result.data]
+
+    async def set_eval_baseline(self, gem_id, run_id) -> EvalRun | None:
+        db = get_supabase()
+        if not db.table("eval_runs").select("id").eq("id", run_id).eq("gem_id", gem_id).execute().data:
+            return None
+        db.table("eval_runs").update({"baseline": False}).eq("gem_id", gem_id).execute()
+        return EvalRun(**db.table("eval_runs").update({"baseline": True}).eq("id", run_id).execute().data[0])
 
     # ---- runs
     async def create_run(self, gem_id, gem_name, model, provider, input_text) -> Run:
