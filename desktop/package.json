@@ -1,6 +1,6 @@
 {
   "name": "lapidary-console",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Lapidary Console: installs, connects and manages the AI tools on a Windows machine, with Lapidary as the hub.",
   "private": true,
   "main": "main.js",

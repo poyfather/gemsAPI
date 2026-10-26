@@ -7,7 +7,7 @@ A lapidary is the craftsperson who cuts and polishes rough stones into gems. Tha
 [![CI](https://github.com/poyfather/lapidary/actions/workflows/ci.yml/badge.svg)](https://github.com/poyfather/lapidary/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/poyfather/lapidary/actions/workflows/codeql.yml/badge.svg)](https://github.com/poyfather/lapidary/actions/workflows/codeql.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-1B2A4A.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.3.0-7c3aed.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.4.0-7c3aed.svg)](CHANGELOG.md)
 [![Python 3.12+](https://img.shields.io/badge/Python-3.12%2B-3776AB.svg)](backend/requirements.txt)
 [![Next.js 16](https://img.shields.io/badge/Next.js-16-000000.svg)](frontend/package.json)
 
