@@ -5,6 +5,7 @@ import { gems as gemsApi, EvalCase, EvalCheck, EvalEstimate, EvalRun, EvalRunRep
 import { explain, providerLabel } from "@/lib/words";
 import { FlaskConical, Loader2, Play, Plus, Trash2, Check, X, Flag, ChevronDown, ChevronRight } from "lucide-react";
 import clsx from "clsx";
+import BlankInputs from "@/components/BlankInputs";
 
 const CHECKS: { id: EvalCheck; label: string; hint: string }[] = [
   { id: "contains", label: "the answer contains", hint: "a word or phrase, any case" },
@@ -99,12 +100,7 @@ export default function GemEvals({ gem }: { gem: Gem }) {
         <form onSubmit={add} className="px-4 py-3 border-b border-gem-border space-y-2">
           <input className={input} placeholder="A short name (optional)" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
           <textarea className={input} rows={2} required placeholder="What the prompt is asked" value={draft.input} onChange={(e) => setDraft({ ...draft, input: e.target.value })} />
-          {gem.variables.map((v) => (
-            <div key={v} className="flex items-center gap-2">
-              <code className="text-xs text-blue-400 w-28 shrink-0">{"{" + v + "}"}</code>
-              <input className={input} placeholder={`Value for ${v}`} value={draft.variables[v] ?? ""} onChange={(e) => setDraft({ ...draft, variables: { ...draft.variables, [v]: e.target.value } })} />
-            </div>
-          ))}
+          <BlankInputs names={gem.variables} specs={gem.variable_specs} values={draft.variables} onChange={(v) => setDraft({ ...draft, variables: v })} size="xs" />
           <div className="flex items-center gap-2">
             <span className="text-xs text-slate-500 shrink-0">Pass when</span>
             <select className={input} value={draft.check} onChange={(e) => setDraft({ ...draft, check: e.target.value as EvalCheck })}>

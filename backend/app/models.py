@@ -8,6 +8,18 @@ from app import settings
 
 # ─── Gem models ────────────────────────────────────────────────────────────────
 
+VARIABLE_TYPES = ("text", "long_text", "number", "choice", "boolean")
+
+
+class VariableSpec(BaseModel):
+    """What a {blank} expects (roadmap 29). Values stay strings on the wire; the type says how to check and show them."""
+    description: str = Field(default="", description="What to put here, in a sentence")
+    type: str = Field(default="text", description="text, long_text, number, choice or boolean")
+    options: list[str] = Field(default=[], description="The allowed values of a choice")
+    default: Optional[str] = Field(default=None, description="Used when no value is given")
+    required: bool = Field(default=True, description="A required blank with no default must be filled before the gem runs")
+
+
 class GemBase(BaseModel):
     name: str = Field(..., description="Unique snake_case identifier, e.g. 'code_reviewer'")
     description: str = Field(default="", description="Human-readable description of what this gem does")
@@ -21,6 +33,7 @@ class GemBase(BaseModel):
     kind: str = Field(default="prompt", description="'prompt' (one model call) or 'agent' (may call its tools in a loop)")
     tools: list[str] = Field(default=[], description="Registered tool names an agent gem may call; see GET /agents/tools")
     memory: bool = Field(default=False, description="Recall: prepend the top memory matches for the message inside a <memory> block (ADR-010)")
+    variable_specs: dict[str, VariableSpec] = Field(default={}, description="Descriptions, types, defaults and choices for the {blanks}, by name (roadmap 29)")
 
 
 class GemCreate(GemBase):
@@ -37,6 +50,7 @@ class GemUpdate(BaseModel):
     kind: Optional[str] = None
     tools: Optional[list[str]] = None
     memory: Optional[bool] = None
+    variable_specs: Optional[dict[str, VariableSpec]] = None
     note: Optional[str] = Field(default=None, description="What changed and why; kept with the new version in the gem's history")
 
 
@@ -64,6 +78,8 @@ class ResolveResponse(BaseModel):
     referenced_gems: list[str] = []
     variables_used: list[str] = []
     variables_missing: list[str] = []
+    variables_defaulted: list[str] = Field(default=[], description="Blanks filled from their default")
+    variable_errors: list[str] = Field(default=[], description="Values that do not fit their blank's type or choices, and required blanks left empty")
 
 
 # ─── Chat models ───────────────────────────────────────────────────────────────
@@ -267,7 +283,7 @@ class PipelineResult(BaseModel):
 
 # ─── Version history (roadmap 14) ─────────────────────────────────────────────
 
-VERSIONED_FIELDS = ("name", "description", "system_prompt", "model", "provider", "tags", "variables", "kind", "tools", "memory")
+VERSIONED_FIELDS = ("name", "description", "system_prompt", "model", "provider", "tags", "variables", "kind", "tools", "memory", "variable_specs")
 
 
 class GemVersion(BaseModel):

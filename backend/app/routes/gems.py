@@ -36,7 +36,10 @@ async def create_gem(data: GemCreate):
     existing = await gem_service.get_gem_by_name(data.name)
     if existing:
         raise HTTPException(status_code=400, detail=f"A gem named '{data.name}' already exists.")
-    return await gem_service.create_gem(data)
+    try:
+        return await gem_service.create_gem(data)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
 
 
 @router.post("/resolve", response_model=ResolveResponse, summary="Resolve a gem")
@@ -46,7 +49,7 @@ async def resolve_gem(request: ResolveRequest):
     recursively and fill in {variable} placeholders.
     """
     try:
-        result = await gem_service.resolve_gem_detailed(request.gem_name, request.variables)
+        result = await gem_service.resolve_gem_detailed(request.gem_name, request.variables, strict=False)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 
@@ -56,6 +59,8 @@ async def resolve_gem(request: ResolveRequest):
         referenced_gems=result.referenced_gems,
         variables_used=result.variables_used,
         variables_missing=result.variables_missing,
+        variables_defaulted=result.variables_defaulted,
+        variable_errors=result.variable_errors,
     )
 
 
@@ -74,7 +79,10 @@ async def update_gem(gem_id: str, data: GemUpdate):
     gem = await _find_gem(gem_id)
     if not gem:
         raise HTTPException(status_code=404, detail=f"Gem '{gem_id}' not found.")
-    return await gem_service.update_gem(gem.id, data)
+    try:
+        return await gem_service.update_gem(gem.id, data)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
 
 
 @router.get("/{gem_id}/versions", response_model=list[GemVersionSummary], summary="A gem's history")

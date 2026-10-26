@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { gems as gemsApi, chat as chatApi, agents as agentsApi, runs as runsApi, Gem, ChatMessage, AvailableModels, RunEvent } from "@/lib/api";
 import { explain } from "@/lib/words";
 import RunEvents from "@/components/RunEvents";
+import BlankInputs from "@/components/BlankInputs";
 import Link from "next/link";
 import {
   Send, Loader2, Gem as GemIcon, Variable, ChevronDown,
@@ -243,18 +244,7 @@ function ChatPageInner() {
                 <Variable className="w-3.5 h-3.5 text-blue-400" />
                 Blanks to fill
               </label>
-              {currentGem.variables.map((v) => (
-                <div key={v} className="space-y-1">
-                  <label className="text-xs text-blue-400 font-mono">{"{" + v + "}"}</label>
-                  <input
-                    type="text"
-                    placeholder={`Value for ${v}`}
-                    value={varValues[v] ?? ""}
-                    onChange={(e) => setVarValues((p) => ({ ...p, [v]: e.target.value }))}
-                    className="w-full px-2.5 py-1.5 rounded-md bg-gem-surface border border-gem-border text-slate-300 text-xs placeholder:text-slate-600 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
-                  />
-                </div>
-              ))}
+              <BlankInputs names={currentGem.variables} specs={currentGem.variable_specs} values={varValues} onChange={setVarValues} />
             </div>
           )}
 

@@ -32,6 +32,7 @@ def _gem(row: sqlite3.Row) -> Gem:
         d[k] = json.loads(d[k] or "[]")
     d["is_active"] = bool(d["is_active"])
     d["memory"] = bool(d.get("memory", 0))
+    d["variable_specs"] = json.loads(d.get("variable_specs") or "{}")
     return Gem(**d)
 
 
@@ -99,6 +100,9 @@ class SQLiteStore:
         if "memory" not in cols:
             with self._lock, self._db:
                 self._db.execute("ALTER TABLE gems ADD COLUMN memory INTEGER NOT NULL DEFAULT 0")
+        if "variable_specs" not in cols:
+            with self._lock, self._db:
+                self._db.execute("ALTER TABLE gems ADD COLUMN variable_specs TEXT NOT NULL DEFAULT '{}'")
 
     def _seed(self, seed_sql_file: str | None) -> None:
         if self._db.execute("SELECT COUNT(*) FROM gems").fetchone()[0]:
@@ -148,10 +152,11 @@ class SQLiteStore:
         d = data.model_dump()
         with self._lock, self._db:
             self._db.execute(
-                "INSERT INTO gems (id, name, description, system_prompt, model, provider, tags, variables, kind, tools, memory, is_active, created_at, updated_at)"
-                " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)",
+                "INSERT INTO gems (id, name, description, system_prompt, model, provider, tags, variables, kind, tools, memory, variable_specs, is_active, created_at, updated_at)"
+                " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)",
                 (gem_id, d["name"], d["description"], d["system_prompt"], d["model"], d["provider"],
-                 json.dumps(d["tags"]), json.dumps(variables), d["kind"], json.dumps(d["tools"]), int(bool(d.get("memory"))), now, now),
+                 json.dumps(d["tags"]), json.dumps(variables), d["kind"], json.dumps(d["tools"]), int(bool(d.get("memory"))),
+                 json.dumps(d.get("variable_specs") or {}), now, now),
             )
         return await self.get_gem_by_id(gem_id)
 
@@ -159,7 +164,7 @@ class SQLiteStore:
         cols, vals = [], []
         for k, v in updates.items():
             cols.append(f"{k} = ?")
-            vals.append(json.dumps(v) if k in _JSON_GEM else (int(v) if k == "memory" else v))
+            vals.append(json.dumps(v) if k in _JSON_GEM or k == "variable_specs" else (int(v) if k == "memory" else v))
         cols.append("updated_at = ?")
         vals.append(_now())
         with self._lock, self._db:
