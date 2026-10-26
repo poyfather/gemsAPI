@@ -21,6 +21,22 @@ export function lapidaryMcpEntries({ backendDir, pythonExe, reaCommand = "npx", 
 }
 
 /**
+ * Lapidary over HTTP (roadmap item 41): what to paste into a client that takes a URL,
+ * and a stdio bridge entry (mcp-remote) for apps that only start local commands.
+ * The header has no space after the colon because some apps split arguments on spaces.
+ */
+export function lapidaryHttpDetails({ key, host = "127.0.0.1", port = 8000, path = "/mcp" }) {
+  const url = `http://${host}:${port}${path}`;
+  return {
+    url,
+    header: "X-API-Key",
+    key,
+    urlEntry: { lapidary: { url, headers: { "X-API-Key": key } } },
+    bridgeEntry: { lapidary: { command: "npx", args: ["-y", "mcp-remote", url, "--header", `X-API-Key:${key}`] } },
+  };
+}
+
+/**
  * A docker compose file for Open WebUI with Lapidary, OpenAI and Ollama as providers.
  * Lapidary is reached from inside the container as host.docker.internal.
  */

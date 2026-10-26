@@ -28,7 +28,7 @@ These were found during the audit and fixed because CI could not pass without th
 | 7 | Patched Next.js, then Next 15 | Security, DX | S then M | Now, done |
 | 8 | Turn the strict TypeScript lint rules back on | DX | S | Now, done |
 | 9 | Decide the Supabase RLS and key model | Security | M to L | Next, done |
-| 10 | Per-client API keys, and auth for a hosted MCP server | Security | M | Next |
+| 10 | Per-client API keys, and auth for a hosted MCP server | Security | M | Now, done with 41 |
 | 11 | Rate limits and spend guards on chat | Security, cost | M | Next |
 | 12 | API consistency and versioning | API, MCP | M | Next |
 | 13 | Streaming in the chat UI | Product | M | Next, done |
@@ -59,7 +59,7 @@ These were found during the audit and fixed because CI could not pass without th
 | 38 | Storage layer with a SQLite backend | Console, data | L | Next, done |
 | 39 | Installers and updates through winget and Docker; Open WebUI management | Console | L | Next |
 | 40 | Settings and connections: keys, MCP servers, client configs | Console | M | Next |
-| 41 | Lapidary's MCP server over HTTP for Claude Desktop and ChatGPT | Console, MCP | M | Next |
+| 41 | Lapidary's MCP server over HTTP for Claude Desktop and ChatGPT | Console, MCP | M | Now, done |
 | 42 | Windows installer, CI build and smoke test, REA bundling, first run | Console | M | Next |
 | 43 | Lapidary Memory: observations across runs, chats and clients | Memory, product | L | Now, done |
 | 44 | Local models as a provider, and the model policy (local, online, mix, auto, hand pick) | Providers, hybrid | M | Now, done |
@@ -159,6 +159,8 @@ Design and security decisions that shape everything after them.
 - **Depends on**: a decision recorded in `DECISIONS.md`. Blocks 10, 14, 21.
 
 ### 10. Per-client API keys, and auth for a hosted MCP server
+
+**Status: done with 41** (`GEMS_CLIENT_KEYS=name:key,name:key` in `backend/app/auth.py`; every check returns the client's name; the MCP server over HTTP sits behind the same keys). Not done: hashed keys in a table with scopes and an audit log; keys stay in the environment.
 
 - **Why**: one shared `GEMS_API_KEY` serves the UI, scripts and anyone with the `.env`; there is no rotation, revocation or audit of who called what. The MCP server in `backend/mcp_server.py` imports the services directly, so it is not gated by the key at all; fine over stdio on one machine, but the moment it is run with an HTTP or SSE transport it is an open write path to the database and to paid LLM calls. Add an `api_keys` table (hashed key, label, scopes such as read-only, created and revoked timestamps), look keys up in `require_api_key`, and give the MCP server the same dependency when it runs over a network transport.
 - **Size**: M.
@@ -369,6 +371,8 @@ A Windows 11 application that installs, connects and manages the AI tools on a m
 - **Depends on**: 37, 39.
 
 ### 41. Lapidary's MCP server over HTTP for Claude Desktop and ChatGPT
+
+**Status: done** (`backend/app/mcp_http.py` mounts the same FastMCP server on the API at `/mcp` as stateless streamable HTTP behind an ASGI key guard that takes `X-API-Key` or a bearer token; `GEMS_MCP_ALLOWED_HOSTS` for a tunnel's domain; per-client keys through `GEMS_CLIENT_KEYS` (item 10); the console's Connections view shows the address with copy buttons for the address, the key, a URL entry and an mcp-remote bridge entry; 6 tests). ChatGPT needs the address reachable over HTTPS from the internet, so a tunnel or a hosted deployment; the console does not set one up.
 
 - **Why**: `backend/mcp_server.py` speaks stdio only. FastMCP also serves streamable HTTP; running it on localhost behind the API key lets ChatGPT (which only takes remote MCP) and Claude Desktop reach Lapidary's gems, agents and runs. Item 10's per-client keys belong here.
 - **Size**: M.

@@ -2,14 +2,14 @@
 // Privileged work lives here: detection, installs, config files, keys, sidecars, logs.
 // The renderer only ever talks to it through the IPC surface in preload.js.
 
-import { app, BrowserWindow, ipcMain, safeStorage, shell } from "electron";
+import { app, BrowserWindow, clipboard, ipcMain, safeStorage, shell } from "electron";
 import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { COMPONENTS, detectAll, installCommand, paths } from "./lib/components.js";
-import { backendEnv, lapidaryMcpEntries, lapidaryMcpServersFile, mergeMcpServers, openWebUICompose } from "./lib/configs.js";
+import { backendEnv, lapidaryHttpDetails, lapidaryMcpEntries, lapidaryMcpServersFile, mergeMcpServers, openWebUICompose } from "./lib/configs.js";
 import { Sidecar, waitForHealth } from "./lib/sidecars.js";
 import { capOutput, pwshInvocation } from "./lib/pwsh.js";
 import { TOOLBOX, detectToolbox, toolboxInstallCommand, toolboxSourceLabel } from "./lib/toolbox.js";
@@ -114,6 +114,18 @@ ipcMain.handle("console:settings:set", async (_e, patch) => {
   for (const [k, v] of Object.entries(patch)) if (typeof v === "string" && v !== "set") s[k] = v;
   saveSettings(s);
   return { ok: true, note: "saved; press Restart Lapidary on the Dashboard so the new settings are used" };
+});
+ipcMain.handle("console:mcp:details", async () => {
+  const s = loadSettings();
+  const d = lapidaryHttpDetails({ key: s.gemsApiKey || "" });
+  return { url: d.url, header: d.header, keyHint: d.key ? `${d.key.slice(0, 4)}...${d.key.slice(-4)}` : "", urlEntry: d.urlEntry, bridgeEntry: d.bridgeEntry };
+});
+ipcMain.handle("console:mcp:copy", async (_e, what) => {
+  const s = loadSettings();
+  const d = lapidaryHttpDetails({ key: s.gemsApiKey || "" });
+  const text = what === "key" ? d.key : what === "bridge" ? JSON.stringify({ mcpServers: d.bridgeEntry }, null, 2) : what === "entry" ? JSON.stringify({ mcpServers: d.urlEntry }, null, 2) : d.url;
+  clipboard.writeText(text);
+  return { ok: true, message: what === "key" ? "key copied; paste it as the X-API-Key header" : what === "url" ? `copied ${d.url}` : "copied the config entry" };
 });
 ipcMain.handle("console:connect:claude", async () => writeMcp(P.claudeConfig));
 ipcMain.handle("console:connect:chatgpt", async () => writeMcp(P.chatgptConfig));

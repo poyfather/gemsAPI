@@ -66,6 +66,12 @@ LLM_TIMEOUT_SECONDS: float = float(_env("LLM_TIMEOUT_SECONDS", "60"))
 LLM_MAX_RETRIES: int = int(_env("LLM_MAX_RETRIES", "2"))
 LLM_MAX_TOKENS: int = int(_env("LLM_MAX_TOKENS", "4096"))
 
+# The MCP server over HTTP (roadmap item 41): mounted on the API at this path,
+# behind the same keys. Hosts other than localhost (a tunnel's domain, so
+# ChatGPT can reach it) must be listed, comma separated, or "*".
+MCP_HTTP_PATH: str = _env("GEMS_MCP_HTTP_PATH", "/mcp")
+MCP_ALLOWED_HOSTS: list[str] = _env_list("GEMS_MCP_ALLOWED_HOSTS")
+
 # Lapidary Memory (ADR-010). Capture stores an observation when a run finishes;
 # summarize asks the memory_summarizer gem to write it (the plain digest is the
 # fallback and the only option without a model). Recall is what a gem with

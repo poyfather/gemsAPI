@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { backendEnv, lapidaryMcpEntries, lapidaryMcpServersFile, mergeMcpServers, openWebUICompose } from "../lib/configs.js";
+import { backendEnv, lapidaryHttpDetails, lapidaryMcpEntries, lapidaryMcpServersFile, mergeMcpServers, openWebUICompose } from "../lib/configs.js";
 
 test("merging MCP entries keeps what the user already had", () => {
   const existing = JSON.stringify({ mcpServers: { filesystem: { command: "npx", args: ["fs"] } }, theme: "dark" });
@@ -38,4 +38,12 @@ test("the backend environment reflects the settings, sqlite by default, supabase
   assert.equal(hosted.GEMS_STORAGE, "supabase");
   assert.equal(hosted.SUPABASE_SERVICE_ROLE_KEY, "s");
   assert.deepEqual(JSON.parse(lapidaryMcpServersFile({})).mcpServers.rea.risky, false);
+});
+
+test("the HTTP details give a URL entry and an mcp-remote bridge entry with the key as a header", () => {
+  const d = lapidaryHttpDetails({ key: "lap-key" });
+  assert.equal(d.url, "http://127.0.0.1:8000/mcp");
+  assert.deepEqual(d.urlEntry, { lapidary: { url: "http://127.0.0.1:8000/mcp", headers: { "X-API-Key": "lap-key" } } });
+  assert.deepEqual(d.bridgeEntry.lapidary.args, ["-y", "mcp-remote", "http://127.0.0.1:8000/mcp", "--header", "X-API-Key:lap-key"]);
+  assert.equal(lapidaryHttpDetails({ key: "k", host: "lapidary.example.com", port: 443, path: "/mcp" }).url, "http://lapidary.example.com:443/mcp");
 });

@@ -1,6 +1,6 @@
 # Lapidary
 
-A self-hosted prompt library and agent harness. Store reusable LLM system prompts ("gems") in Supabase, compose them with `{{gem:name}}`, fill `{variable}` placeholders at call time, give a gem tools and run it as an agent, and serve all of it over a REST API, a web UI and an MCP server that Claude Desktop, Cursor and other MCP clients can call directly.
+A self-hosted prompt library and agent harness. Store reusable LLM system prompts ("gems") in Supabase, compose them with `{{gem:name}}`, fill `{variable}` placeholders at call time, give a gem tools and run it as an agent, and serve all of it over a REST API, a web UI and an MCP server, over stdio or HTTP, that Claude Desktop, ChatGPT, Cursor and other MCP clients can call directly.
 
 A lapidary is the craftsperson who cuts and polishes rough stones into gems. That is the job here: rough prompts become named, composable, versioned gems, and the polished ones get to act. The project was called gemsAPI until October 2026; the repository URL and the `GEMS_*` environment variables are unchanged.
 
@@ -68,7 +68,7 @@ Every surface hands the gem to the same resolver, which expands `{{gem:name}}` r
 |---|---|
 | **Web UI** (Next.js 16, port 3000) | Browse, search and tag gems, edit them with a live resolved preview, test any gem in a chat view with streamed replies, run agent gems and watch each tool call as it happens, and open any past run by id |
 | **REST API** (FastAPI, port 8000) | CRUD on `/gems`, `POST /gems/resolve` to expand a gem, `POST /chat` with optional SSE streaming, Swagger at `/docs` |
-| **MCP server** (FastMCP, stdio) | Tools `list_gems`, `search_gems`, `get_gem`, `resolve_gem_prompt`, `chat_with_gem`, `create_gem`, `run_agent`, `approve_run`, `list_agent_tools`, `list_available_models`, `search_memory`, `get_memories`, `remember`, `forget`, `list_pipelines`, `run_pipeline`, `resume_pipeline`, plus `gems://list`, `gems://{name}` and `runs://{id}` resources |
+| **MCP server** (FastMCP, stdio or HTTP at `/mcp`) | Tools `list_gems`, `search_gems`, `get_gem`, `resolve_gem_prompt`, `chat_with_gem`, `create_gem`, `run_agent`, `approve_run`, `list_agent_tools`, `list_available_models`, `search_memory`, `get_memories`, `remember`, `forget`, `list_pipelines`, `run_pipeline`, `resume_pipeline`, plus `gems://list`, `gems://{name}` and `runs://{id}` resources |
 | **Agent runs** | A gem of kind `agent` lists tools it may call; `POST /agents/{name}/runs` runs the loop (model turn, tool calls, results, repeat) and records every step in `runs` and `run_events` |
 | **Seed gems** | `base_assistant`, `code_reviewer`, `creative_writer`, `summarizer`, `engineering_lead`, `prompt_enhancer`, the newcomer prompts `study_buddy`, `writing_coach` and `research_assistant`, `memory_summarizer`, the gate gems `test_runner` and `adversarial_reviewer`, and the agents `gem_librarian`, `rea_analyst`, `windows_operator` and `program_builder`, each also kept as a reviewable file in [`prompts/`](prompts/) |
 
@@ -98,9 +98,21 @@ You need Python 3.12 or newer, Node 20 or newer, and an `ANTHROPIC_API_KEY` or `
 The server refuses to start until `GEMS_API_KEY` is set, and every `/gems` and `/chat` request needs it in an `X-API-Key` header. The frontend adds that header server-side in [`frontend/proxy.ts`](frontend/proxy.ts), so the key never reaches the browser.
 
 <details>
-<summary>Connect an MCP client (Claude Desktop, Cursor)</summary>
+<summary>Connect an MCP client (Claude Desktop, Claude Code, Cursor, ChatGPT)</summary>
 
-The MCP server runs over stdio and reads `backend/.env`, so point the client at the backend's virtualenv Python and the absolute path of [`backend/mcp_server.py`](backend/mcp_server.py). For Claude Desktop the config file is `~/Library/Application Support/Claude/claude_desktop_config.json` on macOS and `%APPDATA%\Claude\claude_desktop_config.json` on Windows:
+**Over HTTP (roadmap item 41).** The running backend serves the same MCP server at `http://localhost:8000/mcp` (streamable HTTP, stateless) behind the API key, sent as `X-API-Key` or a bearer token. Any client that takes a URL and headers can use it, with no process of its own:
+
+```json
+{
+  "mcpServers": {
+    "lapidary": { "url": "http://localhost:8000/mcp", "headers": { "X-API-Key": "your-key" } }
+  }
+}
+```
+
+An app that only starts local commands can reach the address through the [mcp-remote](https://www.npmjs.com/package/mcp-remote) bridge: `npx -y mcp-remote http://localhost:8000/mcp --header X-API-Key:your-key`. ChatGPT's connectors only accept an address reachable from the internet over HTTPS, so put the backend behind a tunnel (Cloudflare Tunnel, ngrok) or a hosted deployment, list that host in `GEMS_MCP_ALLOWED_HOSTS`, and give ChatGPT its own key through `GEMS_CLIENT_KEYS` (`chatgpt:some-key`) so it can be revoked on its own. Lapidary Console shows the address with copy buttons on its Connections view.
+
+**Over stdio.** The MCP server also runs as its own process and reads `backend/.env`, so point the client at the backend's virtualenv Python and the absolute path of [`backend/mcp_server.py`](backend/mcp_server.py). For Claude Desktop the config file is `~/Library/Application Support/Claude/claude_desktop_config.json` on macOS and `%APPDATA%\Claude\claude_desktop_config.json` on Windows:
 
 ```json
 {
@@ -226,6 +238,8 @@ Backend variables live in `backend/.env` (template: [`.env.example`](.env.exampl
 | `SUPABASE_SERVICE_ROLE_KEY` | backend | Server-side key, the only Supabase credential the backend accepts. RLS has no policies for any other role, so the anon key reads nothing |
 | `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` | backend | Providers for `/chat` and `chat_with_gem`. Set the ones you use |
 | `GEMS_API_KEY` | backend and frontend | Shared secret for the `X-API-Key` header. Required |
+| `GEMS_CLIENT_KEYS` | backend | Extra accepted keys, one per client, as `name:key,name:key`, so each client's key can be rotated or revoked alone (roadmap item 10) |
+| `GEMS_MCP_HTTP_PATH`, `GEMS_MCP_ALLOWED_HOSTS` | backend | Where the MCP server is mounted on the API (`/mcp`) and which hosts besides localhost may reach it (a tunnel's domain, or `*`) |
 | `CORS_ORIGINS` | backend | Comma-separated allowed origins, default `http://localhost:3000` |
 | `BACKEND_URL` | frontend | Where `/api/*` is proxied, default `http://localhost:8000` |
 | `GEMS_MODEL_POLICY` | backend | `local`, `online`, `mix`, `auto` (default) or `manual`; see "Which AI should we use?" |

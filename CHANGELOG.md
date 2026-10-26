@@ -4,8 +4,12 @@ All notable changes to Lapidary are documented here. The format follows [Keep a 
 
 ## [Unreleased]
 
+### Added
+- The MCP server over HTTP (roadmap item 41). The backend mounts the same FastMCP server at `/mcp` (streamable HTTP, stateless) behind the API key as `X-API-Key` or a bearer token, so Claude Desktop and Claude Code connectors, Cursor, VS Code and, through a public HTTPS address, ChatGPT reach the gems, agents, memory and pipelines with no local process. `GEMS_MCP_HTTP_PATH` and `GEMS_MCP_ALLOWED_HOSTS` (a tunnel's host). The console's Connections view shows the address with copy buttons for the address, the key, a URL entry and an mcp-remote bridge entry.
+- Per-client API keys (roadmap item 10): `GEMS_CLIENT_KEYS=name:key,name:key` adds accepted keys that can be rotated or revoked one at a time; every check returns the client's name.
+
 ### Planned
-- Lapidary's MCP server over HTTP for Claude Desktop and ChatGPT (roadmap item 41), the installer's first run on a real Windows machine (42), the workbench (46), prompt version history (`gem_versions`).
+- The installer's first run on a real Windows machine (roadmap item 42), the workbench (46), prompt version history (`gem_versions`).
 
 ## [0.4.0] - 2026-10-26
 
