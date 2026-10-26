@@ -77,3 +77,12 @@ test("versions: newer available, up to date, or offline", () => {
   assert.equal(pwsh.pwsh.fix.action, "install:pwsh");
   assert.equal(summarise(Object.values(pwsh)), "1 suggestion");
 });
+
+test("the helper: running, stopped, or not on this platform; updates go through it when it runs", () => {
+  assert.equal(byId(diagnose({ ...healthy, helper: { running: true } })).helper.state, "ok");
+  assert.equal(byId(diagnose({ ...healthy, helper: { running: false } })).helper.state, "warn");
+  assert.equal(byId(diagnose({ ...healthy, helper: { running: false } })).helper.fix.action, "helper:start");
+  assert.equal(byId(diagnose(healthy)).helper, undefined);
+  assert.equal(byId(diagnose({ ...healthy, latest: "0.4.0", helper: { running: true } })).version.fix.action, "update:console");
+  assert.match(byId(diagnose({ ...healthy, latest: "0.4.0", helper: { running: false } })).version.fix.action, /releases/);
+});

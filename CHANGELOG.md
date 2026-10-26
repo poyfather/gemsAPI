@@ -5,6 +5,7 @@ All notable changes to Lapidary are documented here. The format follows [Keep a 
 ## [Unreleased]
 
 ### Added
+- Lapidary Console installs like Chrome (roadmap item 42). The installer is per machine with one administrator prompt and registers Lapidary Helper, a Windows service running as SYSTEM, so installs from Components, Toolbox and the first run, and updates of the console itself, need no further prompt. The helper answers only over a local named pipe, installs only winget and PowerShell Gallery ids on an allowlist written from the console's catalog at build time, and updates the console only to a newer GitHub release that matches its SHA-256 checksum and, on signed builds, the pinned publisher. The console falls back to installing directly when the helper is not running; the console starts a stopped helper itself, and the Doctor reports it and offers "Start it" and "Update now". CI builds the helper, installs the result on the runner to check the service and its refusals, uninstalls it, and attaches the installer and its checksum to each release. Code signing with Azure Artifact Signing or a .pfx switches on when the repository secrets exist. 35 tests.
 - Worked examples as data (roadmap item 31). A gem carries a list of examples (a question, the answer you want, and a note for people) in a new `examples` field (`supabase/add_examples.sql`). They are rendered into the prompt as literal text inside `<examples>` tags at a `{{examples}}` marker, or at the end, so braces inside an example are never filled as blanks; embedded gems bring their own. The editor adds, reorders and removes them; "Save as an example" on a chat answer keeps it with the question before it; "Make a test from it" on the prompt page turns an example into a judged test. Examples are part of the version history, and a past version in Compare uses its own. MCP `get_gem` returns them and `add_gem_example` adds one. 7 tests.
 - Typed blanks (roadmap item 29). Each `{variable}` can carry a description, a type (text, long text, number, choice from a list, yes or no), a default and whether it is required, in a new `variable_specs` field on gems (`supabase/add_variable_specs.sql` for existing installs). Defaults fill empty blanks; a wrong value or a missing required blank stops a chat, a run or a test with a plain message, and the resolve preview lists the problems and the defaults it used. Blanks without a spec behave as before. The editor has a Blanks section, and chat, the prompt page, Compare and Tests show a dropdown, yes or no, a number field or a text area to match. MCP clients get the specs as a JSON schema (`variables_schema` from `list_gems` and `get_gem`), and MCP `create_gem` and `update_gem` take them. 8 tests.
 
@@ -21,7 +22,7 @@ All notable changes to Lapidary are documented here. The format follows [Keep a 
 - Lapidary Console runs on Electron 42 (from 38; Dependabot PR 43). None of the breaking changes in 39 to 42 touch the APIs the console uses.
 
 ### Planned
-- The installer's first run on a real Windows machine (roadmap item 42), the workbench (46), prompt version history (`gem_versions`).
+- Signing credentials and the first run on a real Windows 11 machine (roadmap item 42), the workbench (46).
 
 ## [0.4.0] - 2026-10-26
 

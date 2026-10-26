@@ -60,7 +60,7 @@ These were found during the audit and fixed because CI could not pass without th
 | 39 | Installers and updates through winget and Docker; Open WebUI management | Console | L | Now, done |
 | 40 | Settings and connections: keys, MCP servers, client configs | Console | M | Now, done |
 | 41 | Lapidary's MCP server over HTTP for Claude Desktop and ChatGPT | Console, MCP | M | Now, done |
-| 42 | Windows installer, CI build and smoke test, REA bundling, first run | Console | M | Now, partly done |
+| 42 | Windows installer, CI build and smoke test, REA bundling, first run, helper service, signing | Console | M | Now, partly done |
 | 43 | Lapidary Memory: observations across runs, chats and clients | Memory, product | L | Now, done |
 | 44 | Local models as a provider, and the model policy (local, online, mix, auto, hand pick) | Providers, hybrid | M | Now, done |
 | 45 | Gates: builder, tests, visual review, adversarial review, acceptance | Agents, quality | L | Now, done |
@@ -398,7 +398,7 @@ A Windows 11 application that installs, connects and manages the AI tools on a m
 
 ### 42. Windows installer, CI build and smoke test, REA bundling, first run
 
-**Status: partly done** (PR 52: the installer is built and the packaged backend is smoke-tested on every push to main; REA comes through npx on first use; the first run exists (item 47)). Still open: installing and running the console on a real Windows machine.
+**Status: partly done** (PR 52: the installer is built and the packaged backend is smoke-tested on every push to main; REA comes through npx on first use; the first run exists (item 47). Then: a per-machine installer with one administrator prompt, Lapidary Helper as a SYSTEM service for allowlisted installs and verified console updates, installed and checked on the CI runner, signing switched on by repository secrets, and the installer attached to each release with its checksum). Still open: signing credentials (desktop/README.md, Code signing) and running the console by hand on a real Windows 11 machine.
 
 - **Why**: an NSIS installer from electron-builder, built on `windows-latest` with the backend as a PyInstaller single file, smoke-tested by launching and hitting `/health`; `rea-agents` bundled; a first-run screen that takes the keys, creates the database with the seed gems and opens the console.
 - **Size**: M.

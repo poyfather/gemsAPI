@@ -23,6 +23,10 @@ lib/configs.js     pure config writers: Claude Desktop and ChatGPT MCP entries, 
 lib/sidecars.js    child processes and health polling
 lib/pwsh.js        PowerShell 7 invocation and output capping
 lib/toolbox.js     the optional tools catalog with publishers, sources and detection
+lib/helper.js      the pipe client for Lapidary Helper, and the allowlist built from the catalog
+helper/            Lapidary Helper, the Windows service that installs and updates (Python, pywin32)
+installer.nsh      installer additions that register and remove the helper
+scripts/           allowlist.mjs writes the helper's allowlist at build time
 test/              node --test; the pure logic is covered on every platform
 ```
 
@@ -38,16 +42,49 @@ Without a packaged backend the console says so in Logs and talks to whatever is 
 
 ## Build the Windows installer
 
-The `desktop` workflow in CI builds the backend as a single file with PyInstaller, the UI as a Next.js standalone server, then `electron-builder --win` into an NSIS installer (`LapidaryConsole-Setup-<version>.exe`). The same steps run by hand on a Windows machine:
+The `desktop` workflow in CI builds the backend as a single file with PyInstaller, the UI as a Next.js standalone server, Lapidary Helper as a PyInstaller folder with its allowlist, then `electron-builder --win` into an NSIS installer (`LapidaryConsole-Setup-<version>.exe`) and its SHA-256 checksum. It then installs the result on the Windows runner, checks that the helper service runs as SYSTEM, answers a ping and refuses anything off its allowlist, and uninstalls it again. Every push to main keeps the installer as a workflow artifact; a `v*` tag also attaches it and the checksum to the GitHub release. The same steps run by hand on a Windows machine:
 
 ```powershell
-pip install -r backend/requirements.txt pyinstaller
+pip install -r backend/requirements.txt pyinstaller typer pywin32
 pyinstaller --onefile --name lapidary-backend --paths backend backend/run.py
 # copy dist/lapidary-backend.exe to build/backend/
+pyinstaller --onedir --name lapidary-helper --distpath build --hidden-import win32timezone desktop/helper/lapidary_helper.py
+node desktop/scripts/allowlist.mjs build/lapidary-helper/allowlist.json
 cd frontend; npm ci; npm run build
 # copy .next/standalone to build/frontend/ (plus .next/static and public inside it)
 cd ../desktop; npm ci; npm run dist:win
 ```
+
+## Installs and updates without administrator prompts
+
+The console installs the way Chrome does. The installer asks for administrator rights once, installs for every user on the PC under Program Files, and registers **Lapidary Helper**, a small Windows service that runs as SYSTEM. After that, installing a tool from Components, Toolbox or a first-run recipe, and updating the console itself, happen without another prompt.
+
+The helper is deliberately narrow:
+
+- It listens on a local named pipe that rejects remote clients and admits only SYSTEM, Administrators and signed-in users.
+- It installs or upgrades only ids on its allowlist, which CI writes from the console's own catalog: winget packages from the winget source, machine-wide and silent, and PowerShell Gallery modules for all users. It never runs a command line it is sent.
+- It updates the console only from this repository's latest GitHub release, only to a newer version, and only after the download matches the published SHA-256 checksum. A signed build also requires a valid Authenticode signature whose subject is exactly the publisher baked in at build time. Downloads go into a new folder only SYSTEM and Administrators can open.
+- It logs everything to `helper.log` next to itself in the install folder.
+- Signed-in users may start it, but not stop, change or remove it. The console starts it when it finds it stopped, for example after a slow first start while antivirus scans it.
+
+When the helper is not running, the console installs as before and Windows asks for administrator rights where the installer needs them. The Doctor shows whether the helper runs, and "Update now" when a newer console is out.
+
+## Code signing
+
+An unsigned installer works, but Windows SmartScreen shows "Windows protected your PC" and the publisher reads "Unknown". Signing fixes the publisher name. SmartScreen still warns on a new publisher until downloads build reputation, typically a few weeks. CI signs automatically once the secrets below exist; until then it builds unsigned and says so.
+
+**Azure Artifact Signing (recommended, about 9.99 US dollars a month).** Microsoft's signing service, formerly Trusted Signing. Individual developers in the United States and Canada qualify; organizations also in the EU and UK. No hardware token.
+
+1. In the Azure portal, create an Artifact Signing account in a supported region, for example East US, whose endpoint is `https://eus.codesigning.azure.net`.
+2. Assign yourself the Artifact Signing Identity Verifier role, then complete a Public identity validation, Individual or Organization. Microsoft checks a government ID; allow a few business days.
+3. Create a Public Trust certificate profile from that validation.
+4. Create an app registration in Microsoft Entra ID with a client secret, and give it the Artifact Signing Certificate Profile Signer role on the account.
+5. In the GitHub repository settings, add secrets `AZURE_TENANT_ID`, `AZURE_CLIENT_ID` and `AZURE_CLIENT_SECRET`, and variables `AZURE_SIGNING_ENDPOINT`, `AZURE_SIGNING_ACCOUNT` and `AZURE_SIGNING_PROFILE`.
+6. Add the variable `LAPIDARY_PUBLISHER_SUBJECT` with the certificate profile's full subject as the portal shows it, for example `CN=Jane Doe, O=Jane Doe, L=Austin, S=Texas, C=US`.
+
+**A .pfx certificate instead.** Since 2023 certificate authorities issue code-signing keys only on hardware tokens or cloud HSMs, so a plain .pfx is uncommon now. If you have one, add it base64-encoded as the secret `WIN_CSC_LINK`, its password as `WIN_CSC_KEY_PASSWORD`, and set `LAPIDARY_PUBLISHER_SUBJECT`.
+
+When signing is on, the console, the backend, the helper and the installer are all signed, CI checks the installer's signature, and the helper's allowlist pins the publisher. From then on, installed consoles accept only updates signed by that exact subject, so keep signing every release with the same identity.
 
 ## What each view does
 
