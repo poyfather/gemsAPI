@@ -248,7 +248,7 @@ jobs:
           "uninstalled"
           exit 0   # sc.exe's 1060 (no such service) is the expected last exit code, not a failure
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: LapidaryConsole-Setup
           path: |
@@ -264,7 +264,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: LapidaryConsole-Setup
           path: dist
