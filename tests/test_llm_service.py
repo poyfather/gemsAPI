@@ -179,3 +179,45 @@ def test_a_local_server_that_answers_lists_its_models_sorted(monkeypatch) -> Non
     import asyncio
     monkeypatch.setattr(llm_service, "_get_local", lambda: _FakeClient(["qwen3:4b", "llama3.2", "gemma3"]))
     assert asyncio.run(_models())["local"] == ["gemma3", "llama3.2", "qwen3:4b"]
+
+
+class _Recorder:
+    """An OpenAI-shaped client that records what was sent and answers 'ok'."""
+    def __init__(self) -> None:
+        self.sent: dict = {}
+
+    @property
+    def chat(self):
+        outer = self
+
+        class _Completions:
+            async def create(self, **kw):
+                outer.sent = kw
+                msg = type("M", (), {"content": "ok", "tool_calls": None})()
+                return type("R", (), {"choices": [type("C", (), {"message": msg, "finish_reason": "stop"})()], "usage": None})()
+
+        return type("Chat", (), {"completions": _Completions()})()
+
+
+def test_local_servers_are_asked_not_to_think_by_default(monkeypatch) -> None:
+    import asyncio
+    rec = _Recorder()
+    monkeypatch.setattr(llm_service, "_get_local", lambda: rec)
+    assert asyncio.run(llm_service.complete("s", [{"role": "user", "content": "hi"}], "qwen3:4b", "local", max_tokens=64)) == "ok"
+    assert rec.sent["reasoning_effort"] == "none" and rec.sent["max_tokens"] == 64
+
+
+def test_reasoning_effort_is_configurable_and_never_sent_to_openai(monkeypatch) -> None:
+    import asyncio
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+    rec_local, rec_openai = _Recorder(), _Recorder()
+    monkeypatch.setattr(llm_service, "_get_local", lambda: rec_local)
+    monkeypatch.setattr(llm_service, "_get_openai", lambda: rec_openai)
+    monkeypatch.setattr(settings, "LOCAL_REASONING_EFFORT", "")
+    asyncio.run(llm_service.complete("s", [], "qwen3:4b", "local"))
+    assert "reasoning_effort" not in rec_local.sent
+    monkeypatch.setattr(settings, "LOCAL_REASONING_EFFORT", "low")
+    asyncio.run(llm_service.complete("s", [], "qwen3:4b", "local"))
+    assert rec_local.sent["reasoning_effort"] == "low"
+    asyncio.run(llm_service.complete("s", [], "gpt-x", "openai"))
+    assert "reasoning_effort" not in rec_openai.sent
