@@ -1,50 +1,12 @@
 # Architecture
 
-Lapidary is three small programs around one table. A FastAPI service and a FastMCP server share the same Python package (`backend/app`) and the same resolver; a Next.js app is the human interface; Supabase Postgres holds the gems. This page is the map: what each part does, how a request moves through them, how gem composition works, what the data looks like, and where the trust boundaries are. The diagrams are Mermaid and render on GitHub.
+Lapidary is a prompt library that grew into an agent harness with a Windows console. A FastAPI service and a FastMCP server share the same Python package (`backend/app`) and the same services: the resolver, the model router, the agent run loop, history, tests, memory and pipelines. A Next.js app is the web interface, an Electron app (`desktop/`) is the Windows console, and one store holds everything: SQLite on the machine by default, or Supabase Postgres. This page is the map: what each part does, how a request moves through them, how gem composition works, what the data looks like, and where the trust boundaries are. The big picture is an SVG drawn by `docs/diagrams/build.py` (edit and rerun it to change the picture); the detailed diagrams below are Mermaid and render on GitHub.
 
 ## The big picture
 
-```mermaid
-flowchart LR
-    subgraph callers["Who calls it"]
-        UI["Web UI<br/>Next.js, port 3000"]
-        REST["Scripts and apps<br/>REST with X-API-Key"]
-        OWUI["Open WebUI and other<br/>OpenAI-compatible clients<br/>/v1, bearer key"]
-        MCPC["MCP clients<br/>Claude Desktop, Cursor"]
-    end
-
-    subgraph core["Lapidary"]
-        API["FastAPI service<br/>/gems and /chat, port 8000"]
-        MCPS["FastMCP server<br/>17 tools, 3 resources, stdio or HTTP"]
-        RES["Resolver<br/>expand gem references,<br/>fill variables"]
-        LLM["LLM adapter<br/>complete and stream"]
-        LOOP["Agent run loop<br/>tools (built in and from<br/>other MCP servers),<br/>step cap, run record"]
-    end
-
-    DB[("Supabase Postgres<br/>gems, runs, run_events")]
-
-    subgraph providers["LLM providers"]
-        ANT["Anthropic Messages API"]
-        OAI["OpenAI Chat Completions"]
-    end
-
-    UI -- "/api/* proxy,<br/>key added server-side" --> API
-    REST --> API
-    OWUI --> API
-    MCPC -- "stdio, or HTTP at /mcp with the key" --> MCPS
-    API --> RES
-    MCPS --> RES
-    RES --> DB
-    API --> LLM
-    MCPS --> LLM
-    API --> LOOP
-    MCPS --> LOOP
-    LOOP --> RES
-    LOOP --> LLM
-    LOOP --> DB
-    LLM --> ANT
-    LLM --> OAI
-```
+<p align="center">
+  <img src="docs/diagrams/lapidary-architecture.svg" width="100%" alt="Lapidary architecture: you reach it through the web UI, the Windows console, REST and the OpenAI-compatible API, or MCP clients over stdio or HTTP. The backend holds the resolver, the model router, the agent run loop, history and tests, and memory; pipelines run a builder through test, visual and adversarial gates before you accept; models run on this PC or online with your own key, tools come from PowerShell, REA and other MCP servers; everything is stored in SQLite or Supabase.">
+</p>
 
 A **gem** is a named system prompt stored in Postgres. It can embed other gems with `{{gem:name}}` and leave `{variable}` placeholders to be filled at call time. Every surface (REST, UI, MCP) hands the gem to the same resolver, which expands the references recursively and fills the variables, and either returns the finished prompt or passes it to an LLM with the caller's messages.
 
