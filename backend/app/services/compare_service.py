@@ -30,8 +30,8 @@ class CompareError(ValueError):
 class _Plan:
     """What one column will do: the prompt to use (None for an assistant) and which AI."""
 
-    def __init__(self, variant: CompareVariant, version: int, prompt_text: str | None, provider: str, model: str, reason: str, label: str) -> None:
-        self.variant, self.version, self.prompt_text = variant, version, prompt_text
+    def __init__(self, variant: CompareVariant, version: int, prompt_text: str | None, provider: str, model: str, reason: str, label: str, specs: dict | None = None) -> None:
+        self.variant, self.version, self.prompt_text, self.specs = variant, version, prompt_text, specs or {}
         self.provider, self.model, self.reason, self.label = provider, model, reason, label
 
 
@@ -48,6 +48,7 @@ async def _plan(gem: Gem, variants: list[CompareVariant]) -> list[_Plan]:
         if number == current:
             source = gem
             prompt_text = gem.system_prompt
+            specs = gem.variable_specs
         else:
             found = next((h for h in history if h.version == number), None)
             if found is None:
@@ -57,9 +58,10 @@ async def _plan(gem: Gem, variants: list[CompareVariant]) -> list[_Plan]:
             snap = found.snapshot
             source = gem.model_copy(update={"provider": snap.get("provider", gem.provider), "model": snap.get("model", gem.model)})
             prompt_text = snap.get("system_prompt", "")
+            specs = snap.get("variable_specs") or {}
         choice = await model_router.choose(source, provider_override=v.provider_override, model_override=v.model_override)
         label = v.label.strip() or f"v{number} · {_ai_words(choice.provider)} ({choice.model})"
-        plans.append(_Plan(v, number, None if gem.kind == "agent" else prompt_text, choice.provider, choice.model, choice.reason, label))
+        plans.append(_Plan(v, number, None if gem.kind == "agent" else prompt_text, choice.provider, choice.model, choice.reason, label, specs))
     return plans
 
 
@@ -75,7 +77,7 @@ async def _answer(gem: Gem, plan: _Plan, message: str, variables: dict[str, str]
         if result.run.status == "failed":
             raise RuntimeError(result.run.error or "the run failed")
         return result.run.output or "", result.run.id
-    prompt = await gem_service.resolve_text(gem.name, plan.prompt_text or "", variables)
+    prompt = await gem_service.resolve_text(gem.name, plan.prompt_text or "", variables, plan.specs)
     return await llm_service.complete(prompt, [{"role": "user", "content": message}], plan.model, plan.provider, max_tokens=max_tokens), None
 
 

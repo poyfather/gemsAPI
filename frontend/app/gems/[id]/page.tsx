@@ -7,6 +7,7 @@ import { gems as gemsApi, Gem, ResolveResponse } from "@/lib/api";
 import { explain, providerLabel } from "@/lib/words";
 import GemHistory from "@/components/GemHistory";
 import GemEvals from "@/components/GemEvals";
+import BlankInputs from "@/components/BlankInputs";
 import {
   ArrowLeft, Edit, Trash2, MessageSquare, Loader2,
   AlertTriangle, Variable, LinkIcon, Cpu, ChevronDown, ChevronUp, Bot, Columns2
@@ -267,19 +268,8 @@ export default function GemDetailPage() {
 
             {gem.variables.length > 0 && (
               <div className="px-4 py-3 border-b border-gem-border space-y-2">
-                <p className="text-xs text-slate-500">Fill the blanks (optional):</p>
-                {gem.variables.map((v) => (
-                  <div key={v} className="flex items-center gap-2">
-                    <code className="text-xs text-blue-400 w-28 shrink-0">{"{" + v + "}"}</code>
-                    <input
-                      type="text"
-                      placeholder={`Value for ${v}`}
-                      value={varValues[v] ?? ""}
-                      onChange={(e) => setVarValues((p) => ({ ...p, [v]: e.target.value }))}
-                      className="flex-1 px-2 py-1 rounded-md bg-gem-surface border border-gem-border text-slate-300 text-xs focus:outline-hidden focus:ring-1 focus:ring-violet-500"
-                    />
-                  </div>
-                ))}
+                <p className="text-xs text-slate-500">Fill the blanks (optional; empty ones use their default):</p>
+                <BlankInputs names={gem.variables} specs={gem.variable_specs} values={varValues} onChange={setVarValues} size="xs" />
               </div>
             )}
 
@@ -290,6 +280,16 @@ export default function GemDetailPage() {
                 </p>
               ) : (
                 <>
+                  {(resolve.variable_errors ?? []).length > 0 && (
+                    <div className="mb-3 p-2 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-400">
+                      {(resolve.variable_errors ?? []).join("; ")}
+                    </div>
+                  )}
+                  {(resolve.variables_defaulted ?? []).length > 0 && (
+                    <div className="mb-3 text-xs text-slate-500">
+                      Filled from defaults: {(resolve.variables_defaulted ?? []).map((v) => "{" + v + "}").join(", ")}
+                    </div>
+                  )}
                   {resolve.variables_missing.length > 0 && (
                     <div className="mb-3 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-400">
                       Blanks not filled: {resolve.variables_missing.map((v) => "{" + v + "}").join(", ")}

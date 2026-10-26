@@ -7,6 +7,7 @@ import { gems as gemsApi, chat as chatApi, AvailableModels, CompareResult, Compa
 import { explain, providerLabel } from "@/lib/words";
 import { ArrowLeft, Columns2, Loader2, Plus, X, Check, Play, FlaskConical } from "lucide-react";
 import clsx from "clsx";
+import BlankInputs from "@/components/BlankInputs";
 
 type Column = { version: string; provider: string; model: string };
 const blank: Column = { version: "", provider: "", model: "" };
@@ -120,12 +121,7 @@ export default function ComparePage() {
       <div className="bg-gem-card border border-gem-border rounded-xl p-4 space-y-3">
         <textarea rows={3} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="The question every column answers"
           className="w-full px-3 py-2 rounded-lg bg-gem-surface border border-gem-border text-slate-100 text-sm placeholder:text-slate-600 focus:outline-hidden focus:ring-2 focus:ring-violet-500 resize-y" />
-        {gem.variables.map((v) => (
-          <div key={v} className="flex items-center gap-2">
-            <code className="text-xs text-blue-400 w-28 shrink-0">{"{" + v + "}"}</code>
-            <input className={field} placeholder={`Value for ${v}`} value={vars[v] ?? ""} onChange={(e) => setVars({ ...vars, [v]: e.target.value })} />
-          </div>
-        ))}
+        <BlankInputs names={gem.variables} specs={gem.variable_specs} values={vars} onChange={setVars} />
         <div className="flex flex-wrap gap-2">
           <button onClick={() => go("answers")} disabled={!!busy || !message.trim()} className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white text-sm">
             {busy === "answers" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />} Compare answers

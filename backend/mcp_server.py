@@ -57,6 +57,7 @@ from app.services.gem_service import (
     resolve_gem,
     resolve_gem_detailed,
     extract_gem_refs,
+    variables_schema,
 )
 from app import settings
 from app.services.llm_service import available_models, complete
@@ -96,6 +97,7 @@ async def list_gems() -> list[dict]:
             "description": g.description,
             "tags":        g.tags,
             "variables":   g.variables,
+            "variables_schema": variables_schema(g),
             "provider":    g.provider,
             "model":       g.model,
         }
@@ -155,6 +157,7 @@ async def get_gem(name: str) -> dict:
         "provider":      gem.provider,
         "tags":          gem.tags,
         "variables":     gem.variables,
+        "variables_schema": variables_schema(gem),
         "gem_refs":      extract_gem_refs(gem.system_prompt),
         "created_at":    gem.created_at.isoformat(),
         "updated_at":    gem.updated_at.isoformat(),
@@ -183,13 +186,15 @@ async def resolve_gem_prompt(
     if variables is None:
         variables = {}
     try:
-        result = await resolve_gem_detailed(name, variables)
+        result = await resolve_gem_detailed(name, variables, strict=False)
         return {
-            "gem_name":          result.gem_name,
-            "resolved_prompt":   result.resolved_prompt,
-            "referenced_gems":   result.referenced_gems,
-            "variables_used":    result.variables_used,
-            "variables_missing": result.variables_missing,
+            "gem_name":            result.gem_name,
+            "resolved_prompt":     result.resolved_prompt,
+            "referenced_gems":     result.referenced_gems,
+            "variables_used":      result.variables_used,
+            "variables_missing":   result.variables_missing,
+            "variables_defaulted": result.variables_defaulted,
+            "variable_errors":     result.variable_errors,
         }
     except ValueError as exc:
         return {"error": str(exc)}
@@ -254,6 +259,7 @@ async def create_gem(
     model: str | None = None,
     provider: str | None = None,
     tags: list[str] | None = None,
+    variable_specs: dict[str, dict] | None = None,
 ) -> dict:
     """
     Create a new gem in the library.
@@ -265,6 +271,8 @@ async def create_gem(
         model:         LLM model; defaults to the server's GEMS_DEFAULT_MODEL.
         provider:      'anthropic', 'openai', 'local', or 'auto' (the model policy decides); defaults to GEMS_DEFAULT_PROVIDER.
         tags:          Optional list of tags.
+        variable_specs: Optional, by blank name: {"description", "type" (text, long_text, number, choice, boolean),
+                       "options" (for a choice), "default", "required"}.
 
     Example system_prompt with composition:
         "{{gem:base_assistant}}\\n\\nYou specialize in {domain} tasks."
@@ -280,6 +288,7 @@ async def create_gem(
             model=model or settings.DEFAULT_MODEL,
             provider=provider or settings.DEFAULT_PROVIDER,
             tags=tags,
+            variable_specs=variable_specs or {},
         ), source="mcp")
         return {"success": True, "id": gem.id, "name": gem.name, "variables": gem.variables}
     except Exception as exc:
@@ -288,18 +297,27 @@ async def create_gem(
 
 @mcp.tool()
 async def update_gem(name: str, system_prompt: str | None = None, description: str | None = None,
-                     tags: list[str] | None = None, note: str = "") -> dict:
+                     tags: list[str] | None = None, variable_specs: dict[str, dict] | None = None, note: str = "") -> dict:
     """
     Change a gem and keep the change in its history (roadmap 14). Only the fields you pass change.
-    Say in `note` what you changed and why; it is shown next to the new version.
+    `variable_specs` is merged per blank: pass {"tone": {...}} to describe one blank and keep the
+    others (see variables_schema in get_gem). Say in `note` what you changed and why.
     """
     from app.models import GemUpdate
     from app.services.gem_service import update_gem as _update
     gem = await get_gem_by_name(name)
     if not gem:
         return {"error": f"Gem '{name}' not found."}
-    updated = await _update(gem.id, GemUpdate(system_prompt=system_prompt, description=description, tags=tags, note=note or None), source="mcp")
-    return {"name": updated.name, "variables": updated.variables, "updated_at": str(updated.updated_at)}
+    merged = None
+    if variable_specs is not None:
+        merged = {k: v.model_dump() for k, v in gem.variable_specs.items()}
+        merged.update(variable_specs)
+    try:
+        updated = await _update(gem.id, GemUpdate(system_prompt=system_prompt, description=description, tags=tags,
+                                                  variable_specs=merged, note=note or None), source="mcp")
+    except ValueError as exc:
+        return {"error": str(exc)}
+    return {"name": updated.name, "variables": updated.variables, "variables_schema": variables_schema(updated), "updated_at": str(updated.updated_at)}
 
 
 @mcp.tool()

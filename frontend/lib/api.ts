@@ -2,6 +2,17 @@
 // In development: Next.js dev server proxies /api/* -> http://localhost:8000/*
 // In production:  Set BACKEND_URL in next.config.ts
 
+export type VariableType = "text" | "long_text" | "number" | "choice" | "boolean";
+
+/** What a {blank} expects (roadmap 29). */
+export interface VariableSpec {
+  description: string;
+  type: VariableType;
+  options: string[];
+  default?: string | null;
+  required: boolean;
+}
+
 export interface Gem {
   id: string;
   name: string;
@@ -14,6 +25,7 @@ export interface Gem {
   kind?: "prompt" | "agent";
   tools?: string[];
   memory?: boolean;
+  variable_specs?: Record<string, VariableSpec>;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -29,6 +41,7 @@ export interface GemCreate {
   kind?: "prompt" | "agent";
   tools?: string[];
   memory?: boolean;
+  variable_specs?: Record<string, VariableSpec>;
 }
 
 export type GemUpdate = Partial<GemCreate> & { note?: string };
@@ -144,6 +157,8 @@ export interface ResolveResponse {
   referenced_gems: string[];
   variables_used: string[];
   variables_missing: string[];
+  variables_defaulted?: string[];
+  variable_errors?: string[];
 }
 
 export interface ChatMessage {

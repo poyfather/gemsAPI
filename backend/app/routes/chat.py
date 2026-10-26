@@ -39,6 +39,8 @@ async def chat(request: ChatRequest):
     # Resolve gem
     try:
         resolved_prompt, _ = await gem_service.resolve_gem(request.gem_name, request.variables)
+    except gem_service.VariableError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc))
 

@@ -47,7 +47,7 @@ These were found during the audit and fixed because CI could not pass without th
 | 26 | Screenshots, API reference, resolution guide | Docs | S to M | Later |
 | 27 | Split-deploy guide | Docs | S | Later |
 | 28 | Evals per gem, runnable from the UI | Product, quality | M | Now, done |
-| 29 | Typed variables with descriptions and defaults | Product, MCP | M | Next |
+| 29 | Typed variables with descriptions and defaults | Product, MCP | M | Now, done |
 | 30 | Side-by-side runs | Product | M | Now, done |
 | 31 | Few-shot examples as first-class data | Product | M | Later |
 | 32 | Agent tools from remote MCP servers and HTTP endpoints | Agents | M | Next, MCP done |
@@ -231,6 +231,8 @@ Design and security decisions that shape everything after them.
 - **Depends on**: 15 (schema change as a migration), 11 (spend guard, since every run costs money).
 
 ### 29. Typed variables with descriptions and defaults
+
+**Status: done** (a `variable_specs` column on gems in both stores: description, type (text, long_text, number, choice with options, boolean), default, required; specs are cleaned on save to the blanks the prompt has, and an impossible spec is refused. `gem_service.resolve_gem_detailed` fills defaults and checks values, with the embedded gems' specs applied and the outer gem winning; chats, runs and tests stop with a plain message, while the resolve preview reports `variable_errors` and `variables_defaulted`. Blanks without a spec behave as before. Specs are part of the version history and a past version in Compare uses its own. MCP `list_gems`, `get_gem` and the agent tool `get_gem` return `variables_schema` as a JSON schema; MCP `create_gem` and `update_gem` take specs. A Blanks section in the editor and typed inputs on the chat, prompt, Compare and Tests views. The editor now detects blanks with the backend's rule, so `{{gem:...}}` is no longer listed as one. `supabase/add_variable_specs.sql`; 8 tests).
 
 - **Why**: a variable today is only a name scraped from the prompt by `extract_variables`. Nothing says what `{tone}` expects, whether it is required, or what a sensible default is. That makes a gem usable only by the person who wrote it, and it makes the MCP tools blind: an agent calling `resolve_gem_prompt` cannot know which values to supply. Add a `variable_specs` JSON column (name, description, type, enum values, default, required), validate on resolve, render proper inputs in `GemForm.tsx` and the chat page, and expose the specs in `list_gems` and `get_gem` so MCP clients can fill them correctly.
 - **Size**: M.
@@ -473,7 +475,7 @@ The engineering items make the project safe to run. These are the ones that woul
 1. Version history with diffs and rollback (14), done.
 2. Evals per gem, run from the UI, with a recorded baseline (28), done.
 3. Side-by-side runs across versions and models (30), done.
-4. Typed variables with descriptions and defaults, exposed over MCP (29).
+4. Typed variables with descriptions and defaults, exposed over MCP (29), done.
 5. Few-shot examples as data rather than prose (31).
 6. Import and export in a hand-readable format (22).
 7. Accounts and sharing, once there is something worth sharing (9, 10, 21).

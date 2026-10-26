@@ -15,7 +15,7 @@ Lapidary (gemsAPI until October 2026) is a self-hosted prompt library and agent 
 
 ## Domain Vocabulary
 - **Gem**: a named, reusable LLM system prompt stored in Supabase. Analogous to a function in code.
-- **Variable**: a `{placeholder}` in a gem's prompt filled at call time with a key-value dict.
+- **Variable**: a `{placeholder}` in a gem's prompt filled at call time with a key-value dict. Its spec (roadmap 29) can give a description, a type, choices, a default and whether it is required; on screen it is a "blank".
 - **Gem reference**: a `{{gem:name}}` tag in a prompt that embeds another gem's resolved content recursively.
 - **Resolution**: the process of expanding all `{{gem:name}}` references and filling all `{variable}` placeholders to produce a final, ready-to-use system prompt.
 - **Provider**: the LLM API used to run a gem: `anthropic`, `openai`, `local` (any OpenAI-compatible server on this PC) or `auto` (the model policy decides).

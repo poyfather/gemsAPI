@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS gems (
                           CHECK (kind IN ('prompt', 'agent')),
   tools       TEXT[]      NOT NULL DEFAULT '{}',
   memory      BOOLEAN     NOT NULL DEFAULT false,
+  variable_specs JSONB    NOT NULL DEFAULT '{}',
   is_active   BOOLEAN     NOT NULL DEFAULT true,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()

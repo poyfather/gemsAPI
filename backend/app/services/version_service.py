@@ -38,7 +38,10 @@ def changed_fields(before: dict | None, after: dict) -> list[str]:
 
 
 async def versions(gem_id: str) -> list[GemVersion]:
-    return await _store().list_gem_versions(gem_id)
+    found = await _store().list_gem_versions(gem_id)
+    for v in found:   # versions saved before typed blanks existed had none
+        v.snapshot.setdefault("variable_specs", {})
+    return found
 
 
 async def record(gem: Gem, *, note: str = "", source: str = "api") -> GemVersion | None:

@@ -12,6 +12,7 @@ from app.agents.mcp_sources import refresh_remote_tools
 from app.agents.runner import resume_run, run_agent
 from app.agents.tools import all_tools
 from app.auth import require_api_key
+from app.services import gem_service
 from app.models import ApprovalRequest, RunEvent, RunRequest, RunResult, ToolInfo
 
 router = APIRouter(prefix="/agents", tags=["agents"], dependencies=[Depends(require_api_key)])
@@ -82,6 +83,8 @@ async def start_run(gem_name: str, request: RunRequest):
     if not request.stream:
         try:
             return await run_agent(gem_name, request.message, **kwargs)
+        except gem_service.VariableError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
         except ValueError as exc:
             raise HTTPException(status_code=404, detail=str(exc))
     return _stream(lambda on_event: run_agent(gem_name, request.message, on_event=on_event, **kwargs))

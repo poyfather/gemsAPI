@@ -22,7 +22,7 @@ Two tricks make the drawer more than a list:
 - **Prompts can contain other prompts.** Write a short `base_assistant` once ("be direct, be honest about uncertainty"), then start `code_reviewer` with `{{gem:base_assistant}}` and add only the review rules. Improve the base, and everything built on it improves too.
 - **Prompts can have blanks.** Leave `{language}` or `{tone}` in the text and fill it in at the moment you use it, so one prompt serves many situations.
 
-Who it is for: anyone who writes prompts as part of their work and uses them from more than one place. Who it is not for yet: a casual user with three prompts in a notes app, since setting up a database and two services is more than that problem needs. [docs/ROADMAP.md](docs/ROADMAP.md) lists what would change that; version history, per-prompt tests and side-by-side runs are done; typed blanks are next.
+Who it is for: anyone who writes prompts as part of their work and uses them from more than one place. Who it is not for yet: a casual user with three prompts in a notes app, since setting up a database and two services is more than that problem needs. [docs/ROADMAP.md](docs/ROADMAP.md) lists what would change that; version history, per-prompt tests, side-by-side runs and typed blanks are done; few-shot examples as data are next.
 
 ## How it fits together
 
@@ -155,6 +155,16 @@ curl -s http://localhost:8000/gems/resolve \
 ```
 
 The response carries `resolved_prompt`, `referenced_gems` (`["code_reviewer", "base_assistant"]`), `variables_used` and `variables_missing` for anything left unfilled. Gems can be fetched, updated and deleted by name or by id.
+
+**Typed blanks** (roadmap item 29). Each `{variable}` can say what it expects in `variable_specs`: a description, a type (`text`, `long_text`, `number`, `choice` with its `options`, or `boolean`), a `default` and whether it is `required`. An empty blank uses its default; a value that does not fit, or a required blank left empty, stops a chat or a run with a message such as "Fill in the blanks: {audience} is required: Who will read it". Blanks without a spec behave as before, and the resolve preview reports problems instead of stopping. The editor has a Blanks section for this, and every place you type values (chat, the prompt page, Compare, Tests) shows a dropdown for a choice, yes or no, a number field or a text area to match. MCP clients get the specs as a JSON schema in `variables_schema` from `list_gems` and `get_gem`, so Claude Desktop or Cursor can fill them in correctly; `create_gem` and `update_gem` take specs too (`update_gem` merges them per blank).
+
+```json
+"variable_specs": {
+  "tone": {"description": "How it should sound", "type": "choice", "options": ["warm", "neutral", "firm"], "default": "warm"},
+  "audience": {"description": "Who will read it"},
+  "words": {"type": "number", "default": "80"}
+}
+```
 
 ## Agents
 
@@ -290,7 +300,7 @@ desktop/            Lapidary Console, the Windows 11 Electron application (see d
 backend/mcp_server.py   FastMCP server over the same services
 frontend/           Next.js 16 app router UI (app/ including runs/[id], components/ including RunEvents, lib/api.ts with the SSE client, proxy.ts)
 configs/            mcp_servers.json (copy the example) for tools from other MCP servers
-supabase/           schema.sql (tables, RLS, seed gems; also the seed source for SQLite) and one-off migrations such as lock_down_rls.sql, add_agent_runs.sql, add_newcomer_gems.sql, add_memory.sql, add_pipelines.sql, add_gem_versions.sql and add_evals.sql
+supabase/           schema.sql (tables, RLS, seed gems; also the seed source for SQLite) and one-off migrations such as lock_down_rls.sql, add_agent_runs.sql, add_newcomer_gems.sql, add_memory.sql, add_pipelines.sql, add_gem_versions.sql, add_evals.sql and add_variable_specs.sql
 prompts/            the shipped gems as markdown, one file per gem
 evals/              live-API quality checks for gems (eval_prompt_enhancer.py)
 tests/              pytest unit tests, no network

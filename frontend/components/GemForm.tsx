@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { gems as gemsApi, chat as chatApi, agents as agentsApi, GemCreate, Gem, AvailableModels, ToolInfo } from "@/lib/api";
+import { gems as gemsApi, chat as chatApi, agents as agentsApi, GemCreate, Gem, AvailableModels, ToolInfo, VariableSpec, VariableType } from "@/lib/api";
+import BlankInputs from "@/components/BlankInputs";
 import { explain } from "@/lib/words";
 import { Info, Plus, X, Loader2, Eye, Bot } from "lucide-react";
 import clsx from "clsx";
@@ -25,6 +26,7 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
     kind:          initialGem?.kind          ?? "prompt",
     tools:         initialGem?.tools         ?? [],
     memory:        initialGem?.memory        ?? false,
+    variable_specs: initialGem?.variable_specs ?? {},
   });
   const [tagInput, setTagInput]   = useState("");
   const [note, setNote]           = useState("");
@@ -67,11 +69,12 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
   const detectedVars: string[] = [];
   const gemRefs:      string[] = [];
   const promptText = form.system_prompt;
-  const varMatches = promptText.match(/\{([^{}]+)\}/g) || [];
-  varMatches.forEach((m) => {
-    const name = m.slice(1, -1);
-    if (!detectedVars.includes(name)) detectedVars.push(name);
-  });
+  // Same rule as the backend's extract_variables: {{gem:...}} tags are not blanks, and names are identifiers.
+  const withoutRefs = promptText.replace(/\{\{gem:[A-Za-z0-9_.-]+\}\}/g, "");
+  for (const m of withoutRefs.matchAll(/\{([A-Za-z_][A-Za-z0-9_]*)\}/g)) {
+    if (!detectedVars.includes(m[1])) detectedVars.push(m[1]);
+  }
+  detectedVars.sort();
   const gemRefMatches = promptText.match(/\{\{gem:([^}]+)\}\}/g) || [];
   gemRefMatches.forEach((m) => {
     const name = m.slice(6, -2).trim();
@@ -374,6 +377,45 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
           </div>
         )}
 
+        {/* Blanks: description, type, choices, default (roadmap 29) */}
+        {detectedVars.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-slate-300">Blanks <span className="font-normal text-slate-500">(say what each one is for, so anyone, and any AI app, can fill it in)</span></p>
+            {detectedVars.map((v) => {
+              const spec: VariableSpec = { description: "", type: "text", options: [], default: null, required: true, ...(form.variable_specs?.[v] ?? {}) };
+              const setSpec = (patch: Partial<VariableSpec>) =>
+                setForm((f) => ({ ...f, variable_specs: { ...(f.variable_specs ?? {}), [v]: { ...spec, ...patch } } }));
+              const small = "px-2 py-1 rounded-md bg-gem-surface border border-gem-border text-slate-200 text-xs placeholder:text-slate-600 focus:outline-hidden focus:ring-1 focus:ring-violet-500";
+              return (
+                <div key={v} className="rounded-lg border border-gem-border bg-gem-card p-2.5 space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <code className="text-xs text-blue-400 shrink-0">{"{" + v + "}"}</code>
+                    <input className={clsx(small, "flex-1")} placeholder="What goes here, e.g. who will read it" value={spec.description} onChange={(e) => setSpec({ description: e.target.value })} />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <select className={small} value={spec.type} onChange={(e) => setSpec({ type: e.target.value as VariableType })}>
+                      <option value="text">text</option>
+                      <option value="long_text">long text</option>
+                      <option value="number">number</option>
+                      <option value="choice">choice from a list</option>
+                      <option value="boolean">yes or no</option>
+                    </select>
+                    {spec.type === "choice" && (
+                      <input className={clsx(small, "flex-1 min-w-40")} placeholder="the choices, comma separated" value={spec.options.join(", ")}
+                        onChange={(e) => setSpec({ options: e.target.value.split(",").map((o) => o.trim()).filter(Boolean) })} />
+                    )}
+                    <input className={clsx(small, "w-36")} placeholder="default (optional)" value={spec.default ?? ""} onChange={(e) => setSpec({ default: e.target.value || null })} />
+                    <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">
+                      <input type="checkbox" className="accent-violet-500" checked={spec.required} onChange={(e) => setSpec({ required: e.target.checked })} />
+                      required
+                    </label>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         {/* Error + Submit */}
         {error && (
           <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-sm text-red-400">
@@ -423,18 +465,7 @@ export default function GemForm({ initialGem, mode }: GemFormProps) {
           {detectedVars.length > 0 && (
             <div className="px-4 py-3 border-b border-gem-border space-y-2">
               <p className="text-xs text-slate-500">Fill the blanks for the preview:</p>
-              {detectedVars.map((v) => (
-                <div key={v} className="flex items-center gap-2">
-                  <code className="text-xs text-blue-400 w-24 shrink-0">{"{" + v + "}"}</code>
-                  <input
-                    type="text"
-                    placeholder={`Value for ${v}`}
-                    value={varValues[v] ?? ""}
-                    onChange={(e) => setVarValues((prev) => ({ ...prev, [v]: e.target.value }))}
-                    className="flex-1 px-2 py-1 rounded-md bg-gem-surface border border-gem-border text-slate-300 text-xs focus:outline-hidden focus:ring-1 focus:ring-violet-500"
-                  />
-                </div>
-              ))}
+              <BlankInputs names={detectedVars} specs={form.variable_specs} values={varValues} onChange={setVarValues} size="xs" />
             </div>
           )}
 

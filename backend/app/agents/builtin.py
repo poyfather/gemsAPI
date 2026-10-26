@@ -44,6 +44,7 @@ async def get_gem(name: str) -> dict:
         "provider": g.provider,
         "kind": g.kind,
         "tools": g.tools,
+        "variables_schema": gem_service.variables_schema(g),
     }
 
 
@@ -51,7 +52,7 @@ async def get_gem(name: str) -> dict:
 async def resolve_gem(name: str, variables: dict[str, str] | None = None) -> dict:
     """Expand a gem's {{gem:name}} references and fill its {variable} placeholders. Returns the resolved prompt, the gems it referenced, and any variables still missing."""
     try:
-        r = await gem_service.resolve_gem_detailed(name, variables or {})
+        r = await gem_service.resolve_gem_detailed(name, variables or {}, strict=False)
     except ValueError as exc:
         return {"error": str(exc)}
     return {
@@ -59,6 +60,7 @@ async def resolve_gem(name: str, variables: dict[str, str] | None = None) -> dic
         "resolved_prompt": r.resolved_prompt,
         "referenced_gems": r.referenced_gems,
         "variables_missing": r.variables_missing,
+        "variable_errors": r.variable_errors,
     }
 
 
