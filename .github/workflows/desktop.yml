@@ -242,8 +242,11 @@ jobs:
           }
           "helper: $state"
           if ($state -eq "registered") { sc.exe query LapidaryHelper; sc.exe qc LapidaryHelper; throw "the uninstaller left Lapidary Helper registered" }
-          if (Test-Path "$env:ProgramFiles\Lapidary Console\resources\helper\lapidary-helper.exe") { throw "the uninstaller left the helper's files" }
+          $exe = "$env:ProgramFiles\Lapidary Console\resources\helper\lapidary-helper.exe"
+          foreach ($i in 1..30) { if (-not (Test-Path $exe)) { break }; Start-Sleep 1 }
+          if (Test-Path $exe) { throw "the uninstaller left the helper's files" }
           "uninstalled"
+          exit 0   # sc.exe's 1060 (no such service) is the expected last exit code, not a failure
 
       - uses: actions/upload-artifact@v4
         with:
