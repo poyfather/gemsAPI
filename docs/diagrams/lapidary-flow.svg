@@ -1,0 +1,123 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="830" viewBox="0 0 1200 830" font-family="Segoe UI, -apple-system, BlinkMacSystemFont, Helvetica Neue, Arial, sans-serif" role="img" aria-labelledby="t d"><title id="t">How Lapidary Answers</title><desc id="d">You ask from the web UI, the Windows console, Claude or ChatGPT over MCP, Cursor or Codex, Open WebUI, or a script. Lapidary builds the prompt, picks the AI, answers or acts with tools, checks the result with gates and tests, and keeps the run, the version and what it learned, then answers in the app you asked from.</desc><defs><marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#3557d6"/></marker><marker id="arrowStart" viewBox="0 0 10 10" refX="1.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#3557d6"/></marker><filter id="shadow" x="-5%" y="-5%" width="110%" height="120%"><feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#1e3a8a" flood-opacity="0.10"/></filter></defs><rect width="1200" height="830" fill="#ffffff"/><text x="600" y="52" font-size="36" font-weight="800" fill="#14213d" text-anchor="middle">How Lapidary Answers</text>
+<text x="600" y="84" font-size="18" font-weight="500" fill="#5b6577" text-anchor="middle">One prompt library, every app, the AI you choose</text>
+<rect x="40" y="108" width="1120" height="92" rx="14" fill="#f5f9ff" stroke="#cddcf6" stroke-width="1.5"/>
+<g transform="translate(60.0,140.0) scale(1.167)" fill="none" stroke="#14213d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7.5" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></g>
+<text x="98" y="150" font-size="17" font-weight="800" fill="#14213d" text-anchor="start">You ask from</text>
+<text x="98" y="170" font-size="13" font-weight="400" fill="#5b6577" text-anchor="start">any of these</text>
+<rect x="236.0" y="128" width="172.0" height="52" rx="10" fill="#ffffff" stroke="#c9d3e3" stroke-width="1.6"/>
+<g transform="translate(246.5,144.5) scale(0.792)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></g>
+<text x="272.0" y="151.0" font-size="13.5" font-weight="700" fill="#14213d" text-anchor="start">Web UI</text>
+<text x="272.0" y="168.0" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="start">try, chat, compare</text>
+<rect x="420.0" y="128" width="172.0" height="52" rx="10" fill="#ffffff" stroke="#c9d3e3" stroke-width="1.6"/>
+<g transform="translate(430.5,144.5) scale(0.792)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M7 13l2 2-2 2M11 17h5"/></g>
+<text x="456.0" y="151.0" font-size="13.5" font-weight="700" fill="#14213d" text-anchor="start">Console</text>
+<text x="456.0" y="168.0" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="start">the Windows app</text>
+<rect x="604.0" y="128" width="172.0" height="52" rx="10" fill="#ffffff" stroke="#c9d3e3" stroke-width="1.6"/>
+<g transform="translate(614.5,144.5) scale(0.792)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2v5M15 2v5M6 7h12v4a6 6 0 0 1-12 0zM12 17v5"/></g>
+<text x="640.0" y="151.0" font-size="13.5" font-weight="700" fill="#14213d" text-anchor="start">AI apps over MCP</text>
+<text x="640.0" y="168.0" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="start">Claude, ChatGPT, Cursor</text>
+<rect x="788.0" y="128" width="172.0" height="52" rx="10" fill="#ffffff" stroke="#c9d3e3" stroke-width="1.6"/>
+<g transform="translate(798.5,144.5) scale(0.792)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></g>
+<text x="824.0" y="151.0" font-size="13.5" font-weight="700" fill="#14213d" text-anchor="start">Open WebUI</text>
+<text x="824.0" y="168.0" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="start">gems as models</text>
+<rect x="972.0" y="128" width="172.0" height="52" rx="10" fill="#ffffff" stroke="#c9d3e3" stroke-width="1.6"/>
+<g transform="translate(982.5,144.5) scale(0.792)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/></g>
+<text x="1008.0" y="151.0" font-size="13.5" font-weight="700" fill="#14213d" text-anchor="start">Your scripts</text>
+<text x="1008.0" y="168.0" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="start">REST and /v1</text>
+<path d="M600,200 L600,232" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<rect x="40" y="236" width="212" height="236" rx="14" fill="#eef4fe" stroke="#3b82f6" stroke-width="2" filter="url(#shadow)"/>
+<circle cx="70" cy="268" r="20.4" fill="#ffffff"/>
+<g transform="translate(58.0,256.0) scale(1.000)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l10 5-10 5L2 7z"/><path d="M2 12l10 5 10-5M2 17l10 5 10-5"/></g>
+<text x="92" y="274" font-size="15.5" font-weight="800" fill="#14213d" text-anchor="start">1  Build the prompt</text>
+<text x="60" y="302" font-size="13.5" font-weight="700" fill="#1d4ed8" text-anchor="start">Resolver</text>
+<text x="60" y="330" font-size="13.5" font-weight="400" fill="#344054" text-anchor="start">pastes in the prompts</text>
+<text x="60" y="351" font-size="13.5" font-weight="400" fill="#344054" text-anchor="start">it is built from</text>
+<text x="60" y="372" font-size="13.5" font-weight="400" fill="#344054" text-anchor="start">fills blanks, defaults</text>
+<text x="60" y="393" font-size="13.5" font-weight="400" fill="#344054" text-anchor="start">adds worked examples</text>
+<text x="60" y="414" font-size="13.5" font-weight="400" fill="#344054" text-anchor="start">and memory</text>
+<path d="M254,354 L265,354" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<rect x="267" y="236" width="212" height="236" rx="14" fill="#f5f0ff" stroke="#8b5cf6" stroke-width="2" filter="url(#shadow)"/>
+<circle cx="297" cy="268" r="20.4" fill="#ffffff"/>
+<g transform="translate(285.0,256.0) scale(1.000)" fill="none" stroke="#6d28d9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M6 15.5V9a3 3 0 0 1 3-3h6.5M8.5 18h7"/></g>
+<text x="319" y="274" font-size="15.5" font-weight="800" fill="#14213d" text-anchor="start">2  Pick the AI</text>
+<text x="287" y="302" font-size="13.5" font-weight="700" fill="#6d28d9" text-anchor="start">Which AI should we use?</text>
+<text x="287" y="330" font-size="13.5" font-weight="400" fill="#344054" text-anchor="start">free one on this PC</text>
+<text x="287" y="351" font-size="13.5" font-weight="400" fill="#344054" text-anchor="start">online with your key</text>
+<text x="287" y="372" font-size="13.5" font-weight="400" fill="#344054" text-anchor="start">a mix, or decide for me</text>
+<text x="287" y="393" font-size="13.5" font-weight="400" fill="#344054" text-anchor="start">and says why</text>
+<path d="M481,354 L492,354" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<rect x="494" y="236" width="212" height="236" rx="14" fill="#f5f9ff" stroke="#93b4f5" stroke-width="2" filter="url(#shadow)"/>
+<circle cx="524" cy="268" r="20.4" fill="#ffffff"/>
+<g transform="translate(512.0,256.0) scale(1.000)" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 0 1-14.3 4.9M4 12a8 8 0 0 1 14.3-4.9M18.5 3v4.5H14M5.5 21v-4.5H10"/></g>
+<text x="546" y="274" font-size="15.5" font-weight="800" fill="#14213d" text-anchor="start">3  Answer or act</text>
+<text x="514" y="302" font-size="13.5" font-weight="700" fill="#1d4ed8" text-anchor="start">Prompt or assistant</text>
+<text x="514" y="330" font-size="13.5" font-weight="400" fill="#344054" text-anchor="start">a prompt answers once</text>
+<text x="514" y="351" font-size="13.5" font-weight="400" fill="#344054" text-anchor="start">an assistant uses tools</text>
+<text x="514" y="372" font-size="13.5" font-weight="400" fill="#344054" text-anchor="start">step by step and asks</text>
+<text x="514" y="393" font-size="13.5" font-weight="400" fill="#344054" text-anchor="start">before risky ones</text>
+<path d="M708,354 L719,354" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<rect x="721" y="236" width="212" height="236" rx="14" fill="#fff5ea" stroke="#f08c2e" stroke-width="2" filter="url(#shadow)"/>
+<circle cx="751" cy="268" r="20.4" fill="#ffffff"/>
+<g transform="translate(739.0,256.0) scale(1.000)" fill="none" stroke="#c2410c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z"/><path d="M9 12l2 2 4-4"/></g>
+<text x="773" y="274" font-size="15.5" font-weight="800" fill="#14213d" text-anchor="start">4  Check it</text>
+<text x="741" y="302" font-size="13.5" font-weight="700" fill="#c2410c" text-anchor="start">Gates and tests</text>
+<text x="741" y="330" font-size="13.5" font-weight="400" fill="#344054" text-anchor="start">tests, visual and</text>
+<text x="741" y="351" font-size="13.5" font-weight="400" fill="#344054" text-anchor="start">adversarial review</text>
+<text x="741" y="372" font-size="13.5" font-weight="400" fill="#344054" text-anchor="start">failures go back</text>
+<text x="741" y="393" font-size="13.5" font-weight="400" fill="#344054" text-anchor="start">you accept the result</text>
+<path d="M935,354 L946,354" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<rect x="948" y="236" width="212" height="236" rx="14" fill="#ecf8ef" stroke="#34a853" stroke-width="2" filter="url(#shadow)"/>
+<circle cx="978" cy="268" r="20.4" fill="#ffffff"/>
+<g transform="translate(966.0,256.0) scale(1.000)" fill="none" stroke="#1e7a37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></g>
+<text x="1000" y="274" font-size="15.5" font-weight="800" fill="#14213d" text-anchor="start">5  Keep it</text>
+<text x="968" y="302" font-size="13.5" font-weight="700" fill="#1e7a37" text-anchor="start">History and memory</text>
+<text x="968" y="330" font-size="13.5" font-weight="400" fill="#344054" text-anchor="start">every run recorded</text>
+<text x="968" y="351" font-size="13.5" font-weight="400" fill="#344054" text-anchor="start">every save versioned</text>
+<text x="968" y="372" font-size="13.5" font-weight="400" fill="#344054" text-anchor="start">lessons remembered</text>
+<text x="968" y="393" font-size="13.5" font-weight="400" fill="#344054" text-anchor="start">for the next time</text>
+<path d="M1054 472 V496 H600" stroke="#3557d6" stroke-width="2.2" fill="none"/>
+<path d="M600,496 L600,520" fill="none" stroke="#3557d6" stroke-width="2.2" marker-end="url(#arrow)"/>
+<rect x="330" y="522" width="540" height="58" rx="14" fill="#ffffff" stroke="#34a853" stroke-width="2.2" filter="url(#shadow)"/>
+<circle cx="372" cy="551" r="15" fill="#34a853"/><path d="M364 551l5 5 10-10" stroke="#fff" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="398" y="547" font-size="19" font-weight="800" fill="#14213d" text-anchor="start">An answer you can trust</text>
+<text x="398" y="567" font-size="13" font-weight="400" fill="#5b6577" text-anchor="start">back in the app you asked from • recorded, versioned, remembered</text>
+<rect x="40" y="602" width="1120" height="118" rx="14" fill="#f8f9fb" stroke="#d0d5dd" stroke-width="1.5" stroke-dasharray="6 5"/>
+<g transform="translate(58.0,628.0) scale(1.000)" fill="none" stroke="#475467" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1"/></g>
+<text x="94" y="646" font-size="16" font-weight="800" fill="#14213d" text-anchor="start">Under the hood</text>
+<rect x="60.0" y="658" width="259.5" height="48" rx="10" fill="#f2f4f7" stroke="#9aa4b2" stroke-width="1.6"/>
+<g transform="translate(70.5,672.5) scale(0.792)" fill="none" stroke="#475467" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></g>
+<text x="96.0" y="679.0" font-size="13.5" font-weight="700" fill="#14213d" text-anchor="start">SQLite or Supabase</text>
+<text x="96.0" y="696.0" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="start">one store for everything</text>
+<rect x="333.5" y="658" width="259.5" height="48" rx="10" fill="#f5f0ff" stroke="#8b5cf6" stroke-width="1.6"/>
+<g transform="translate(344.0,672.5) scale(0.792)" fill="none" stroke="#6d28d9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9.5" y="9.5" width="5" height="5"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></g>
+<text x="369.5" y="679.0" font-size="13.5" font-weight="700" fill="#14213d" text-anchor="start">Ollama and friends</text>
+<text x="369.5" y="696.0" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="start">models on this PC</text>
+<rect x="607.0" y="658" width="259.5" height="48" rx="10" fill="#f5f0ff" stroke="#8b5cf6" stroke-width="1.6"/>
+<g transform="translate(617.5,672.5) scale(0.792)" fill="none" stroke="#6d28d9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18h10a4 4 0 0 0 .6-8A6 6 0 0 0 6 9.6 4.2 4.2 0 0 0 7 18z"/></g>
+<text x="643.0" y="679.0" font-size="13.5" font-weight="700" fill="#14213d" text-anchor="start">Claude and ChatGPT</text>
+<text x="643.0" y="696.0" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="start">online, your own key</text>
+<rect x="880.5" y="658" width="259.5" height="48" rx="10" fill="#fff0f2" stroke="#e8778b" stroke-width="1.6"/>
+<g transform="translate(891.0,672.5) scale(0.792)" fill="none" stroke="#be123c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/></g>
+<text x="916.5" y="679.0" font-size="13.5" font-weight="700" fill="#14213d" text-anchor="start">Tools</text>
+<text x="916.5" y="696.0" font-size="11.5" font-weight="400" fill="#5b6577" text-anchor="start">PowerShell 7, REA, MCP</text>
+<rect x="40" y="740" width="1120" height="70" rx="12" fill="#f3faf5" stroke="#cfe9d6" stroke-width="1.5"/>
+<g transform="translate(59.0,762.0) scale(1.083)" fill="none" stroke="#1e7a37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20v-7M12 20V5M19 20v-10"/></g>
+<text x="98" y="782" font-size="20" font-weight="800" fill="#14213d" text-anchor="start">Key benefits</text>
+<line x1="252.0" y1="754" x2="252.0" y2="796" stroke="#cfe9d6" stroke-width="1.5"/>
+<circle cx="282.0" cy="775" r="11" fill="#1e7a37"/>
+<path d="M276.0 775l4 4 7-7" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="300.0" y="780" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">Write a prompt once</text>
+<line x1="474.5" y1="754" x2="474.5" y2="796" stroke="#cfe9d6" stroke-width="1.5"/>
+<circle cx="504.5" cy="775" r="11" fill="#1e7a37"/>
+<path d="M498.5 775l4 4 7-7" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="522.5" y="780" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">Use it from every app</text>
+<line x1="697.0" y1="754" x2="697.0" y2="796" stroke="#cfe9d6" stroke-width="1.5"/>
+<circle cx="727.0" cy="775" r="11" fill="#1e7a37"/>
+<path d="M721.0 775l4 4 7-7" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="745.0" y="771" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">Free and private</text>
+<text x="745.0" y="788" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">by default</text>
+<line x1="919.5" y1="754" x2="919.5" y2="796" stroke="#cfe9d6" stroke-width="1.5"/>
+<circle cx="949.5" cy="775" r="11" fill="#1e7a37"/>
+<path d="M943.5 775l4 4 7-7" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="967.5" y="771" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">Nothing done</text>
+<text x="967.5" y="788" font-size="13.5" font-weight="500" fill="#14213d" text-anchor="start">until checked</text></svg>

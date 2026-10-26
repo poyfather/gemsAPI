@@ -26,41 +26,11 @@ Who it is for: anyone who writes prompts as part of their work and uses them fro
 
 ## How it fits together
 
-```mermaid
-flowchart LR
-    subgraph callers["Who calls it"]
-        UI["Web UI<br/>Next.js, port 3000"]
-        REST["Scripts and apps<br/>REST with X-API-Key"]
-        MCPC["MCP clients<br/>Claude Desktop, Cursor"]
-    end
+<p align="center">
+  <img src="docs/diagrams/lapidary-flow.svg" width="100%" alt="How Lapidary answers: you ask from the web UI, the Windows console, AI apps over MCP, Open WebUI or a script; Lapidary builds the prompt, picks the AI, answers or acts with tools, checks the result with gates and tests, and keeps the run, the version and what it learned, then answers in the app you asked from.">
+</p>
 
-    subgraph core["Lapidary"]
-        API["FastAPI service<br/>/gems and /chat, port 8000"]
-        MCPS["FastMCP server<br/>7 tools, 2 resources, stdio"]
-        RES["Resolver<br/>expand gem references,<br/>fill variables"]
-        LLM["LLM adapter<br/>complete and stream"]
-    end
-
-    DB[("Supabase Postgres<br/>gems table")]
-
-    subgraph providers["LLM providers"]
-        ANT["Anthropic Messages API"]
-        OAI["OpenAI Chat Completions"]
-    end
-
-    UI -- "/api/* proxy,<br/>key added server-side" --> API
-    REST --> API
-    MCPC -- "stdio" --> MCPS
-    API --> RES
-    MCPS --> RES
-    RES --> DB
-    API --> LLM
-    MCPS --> LLM
-    LLM --> ANT
-    LLM --> OAI
-```
-
-Every surface hands the gem to the same resolver, which expands `{{gem:name}}` references recursively, fills `{variable}` placeholders, and either returns the finished prompt or sends it to a provider with the caller's messages. [ARCHITECTURE.md](ARCHITECTURE.md) has the component model, request sequences, the data model and the trust boundaries as further diagrams.
+Every surface hands the gem to the same resolver, which expands `{{gem:name}}` references recursively, fills `{variable}` placeholders, and either returns the finished prompt or sends it to a provider with the caller's messages. [ARCHITECTURE.md](ARCHITECTURE.md) has the full architecture picture, then the component model, request sequences, the data model and the trust boundaries as further diagrams. Both pictures are drawn by [`docs/diagrams/build.py`](docs/diagrams/build.py); edit it and rerun to change them.
 
 ## What you get
 
