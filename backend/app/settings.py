@@ -35,6 +35,10 @@ OPENAI_DEFAULT_MODEL: str = _env("GEMS_OPENAI_DEFAULT_MODEL", "")   # empty: fir
 LOCAL_OPENAI_BASE_URL: str = _env("LOCAL_OPENAI_BASE_URL", "http://127.0.0.1:11434/v1")
 LOCAL_OPENAI_API_KEY: str = _env("LOCAL_OPENAI_API_KEY", "ollama")
 LOCAL_DEFAULT_MODEL: str = _env("GEMS_LOCAL_DEFAULT_MODEL", "")      # empty: first model the server lists
+# Thinking models (qwen3, deepseek-r1, gpt-oss) can spend a whole token budget reasoning and return an
+# empty answer, which empties tests, comparisons and judges. Sent as reasoning_effort to local servers
+# only; "none" turns thinking off (Ollama, vLLM), "low"/"medium"/"high" allow some, empty sends nothing.
+LOCAL_REASONING_EFFORT: str = _env("GEMS_LOCAL_REASONING_EFFORT", "none")
 
 # The model policy, answered in the UI by "Which AI should we use?":
 #   local  = the free one on this PC      online = the online ones
