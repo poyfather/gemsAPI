@@ -1,6 +1,15 @@
 # Lapidary
 
-**Your own home for the instructions you give AI, and for the assistants you build from them.** Write a prompt once, improve it safely, and use it from Claude, ChatGPT, Cursor, Open WebUI or your own scripts, with a free model on your own PC or an online one with your own key.
+### Your AI. Your instructions. Every app.
+
+Create your best prompts once. Improve them with testing. Turn them into assistants. Use them across your favorite AI tools while keeping control of your data.
+
+<p align="center">
+  <img src="docs/screenshots/compare-answers.png" width="100%" alt="Lapidary's Compare page: two versions of the code_reviewer prompt answer the same request to review a Python average function, on qwen3:4b running on the PC. Version 1 writes a long review with Summary, Issues, Suggestions and Verdict sections. Version 2, after one added paragraph, answers in one line: the ZeroDivisionError on an empty list, the fix, and the test that catches it.">
+</p>
+<p align="center"><sub>A real run, not a mock-up: the same prompt before and after one edit, side by side, answered by qwen3:4b on the PC. Its tests scored version 1 at 2 of 4 and version 2 at 4 of 4.</sub></p>
+
+Lapidary is your own home for the instructions you give AI, and for the assistants you build from them. Write a prompt once, improve it safely, and use it from Claude, ChatGPT, Cursor, Open WebUI or your own scripts, with a free model on your own PC or an online one with your own key.
 
 Lapidary keeps every prompt (a "gem") in one place you control: a single file on your machine by default, or a Supabase database if you host it. A gem can build on other gems, leave blanks to fill in when you use it, and carry its own worked examples, tests and full history. Give a gem tools and it becomes an assistant that works step by step, asks before anything risky, and records what it did. On Windows 11, Lapidary Console installs and connects the whole set in plain words, for people who have never set up an AI tool before.
 
@@ -12,6 +21,31 @@ A lapidary is the craftsperson who cuts and polishes rough stones into gems. Tha
 [![Version](https://img.shields.io/badge/version-0.4.0-7c3aed.svg)](CHANGELOG.md)
 [![Python 3.12+](https://img.shields.io/badge/Python-3.12%2B-3776AB.svg)](backend/requirements.txt)
 [![Next.js 16](https://img.shields.io/badge/Next.js-16-000000.svg)](frontend/package.json)
+
+## Get started
+
+| You want to | Do this |
+|---|---|
+| **Use it on Windows 11**, no setup knowledge needed | Install **Lapidary Console**. It asks two questions, then installs and connects what you chose, with one administrator prompt. The installer (`LapidaryConsole-Setup-<version>.exe`, with its `.sha256`) is attached to each [release](https://github.com/poyfather/lapidary/releases) from the next one on, and built by every [Desktop workflow run](https://github.com/poyfather/lapidary/actions/workflows/desktop.yml) until then. It is not code-signed yet, so Windows SmartScreen warns: choose More info, then Run anyway. [More about the console](#lapidary-console-windows) |
+| **Run it on any machine with Docker** | Copy `.env.example` to `.env`, set `GEMS_API_KEY`, then `docker compose up --build`. The UI is on port 3000. [Docker Compose](#quick-start) |
+| **Run it from source** on macOS, Linux or Windows | Python 3.12, Node 20 and two terminals; data goes to a SQLite file, no database to set up. [Quick start](#quick-start) |
+| **Use your prompts inside Claude, ChatGPT or Cursor** | Point the app's MCP settings at Lapidary, over HTTP at `/mcp` or as a local command. [Connect an MCP client](#quick-start) |
+| **Run it free and private** | Install [Ollama](https://ollama.com) and pull a model (`ollama pull qwen3:4b`); Lapidary finds it and uses it when the policy says local. [Which AI should we use?](#which-ai-should-we-use) |
+
+A live demo in the browser, with nothing to install and no key, is the next thing on the [roadmap](docs/ROADMAP.md#growth-plan-adr-013).
+
+## See it
+
+| | |
+|---|---|
+| <img src="docs/screenshots/library.png" alt="The library: every prompt and assistant with its tags, its blanks, what it is built from, and which AI it uses."> | <img src="docs/screenshots/prompt-page.png" alt="A prompt's page: its tests with the past scores (4 of 4 on version 2, 2 of 4 on version 1, the baseline), and its history with what changed between versions as a diff."> |
+| **One library.** Every prompt and assistant, tagged, searchable, built from smaller prompts. | **Tests and history.** Every save is a version; the tests score each one against a baseline. |
+| <img src="docs/screenshots/compare-tests.png" alt="Compare on the tests: version 1 and version 2 of code_reviewer through its four tests on qwen3:4b. In this run version 1 passes 1 of 4 and version 2 passes 3 of 4; the AI judge explains why each answer did or did not meet the brevity test."> | <img src="docs/screenshots/chat.png" alt="Chat: the improved code_reviewer answering on qwen3:4b on this PC, with its blank filled in."> |
+| **Side by side on the tests.** Two versions or two AIs through the same tests. This run gave 1 of 4 and 3 of 4; a small model varies, which is why the tests exist. | **Use it.** Chat here, or from any app that connects. |
+| <img src="docs/screenshots/console-start.png" alt="Lapidary Console's first run: Which AI should we use? with five plain-language choices from the free one on this PC to a mix."> | <img src="docs/screenshots/console-doctor.png" alt="Lapidary Console's Doctor: every check in plain words, with one suggestion and the button that fixes it."> |
+| **Lapidary Console.** Two questions, then one click, on Windows 11. | **The Doctor.** Finds what is wrong and offers the fix. |
+
+The pictures come from a real instance with qwen3:4b on Ollama; [docs/screenshots](docs/screenshots/README.md) says how they were made and how to make them again.
 
 ## Why
 
@@ -46,8 +80,9 @@ Every surface hands the gem to the same resolver, which expands `{{gem:name}}` r
 
 | Surface | What it does |
 |---|---|
-| **Web UI** (Next.js 16, port 3000) | Browse, search and tag gems, edit them with a live resolved preview, test any gem in a chat view with streamed replies, run agent gems and watch each tool call as it happens, and open any past run by id |
-| **REST API** (FastAPI, port 8000) | CRUD on `/gems`, `POST /gems/resolve` to expand a gem, `POST /chat` with optional SSE streaming, Swagger at `/docs` |
+| **Web UI** (Next.js 16, port 3000) | Browse, search and tag prompts; edit them with typed blanks, worked examples and a live preview of the prompt as sent; each prompt's tests, scores against a baseline and full history with diffs and restore; Compare for two to four versions or AIs side by side; chat with streamed replies; assistants with every tool call and approval shown live; pipelines with their gates; and Memory |
+| **REST API** (FastAPI, port 8000) | `/gems` with versions, diff and revert; `/gems/resolve`; `/gems/{id}/evals` and `/compare`; `/chat` with SSE streaming; `/agents/{name}/runs` and `/runs/{id}/approve`; `/pipelines`; `/memory`; the OpenAI-compatible `/v1/models` and `/v1/chat/completions`; every route but `/` and `/health` behind an API key; Swagger at `/docs` |
+| **Lapidary Console** (Windows 11) | The first run and recipes, installs and updates through its helper service, connections to Claude Desktop, ChatGPT and Open WebUI, local models with Ollama, a PowerShell 7 view, a toolbox of Windows management tools, and the Doctor |
 | **MCP server** (FastMCP, stdio or HTTP at `/mcp`) | Tools `list_gems`, `search_gems`, `get_gem`, `resolve_gem_prompt`, `chat_with_gem`, `create_gem`, `run_agent`, `approve_run`, `list_agent_tools`, `list_available_models`, `search_memory`, `get_memories`, `remember`, `forget`, `list_pipelines`, `run_pipeline`, `resume_pipeline`, `update_gem`, `add_gem_example`, `gem_history`, `diff_gem_versions`, `revert_gem`, `add_gem_eval`, `run_gem_evals`, `compare_gem`, plus `gems://list`, `gems://{name}` and `runs://{id}` resources |
 | **Agent runs** | A gem of kind `agent` lists tools it may call; `POST /agents/{name}/runs` runs the loop (model turn, tool calls, results, repeat) and records every step in `runs` and `run_events` |
 | **Seed gems** | `base_assistant`, `code_reviewer`, `creative_writer`, `summarizer`, `engineering_lead`, `prompt_enhancer`, the newcomer prompts `study_buddy`, `writing_coach` and `research_assistant`, `memory_summarizer`, the gate gems `test_runner` and `adversarial_reviewer`, and the agents `gem_librarian`, `rea_analyst`, `windows_operator` and `program_builder`, each also kept as a reviewable file in [`prompts/`](prompts/) |

@@ -8,13 +8,13 @@ Lapidary is a prompt library that grew into an agent harness with a Windows cons
   <img src="docs/diagrams/lapidary-architecture.svg" width="100%" alt="Lapidary architecture: you reach it through the web UI, the Windows console, REST and the OpenAI-compatible API, or MCP clients over stdio or HTTP. The backend holds the resolver, the model router, the agent run loop, history and tests, and memory; pipelines run a builder through test, visual and adversarial gates before you accept; models run on this PC or online with your own key, tools come from PowerShell, REA and other MCP servers; everything is stored in SQLite or Supabase.">
 </p>
 
-A **gem** is a named system prompt stored in Postgres. It can embed other gems with `{{gem:name}}` and leave `{variable}` placeholders to be filled at call time. Every surface (REST, UI, MCP) hands the gem to the same resolver, which expands the references recursively and fills the variables, and either returns the finished prompt or passes it to an LLM with the caller's messages.
+A **gem** is a named system prompt kept in Lapidary's store (SQLite by default, Supabase Postgres when hosted). It can embed other gems with `{{gem:name}}` and leave `{variable}` placeholders to be filled at call time. Every surface (REST, the OpenAI-compatible API, the UI, MCP and the console) hands the gem to the same resolver, which expands the references recursively and fills the variables, and either returns the finished prompt or passes it to an LLM with the caller's messages.
 
 ## Architecture principles
 
 - **Separation of concerns.** The backend (FastAPI), the frontend (Next.js) and the MCP server (FastMCP) are independently deployable units. The MCP server imports the backend's service layer directly rather than calling the HTTP API.
 - **Provider abstraction.** All LLM calls go through `backend/app/services/llm_service.py`, which exposes `complete()` and `complete_stream()`. Routes, the MCP server and the resolver never import a provider SDK.
-- **Single source of truth.** Gem content lives only in Supabase. Nothing is cached in memory or read from config files at runtime. The files in `prompts/` are a reviewable mirror of the shipped gems, not a runtime input.
+- **Single source of truth.** Gem content lives only in the store (SQLite or Supabase). Nothing is cached in memory or read from config files at runtime. The files in `prompts/` are a reviewable mirror of the shipped gems, not a runtime input.
 - **Fail-safe recursion.** Resolution is depth-limited (10 levels) and cycle-detected before any further database call is made on a branch.
 - **No client-side secrets.** The browser never holds an API key. The Next.js server (`proxy.ts`) injects `X-API-Key` on the proxy hop, and all LLM keys stay in the backend process.
 
@@ -146,18 +146,20 @@ Compose builds a standalone Next.js server and a uvicorn image, gates the fronte
 
 ## Evaluation and quality gates
 
-- Unit tests in `tests/` cover the extraction helpers and the regex behaviour; they make no network calls and run in CI with ruff, the import check and the frontend build.
-- Offline evals in `evals/` call the real Anthropic API for a gem and record a baseline score in the file. Run one before merging a change to the matching gem in `prompts/`; the score must not regress.
-- CI also checks that every `prompts/*.md` has a seed row in `supabase/schema.sql`.
+- Unit tests in `tests/` cover the resolver, typed blanks, examples, versions, tests and compare, the router, agents and pipelines, memory, both stores, the routes, the OpenAI-compatible API, MCP over HTTP and the console helper's request checks. They run against a temporary SQLite store with no network calls. `desktop/test/` covers the console's logic with `node --test`.
+- Tests per gem (roadmap 28) are the main quality gate for prompts: stored with the gem, run from the UI, the API or MCP, scored against the gem's version and compared with a baseline. Offline evals in `evals/` remain for checks those cannot express.
+- CI runs ruff, pytest, the frontend lint, type check and build, the console tests, the Docker image build, CodeQL, the check that every `prompts/*.md` has a seed row in `supabase/schema.sql`, and a Windows job that builds the installer, installs it, checks the helper service and uninstalls it.
 
 ## Operational integration points
 
 - **REST API**: port 8000, OpenAPI at `/docs` and `/redoc`, `X-API-Key` header on everything except `/` and `/health`.
 - **Frontend**: port 3000, proxies `/api/*`; needs `GEMS_API_KEY` and `BACKEND_URL`.
-- **MCP**: stdio, configured in the client's MCP settings with the backend virtualenv's Python and the absolute path of `backend/mcp_server.py`.
-- **Storage**: Supabase Postgres through `supabase-py` with the service role key.
+- **OpenAI-compatible API**: `GET /v1/models` and `POST /v1/chat/completions` with a bearer key, for Open WebUI and similar clients.
+- **MCP**: stdio, configured in the client's MCP settings with the backend virtualenv's Python and the absolute path of `backend/mcp_server.py` (or the console's `lapidary-backend.exe --mcp`); or streamable HTTP at `/mcp` on the API, behind the same keys.
+- **Storage**: SQLite in one file by default (`GEMS_SQLITE_PATH`), or Supabase Postgres through `supabase-py` with the service role key (`GEMS_STORAGE=supabase`).
+- **Console**: Lapidary Console runs the backend and the UI as sidecars on `127.0.0.1`, and Lapidary Helper listens on the local pipe `\\.\pipe\LapidaryHelper`.
 - **Telemetry**: uvicorn access logs and Python logging; no metrics or tracing yet (`docs/ROADMAP.md` item 20).
 
 ## Known gaps
 
-The prioritised list, with sizes and dependencies, is [docs/ROADMAP.md](docs/ROADMAP.md). The ones this page touches: Docker build (1), 404 for unknown ids (2), variable regex scope (4), resolver tests (5), RLS and key model (9), MCP auth when hosted (10), streaming in the UI (13), version history (14), N+1 queries and a size budget (19).
+The prioritised list, with sizes and dependencies, is [docs/ROADMAP.md](docs/ROADMAP.md). The order comes from ADR-013 (growth before more features). The ones this page touches: one query per gem in a reference tree and no prompt size budget (19), no spend limits or rate limits (11, within 55), one person per instance and keys that are not scoped (21 and 57), and no import or export yet (22).

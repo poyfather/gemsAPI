@@ -1,89 +1,89 @@
 # ROADMAP
 
 ## Purpose
-Track Lapidary development priorities, sequencing, and delivery status.
-This file tracks delivery status of agreed items. The prioritised list of improvements, with reasons, sizes and dependencies, is in [docs/ROADMAP.md](docs/ROADMAP.md).
+Track Lapidary's delivery status: what is being worked on, in what order, and what done looks like. The reasoning behind every item, with sizes and dependencies, is in [docs/ROADMAP.md](docs/ROADMAP.md). The order comes from ADR-013 in [DECISIONS.md](DECISIONS.md): make Lapidary understandable, tryable and useful within five minutes before adding more features.
+
+Success is measured by three numbers (item 58): the share of visitors who create their first gem, the share who use it again seven days later, and the number who share a gem with another person.
 
 ---
 
-## Now
+## Now: phase 1, attract
 
-### Project-Template Alignment
-- Goal: adopt poyfather Project-Template structure across the repo.
-- Status: Complete
+### Repository presentation and consistent docs (52)
+- Goal: a visitor understands what Lapidary does for them from the top of the README, sees the product, and can pick an install path; every document agrees with the code.
+- Status: Partly done. Positioning, screenshots, install options and the doc reconciliation are in. Open: a 90-second demo video, GitHub topics and description, a social preview image.
 - Owner: poyfather
 - Dependencies: None
-- Success Criteria: all required root docs exist, scaffold dirs present, `pytest -q` and `ruff check .` pass.
-- Links: `AGENTS.md`, `DECISIONS.md` (ADR-005)
+- Success Criteria: README shows the product above the fold; no document contradicts the code.
+- Links: `README.md`, `docs/screenshots/`, `CONTEXT.md`, `SECURITY.md`
 
-### Smoke Test and Lint Baseline
-- Goal: `pytest -q` and `ruff check .` pass from repo root with zero warnings/failures.
-- Status: Complete (CI runs `ruff check .` and `pytest -q` on every PR)
+### Live demo in the browser (51)
+- Goal: try Lapidary from a link with no install and no key; watch a prompt become a tested assistant and compare the original and improved answers.
+- Status: Planned
 - Owner: poyfather
-- Dependencies: Project-Template alignment
-- Success Criteria: CI-ready test and lint baseline established.
-- Links: `STANDARDS.md`, `tests/`
+- Dependencies: compare and tests (done), rate limits from 55 before a live model sits behind it
+- Success Criteria: a first-time visitor gets from the link to a side-by-side comparison in under five minutes.
+- Links: `docs/ROADMAP.md` item 51
 
 ---
 
-## Next
+## Now: phase 2, activate
 
-### Prompt Eval Harness
-- Goal: `evals/eval_prompt_enhancer.py` provides a repeatable quality score for the `prompt_enhancer` gem so regressions are caught before merge.
+### Easy import (22)
+- Goal: paste instructions from ChatGPT, Claude or Cursor, or import Markdown and JSON, and get named gems with AI-suggested improvements and duplicates flagged; export to a hand-readable bundle.
+- Status: Planned (moved up by ADR-013)
+- Owner: poyfather
+- Dependencies: a stable schema
+- Success Criteria: a person's existing prompts become a tidy library in one sitting.
+- Links: `docs/ROADMAP.md` item 22
+
+### Gem gallery (53)
+- Goal: 25 to 50 curated gems with a preview, example output, a quality score and one-click install.
 - Status: Planned
 - Owner: poyfather
-- Dependencies: Anthropic API key in env, `prompt_enhancer` gem stable
-- Success Criteria: eval script runs, produces a numeric score, and records a baseline.
-- Links: `evals/`, `prompts/prompt_enhancer.md`, `ARCHITECTURE.md`
-
-### Prompt Version History
-- Goal: add a `gem_versions` table to Supabase that snapshots `system_prompt` on every update, enabling rollback and diff.
-- Status: Planned
-- Owner: poyfather
-- Dependencies: Supabase schema migration
-- Success Criteria: update a gem via UI → previous version visible in history → revert works.
-- Links: `ARCHITECTURE.md`, `supabase/`
-
-### API Authentication
-- Goal: add API key authentication to FastAPI endpoints so the backend can be safely exposed beyond localhost.
-- Status: Complete
-- Owner: poyfather
-- Dependencies: None
-- Success Criteria: unauthenticated requests return 401; authenticated requests work normally.
-- Links: `SECURITY.md`, `backend/app/auth.py`
-
-### Streaming in Chat UI
-- Goal: wire SSE streaming from FastAPI through to the Next.js chat interface so responses appear token-by-token.
-- Status: Planned
-- Owner: poyfather
-- Dependencies: None
-- Success Criteria: chat messages stream visibly in the UI; no full-response wait.
-- Links: `frontend/app/chat/page.tsx`, `backend/app/routes/chat.py`
+- Dependencies: 22 for the bundle format
+- Success Criteria: a new user installs a gallery gem and gets a useful answer before writing any prompt.
+- Links: `docs/ROADMAP.md` item 53
 
 ---
 
-## Later
+## Next: phase 3, retain
 
-### CI Pipeline
-- Goal: GitHub Actions workflow that runs `ruff check .` and `pytest -q` on every PR.
-- Status: Complete (`.github/workflows/ci.yml`)
-- Owner: poyfather
-- Dependencies: smoke test baseline
-- Success Criteria: PRs blocked on lint/test failure.
-- Links: `STANDARDS.md`
-
-### One-Command Deployment
-- Goal: `scripts/deploy.ps1` (or bash equivalent) that builds and pushes Docker images and applies Supabase migrations in one step.
+### Visual builder (54)
+- Goal: connect assistants, tools, tests and approvals on a canvas, saved as an ordinary pipeline.
 - Status: Planned
-- Owner: poyfather
-- Dependencies: stable Docker Compose config, Supabase CLI integration
-- Success Criteria: fresh environment setup in under 5 minutes.
-- Links: `scripts/`, `docker-compose.yml`
+- Links: `docs/ROADMAP.md` item 54
 
-### Gem Import / Export
-- Goal: CLI or UI feature to export all gems as a JSON/YAML bundle and import them into another Lapidary instance.
+### Usage, cost and performance dashboard (55)
+- Goal: per-gem use, models, approximate cost, response time and test trend; monthly spend limits, alerts and rate limits (closes item 11).
 - Status: Planned
-- Owner: poyfather
-- Dependencies: stable schema
-- Success Criteria: export produces a portable file; import populates gems without conflicts.
-- Links: `scripts/`, `supabase/schema.sql`
+- Links: `docs/ROADMAP.md` item 55
+
+### Sharing (56)
+- Goal: publish a gem as a link, install someone else's, and take their updates without losing your own changes.
+- Status: Planned
+- Links: `docs/ROADMAP.md` item 56
+
+### Trust for teams (57)
+- Goal: accounts and roles (item 21), approval workflows, hashed and scoped API keys, a signed Windows installer (item 42), and a published security review.
+- Status: Planned. Installer signing is wired in CI and waits on credentials (`desktop/README.md`, Code signing).
+- Links: `docs/ROADMAP.md` item 57
+
+### Measurement (58)
+- Goal: count the three numbers on the hosted demo and gallery; on self-hosted installs only with the owner's opt-in.
+- Status: Planned
+- Links: `docs/ROADMAP.md` item 58
+
+---
+
+## Done
+
+The foundations the growth plan builds on, with the full list in [CHANGELOG.md](CHANGELOG.md):
+
+- One library with composition, typed blanks and worked examples (items 4, 29, 31).
+- Version history with diffs and restore, tests with a baseline, side-by-side compare (14, 28, 30).
+- Assistants with tools, approvals and a run viewer; pipelines with gates; memory (32 to 34, 43, 45).
+- Local models and the model policy (44); SQLite by default with Supabase as the hosted option (38).
+- REST, the OpenAI-compatible API, and MCP over stdio and over HTTP with per-client keys (10, 36, 41).
+- The Windows console: first run and recipes, plain language, the Doctor, explainers, the installer and its helper service (37, 39, 40, 42 partly, 47 to 50).
+- Streaming chat, API key authentication, CI with lint, tests, CodeQL, Docker and the Windows installer (6, 13, 25).
