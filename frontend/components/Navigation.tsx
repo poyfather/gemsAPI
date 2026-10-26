@@ -59,7 +59,7 @@ export default function Navigation() {
               New prompt
             </Link>
             <a
-              href="https://github.com"
+              href="https://github.com/poyfather/lapidary"
               target="_blank"
               rel="noopener noreferrer"
               className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-gem-hover transition-colors"

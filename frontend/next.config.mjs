@@ -6,6 +6,12 @@ const nextConfig = {
   // then redirects /gems to /gems/ on its own origin, and the browser follows that
   // redirect straight to the backend without the key the proxy adds: a 401 for every list.
   skipTrailingSlashRedirect: true,
+  experimental: {
+    // The /api rewrite is a proxy that gives up after 30 seconds by default. Comparisons and
+    // test runs wait for every answer, which takes minutes on a model running on this PC, so the
+    // UI showed HTTP 500 while the backend was still working. Allow 15 minutes.
+    proxyTimeout: 15 * 60 * 1000,
+  },
   async rewrites() {
     // Proxy /api/* to the FastAPI backend so the frontend
     // never needs to hard-code the backend URL in production.

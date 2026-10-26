@@ -1,6 +1,6 @@
 # Contributing to Lapidary
 
-Thanks for helping. The most useful contributions right now are tests around the resolver, fixes from the [roadmap](docs/ROADMAP.md), and well-evaluated gems.
+Thanks for helping. The most useful contributions right now follow the growth plan in the [roadmap](docs/ROADMAP.md) (ADR-013): anything that makes Lapidary easier to understand, try and get value from in five minutes, well-tested gems for the gallery, and docs that match the code.
 
 ## Development setup
 
@@ -13,7 +13,7 @@ cd frontend && npm install && cd ..
 
 On Windows, `scripts\setup.ps1` does the Python half and `scripts\test.ps1` runs the checks.
 
-The unit tests do not touch Supabase or any LLM, so you can run them without credentials. To try the API, UI or MCP server for real you need a Supabase project with `supabase/schema.sql` applied and the env files described in the README. Never commit `.env` or `.env.local`; both are git-ignored.
+The unit tests use a temporary SQLite store and no LLM, so you can run them without credentials. To try the API, UI or MCP server for real you need only the env files described in the README; data goes to a SQLite file under `data/` unless you configure a Supabase project. A local model server (Ollama, LM Studio) lets you try chat and assistants with no cloud key. Never commit `.env` or `.env.local`; both are git-ignored.
 
 ## Code style
 
@@ -40,7 +40,12 @@ npx tsc --noEmit
 npm run build
 ```
 
-CI also runs CodeQL and checks that every `prompts/*.md` has a matching seed row in `supabase/schema.sql`.
+```sh
+cd desktop
+npm run lint && npm test
+```
+
+CI also runs CodeQL, builds the Docker images, checks that every `prompts/*.md` has a matching seed row in `supabase/schema.sql`, and on Windows builds the console installer, installs it, checks the helper service and uninstalls it.
 
 ## Changing a gem
 

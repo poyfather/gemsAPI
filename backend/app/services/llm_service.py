@@ -66,10 +66,21 @@ def _get_local() -> AsyncOpenAI:
         _local = AsyncOpenAI(
             api_key=settings.LOCAL_OPENAI_API_KEY or "local",
             base_url=settings.LOCAL_OPENAI_BASE_URL,
-            timeout=settings.LLM_TIMEOUT_SECONDS,
+            timeout=settings.LOCAL_TIMEOUT_SECONDS,
             max_retries=settings.LLM_MAX_RETRIES,
         )
     return _local
+
+
+def _local_extra(provider: str) -> dict:
+    """Extra request fields for a local server: how much a thinking model may reason (see settings)."""
+    effort = settings.LOCAL_REASONING_EFFORT.strip()
+    return {"reasoning_effort": effort} if provider == "local" and effort else {}
+
+
+def _cap(provider: str, max_tokens: int) -> int:
+    """A local server counts a thinking model's reasoning against max_tokens; give it room before the answer."""
+    return max_tokens + settings.LOCAL_THINKING_TOKENS if provider == "local" else max_tokens
 
 
 def _openai_like(provider: str) -> AsyncOpenAI:
@@ -109,7 +120,8 @@ async def complete(
         response = await client.chat.completions.create(
             model=model,
             messages=full_messages,
-            max_tokens=max_tokens,
+            max_tokens=_cap(provider, max_tokens),
+            **_local_extra(provider),
         )
         return response.choices[0].message.content or ""
     except EnvironmentError:
@@ -149,7 +161,8 @@ async def complete_stream(
             model=model,
             messages=full_messages,
             stream=True,
-            max_tokens=max_tokens,
+            max_tokens=_cap(provider, max_tokens),
+            **_local_extra(provider),
         )
         async for chunk in stream:
             delta = chunk.choices[0].delta.content if chunk.choices else None
@@ -186,7 +199,7 @@ async def _fetch_models(provider: str) -> list[str]:
         return sorted(ids, reverse=True)
     if provider == "local":
         client = _get_local()
-        return sorted(m.id async for m in client.models.list())
+        return sorted([m.id async for m in client.models.list()])
     client = _get_openai()
     ids = [m.id async for m in client.models.list()]
     chat = [i for i in ids if _OPENAI_CHAT_RE.match(i) and not _OPENAI_EXCLUDE_RE.search(i)]
@@ -303,7 +316,7 @@ async def complete_turn(
 
         client = _openai_like(provider)
         full_messages = [{"role": "system", "content": system_prompt}] + messages
-        kwargs = dict(model=model, messages=full_messages, max_tokens=max_tokens)
+        kwargs = dict(model=model, messages=full_messages, max_tokens=_cap(provider, max_tokens), **_local_extra(provider))
         if tools:
             kwargs["tools"] = [
                 {"type": "function", "function": {"name": t["name"], "description": t["description"], "parameters": t["parameters"]}}
