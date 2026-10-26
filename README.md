@@ -5,9 +5,9 @@
 Create your best prompts once. Improve them with testing. Turn them into assistants. Use them across your favorite AI tools while keeping control of your data.
 
 <p align="center">
-  <a href="docs/demo/lapidary-demo.mp4"><img src="docs/demo/lapidary-demo.gif" width="100%" alt="From Lapidary's demo video: two versions of the code_reviewer prompt answer the same request to review a Python average function on qwen3:4b running on the PC. Version 1 writes a long report with Summary, Issues, Suggestions and Verdict sections; version 2, after one added paragraph, names the ZeroDivisionError, the fix and the test in one line."></a>
+  <a href="https://github.com/poyfather/lapidary/raw/main/docs/demo/lapidary-demo.mp4"><img src="docs/demo/lapidary-demo.gif" width="100%" alt="From Lapidary's demo video: two versions of the code_reviewer prompt answer the same request to review a Python average function on qwen3:4b running on the PC. Version 1 writes a long report with Summary, Issues, Suggestions and Verdict sections; version 2, after one added paragraph, names the ZeroDivisionError, the fix and the test in one line."></a>
 </p>
-<p align="center"><sub>Real answers from qwen3:4b running on the PC. Its tests scored version 1 at 2 of 4 and version 2 at 4 of 4. <a href="docs/demo/lapidary-demo.mp4">Watch the 64-second demo with sound</a>.</sub></p>
+<p align="center"><sub>Real answers from qwen3:4b running on the PC. Its tests scored version 1 at 2 of 4 and version 2 at 4 of 4. <a href="https://github.com/poyfather/lapidary/raw/main/docs/demo/lapidary-demo.mp4">Download the 64-second demo with sound</a> (MP4, 8 MB).</sub></p>
 
 Lapidary is your own home for the instructions you give AI, and for the assistants you build from them. Write a prompt once, improve it safely, and use it from Claude, ChatGPT, Cursor, Open WebUI or your own scripts, with a free model on your own PC or an online one with your own key.
 
