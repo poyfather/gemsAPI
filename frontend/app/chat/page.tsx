@@ -37,6 +37,25 @@ function ChatPageInner() {
   const [showSettings, setShowSettings] = useState(false);
   const [allowRisky, setAllowRisky] = useState(false);
   const [decidingId, setDecidingId] = useState<string | null>(null);
+  const [savedExample, setSavedExample] = useState<string | null>(null);
+
+  // Keep a good answer as a worked example on the prompt (roadmap 31): the question before it, and the answer.
+  const saveAsExample = async (msgId: string) => {
+    const gem = allGems.find((g) => g.name === selectedGem);
+    const i = messages.findIndex((m) => m.id === msgId);
+    const question = [...messages.slice(0, i)].reverse().find((m) => m.role === "user");
+    if (!gem || i < 0 || !question) return;
+    try {
+      const updated = await gemsApi.update(gem.id, {
+        examples: [...(gem.examples ?? []), { input: question.content, output: messages[i].content, note: "saved from chat" }],
+        note: "added an example from chat",
+      });
+      setAllGems((prev) => prev.map((g) => (g.id === updated.id ? updated : g)));
+      setSavedExample(msgId);
+    } catch (err) {
+      alert(explain(err, "Could not save the example."));
+    }
+  };
 
   // Approve or deny the risky call a run in the conversation is waiting on, streaming the rest into its bubble.
   const decide = async (msgId: string, runId: string, approve: boolean) => {
@@ -388,6 +407,12 @@ function ChatPageInner() {
                           <Link href={`/runs/${msg.runId}`} className="block mt-2 text-xs text-violet-400 hover:text-violet-300 underline">
                             See everything it did
                           </Link>
+                        )}
+                        {msg.role === "assistant" && !isAgent && msg.content && !msg.content.startsWith("Fill in the blanks") && (
+                          <button onClick={() => saveAsExample(msg.id)} disabled={savedExample === msg.id}
+                            className="block mt-2 text-xs text-slate-500 hover:text-violet-300 disabled:text-emerald-400">
+                            {savedExample === msg.id ? "Saved as an example" : "Save as an example"}
+                          </button>
                         )}
                       </>
                     )}

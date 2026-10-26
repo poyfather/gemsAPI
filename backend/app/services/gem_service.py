@@ -10,7 +10,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Optional
 
-from app.models import VARIABLE_TYPES, Gem, GemCreate, GemUpdate, VariableSpec
+from app.models import MAX_EXAMPLES, VARIABLE_TYPES, Example, Gem, GemCreate, GemUpdate, VariableSpec
 from app.storage import get_store
 
 
@@ -20,6 +20,7 @@ class VariableError(ValueError):
 # Patterns
 _VAR_RE = re.compile(r'\{([A-Za-z_][A-Za-z0-9_]*)\}')   # matches {variable}; identifier names only
 _GEM_RE = re.compile(r'\{\{gem:([A-Za-z0-9_.-]+)\}\}')   # matches {{gem:name}}; names are identifiers only
+EXAMPLES_MARKER = "{{examples}}"                          # where a gem's worked examples go (roadmap 31)
 
 MAX_DEPTH = 10  # prevent runaway recursion
 
@@ -28,8 +29,8 @@ MAX_DEPTH = 10  # prevent runaway recursion
 
 def extract_variables(prompt: str) -> list[str]:
     """Return unique variable names from {variable} placeholders, ignoring {{gem:…}}."""
-    # Blank out gem refs so we don't falsely capture 'gem' as a variable
-    sanitized = _GEM_RE.sub('', prompt)
+    # Blank out gem refs and the examples marker so neither is taken for a variable
+    sanitized = _GEM_RE.sub('', prompt).replace(EXAMPLES_MARKER, '')
     return sorted(set(_VAR_RE.findall(sanitized)))
 
 
@@ -132,6 +133,57 @@ def variables_schema(gem: Gem) -> dict:
     return {"type": "object", "properties": props, "required": required}
 
 
+# ─── Worked examples (roadmap 31) ──────────────────────────────────────────────
+
+def clean_examples(examples: list) -> list[dict]:
+    """Drop empty examples, trim the rest, and refuse more than MAX_EXAMPLES. Raises ValueError."""
+    out = []
+    for raw in examples or []:
+        ex = raw if isinstance(raw, Example) else Example(**raw)
+        if not ex.input.strip() and not ex.output.strip():
+            continue
+        if not ex.input.strip() or not ex.output.strip():
+            raise ValueError("Every example needs both an input and the answer you want.")
+        out.append({"input": ex.input.strip(), "output": ex.output.strip(), "note": ex.note.strip()})
+    if len(out) > MAX_EXAMPLES:
+        raise ValueError(f"A prompt can carry at most {MAX_EXAMPLES} examples.")
+    return out
+
+
+def render_examples(examples: list) -> str:
+    """The <examples> block. The text is literal: blanks inside an example are not filled."""
+    items = [e if isinstance(e, Example) else Example(**e) for e in examples or []]
+    if not items:
+        return ""
+    body = "\n".join(f"<example>\n<input>\n{e.input}\n</input>\n<output>\n{e.output}\n</output>\n</example>" for e in items)
+    return f"<examples>\n{body}\n</examples>"
+
+
+def _slot(name: str) -> str:
+    """Holds a gem's place for its examples while blanks are filled; no braces, so nothing can fill it."""
+    return f"\u0000lapidary-examples:{name}\u0000"
+
+
+def _place_examples(name: str, prompt: str, examples: list, found: dict) -> str:
+    """Put the slot where the marker is, or at the end when the gem has examples and no marker."""
+    if EXAMPLES_MARKER in prompt:
+        found[name] = examples or []
+        return prompt.replace(EXAMPLES_MARKER, _slot(name))
+    if examples:
+        found[name] = examples
+        return prompt.rstrip() + "\n\n" + _slot(name)
+    return prompt
+
+
+def _fill_examples(prompt: str, found: dict) -> tuple[str, int]:
+    used = 0
+    for name, examples in found.items():
+        block = render_examples(examples)
+        used += len(examples) if block else 0
+        prompt = prompt.replace(_slot(name), block)
+    return prompt, used
+
+
 # ─── CRUD (delegated to the storage backend) ───────────────────────────────────
 
 async def get_all_gems() -> list[Gem]:
@@ -149,7 +201,8 @@ async def get_gem_by_id(gem_id: str) -> Optional[Gem]:
 async def create_gem(data: GemCreate, *, source: str = "api") -> Gem:
     from app.services import version_service
 
-    data = GemCreate(**{**data.model_dump(), "variable_specs": clean_specs(data.variable_specs, data.system_prompt)})
+    data = GemCreate(**{**data.model_dump(), "variable_specs": clean_specs(data.variable_specs, data.system_prompt),
+                        "examples": clean_examples(data.examples)})
     gem = await get_store().create_gem(data, extract_variables(data.system_prompt))
     await version_service.record(gem, note="created", source=source)
     return gem
@@ -167,6 +220,8 @@ async def update_gem(gem_id: str, data: GemUpdate, *, source: str = "api") -> Ge
         prompt = updates.get("system_prompt", before.system_prompt if before else "")
         specs = updates.get("variable_specs", before.variable_specs if before else {})
         updates["variable_specs"] = clean_specs(specs, prompt)
+    if "examples" in updates:
+        updates["examples"] = clean_examples(updates["examples"])
     if before is not None:
         await version_service.ensure_baseline(before)
     gem = await get_store().update_gem(gem_id, updates)
@@ -192,9 +247,10 @@ class ResolvedGem:
     variables_missing: list[str] = field(default_factory=list)    # expected and not provided
     variables_defaulted: list[str] = field(default_factory=list)  # filled from the blank's default
     variable_errors: list[str] = field(default_factory=list)      # values that do not fit their blank
+    examples_used: int = 0                                         # worked examples rendered into the prompt
 
 
-async def _expand(name: str, visited: frozenset[str], depth: int) -> tuple[str, list[str]]:
+async def _expand(name: str, visited: frozenset[str], depth: int, examples: dict | None = None) -> tuple[str, list[str]]:
     """
     Expand every {{gem:ref}} tag in `name`'s prompt, depth first, without touching variables.
 
@@ -217,12 +273,14 @@ async def _expand(name: str, visited: frozenset[str], depth: int) -> tuple[str, 
         raise ValueError(f"Gem '{name}' not found or is inactive.")
 
     prompt = gem.system_prompt
+    if examples is not None:
+        prompt = _place_examples(name, prompt, gem.examples, examples)
     new_visited = visited | {name}
     all_refs: list[str] = []
 
     for ref_name in _GEM_RE.findall(prompt):
         all_refs.append(ref_name)
-        expanded_ref, sub_refs = await _expand(ref_name, new_visited, depth + 1)
+        expanded_ref, sub_refs = await _expand(ref_name, new_visited, depth + 1, examples)
         all_refs.extend(sub_refs)
         prompt = prompt.replace(f"{{{{gem:{ref_name}}}}}", expanded_ref)
 
@@ -242,20 +300,23 @@ def fill_variables(prompt: str, variables: dict[str, str]) -> str:
     return _VAR_RE.sub(lambda m: variables.get(m.group(1), m.group(0)), prompt)
 
 
-async def resolve_text(name: str, text: str, variables: dict[str, str] | None = None, specs: dict | None = None) -> str:
+async def resolve_text(name: str, text: str, variables: dict[str, str] | None = None, specs: dict | None = None,
+                       examples: list | None = None) -> str:
     """
     Resolve `text` as if it were gem `name`'s prompt, e.g. an earlier version from its history.
     Its {{gem:...}} references expand against the library as it is now; a reference back to
     `name` itself is a cycle, as it would be for the live gem.
     """
-    prompt = text
+    found: dict = {}
+    prompt = _place_examples(name, text, examples or [], found)
     visited = frozenset({name})
     for ref_name in _GEM_RE.findall(text):
-        expanded_ref, _ = await _expand(ref_name, visited, 1)
+        expanded_ref, _ = await _expand(ref_name, visited, 1, found)
         prompt = prompt.replace(f"{{{{gem:{ref_name}}}}}", expanded_ref)
     typed = {k: (v if isinstance(v, VariableSpec) else VariableSpec(**v)) for k, v in (specs or {}).items()}
     filled, _, _ = apply_specs(typed, extract_variables(prompt), variables or {})
-    return fill_variables(prompt, filled)
+    out, _ = _fill_examples(fill_variables(prompt, filled), found)
+    return out
 
 
 async def resolve_gem_detailed(name: str, variables: dict[str, str] | None = None, *, strict: bool = True) -> ResolvedGem:
@@ -268,7 +329,8 @@ async def resolve_gem_detailed(name: str, variables: dict[str, str] | None = Non
       3. Fill them from `variables` in a single pass.
     """
     variables = variables or {}
-    expanded, refs = await _expand(name, frozenset(), 0)
+    found_examples: dict = {}
+    expanded, refs = await _expand(name, frozenset(), 0, found_examples)
     expected = extract_variables(expanded)
     # Specs from the embedded gems, then the gem's own (which win for a shared name).
     specs: dict[str, VariableSpec] = {}
@@ -280,15 +342,17 @@ async def resolve_gem_detailed(name: str, variables: dict[str, str] | None = Non
         raise VariableError("Fill in the blanks: " + "; ".join(errors) + ".")
     used = [v for v in expected if v in variables and v not in defaulted]
     missing = [v for v in expected if v not in variables]
+    resolved, examples_used = _fill_examples(fill_variables(expanded, variables), found_examples)
     return ResolvedGem(
         gem_name=name,
-        resolved_prompt=fill_variables(expanded, variables),
+        resolved_prompt=resolved,
         referenced_gems=refs,
         variables_expected=expected,
         variables_used=used,
         variables_missing=missing,
         variables_defaulted=defaulted,
         variable_errors=errors,
+        examples_used=examples_used,
     )
 
 

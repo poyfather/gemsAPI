@@ -13,6 +13,9 @@ export interface VariableSpec {
   required: boolean;
 }
 
+/** A worked example (roadmap 31): rendered into the prompt as literal text; the note is for people. */
+export interface Example { input: string; output: string; note?: string }
+
 export interface Gem {
   id: string;
   name: string;
@@ -26,6 +29,7 @@ export interface Gem {
   tools?: string[];
   memory?: boolean;
   variable_specs?: Record<string, VariableSpec>;
+  examples?: Example[];
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -42,6 +46,7 @@ export interface GemCreate {
   tools?: string[];
   memory?: boolean;
   variable_specs?: Record<string, VariableSpec>;
+  examples?: Example[];
 }
 
 export type GemUpdate = Partial<GemCreate> & { note?: string };
@@ -159,6 +164,7 @@ export interface ResolveResponse {
   variables_missing: string[];
   variables_defaulted?: string[];
   variable_errors?: string[];
+  examples_used?: number;
 }
 
 export interface ChatMessage {
@@ -366,6 +372,9 @@ export const gems = {
     setBaseline: (idOrName: string, runId: string): Promise<EvalRun> =>
       request<EvalRun>(`/gems/${encodeURIComponent(idOrName)}/evals/runs/${encodeURIComponent(runId)}/baseline`, { method: "POST" }),
   },
+
+  exampleToTest: (idOrName: string, index: number): Promise<EvalCase> =>
+    request<EvalCase>(`/gems/${encodeURIComponent(idOrName)}/examples/${index}/test`, { method: "POST" }),
 
   compare: {
     estimate: (idOrName: string, data: CompareRequest, tests = false): Promise<CompareEstimate> =>

@@ -49,7 +49,7 @@ These were found during the audit and fixed because CI could not pass without th
 | 28 | Evals per gem, runnable from the UI | Product, quality | M | Now, done |
 | 29 | Typed variables with descriptions and defaults | Product, MCP | M | Now, done |
 | 30 | Side-by-side runs | Product | M | Now, done |
-| 31 | Few-shot examples as first-class data | Product | M | Later |
+| 31 | Few-shot examples as first-class data | Product | M | Now, done |
 | 32 | Agent tools from remote MCP servers and HTTP endpoints | Agents | M | Next, MCP done |
 | 33 | Approval gates with pause and resume | Agents, security | M | Next, done |
 | 34 | Run viewer in the UI | Agents, product | M | Next, done |
@@ -338,6 +338,8 @@ Worth doing once the foundations above are in.
 
 ### 31. Few-shot examples as first-class data
 
+**Status: done** (an `examples` list on gems in both stores: input, output, a note for people; at most 50, empty ones dropped. The resolver renders each gem's examples as literal text inside `<examples>` tags at its `{{examples}}` marker, or at the end, after blanks are filled, so braces in an example never collide with the variable syntax; embedded gems bring their own, and the marker is never taken for a blank. Examples are versioned with item 14, a past version in Compare uses its own, and `POST /gems/{id}/examples/{index}/test` turns one into a judged test for item 28. MCP `get_gem` returns them and `add_gem_example` adds one; the resolve response reports `examples_used`. An Examples section in the editor (add, reorder, remove), an Examples card on the prompt page with "Make a test from it", and "Save as an example" on chat answers. `supabase/add_examples.sql`; 7 tests).
+
 - **Why**: most strong prompts carry examples, and in this library they live inline in `system_prompt`, so adding or swapping one means editing the whole body and `prompts/<name>.md` by hand. Store examples as a list on the gem (input, output, optional note), render them into the resolved prompt at a marker such as `{{examples}}` inside `<examples>` tags, and let the UI add, reorder and remove them. Examples then version with 14, can be reused by 28 as eval cases, and stop colliding with the variable syntax.
 - **Size**: M.
 - **Depends on**: 4 (syntax decisions), 15 (migration), 29 (the same spec mechanism).
@@ -476,7 +478,7 @@ The engineering items make the project safe to run. These are the ones that woul
 2. Evals per gem, run from the UI, with a recorded baseline (28), done.
 3. Side-by-side runs across versions and models (30), done.
 4. Typed variables with descriptions and defaults, exposed over MCP (29), done.
-5. Few-shot examples as data rather than prose (31).
+5. Few-shot examples as data rather than prose (31), done.
 6. Import and export in a hand-readable format (22).
 7. Accounts and sharing, once there is something worth sharing (9, 10, 21).
 

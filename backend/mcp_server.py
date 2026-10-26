@@ -30,6 +30,7 @@ TOOLS
   chat_with_gem        — send a message to an LLM using a gem as system prompt
   create_gem           — add a new gem to the library
   update_gem           — change a gem; the change is kept in its history
+  add_gem_example      — add a worked example (input and the answer you want)
   gem_history          — a gem's versions, newest first
   diff_gem_versions    — what changed between two versions
   revert_gem           — restore an earlier version as a new one
@@ -158,6 +159,7 @@ async def get_gem(name: str) -> dict:
         "tags":          gem.tags,
         "variables":     gem.variables,
         "variables_schema": variables_schema(gem),
+        "examples":      [e.model_dump() for e in gem.examples],
         "gem_refs":      extract_gem_refs(gem.system_prompt),
         "created_at":    gem.created_at.isoformat(),
         "updated_at":    gem.updated_at.isoformat(),
@@ -195,6 +197,7 @@ async def resolve_gem_prompt(
             "variables_missing":   result.variables_missing,
             "variables_defaulted": result.variables_defaulted,
             "variable_errors":     result.variable_errors,
+            "examples_used":       result.examples_used,
         }
     except ValueError as exc:
         return {"error": str(exc)}
@@ -318,6 +321,26 @@ async def update_gem(name: str, system_prompt: str | None = None, description: s
     except ValueError as exc:
         return {"error": str(exc)}
     return {"name": updated.name, "variables": updated.variables, "variables_schema": variables_schema(updated), "updated_at": str(updated.updated_at)}
+
+
+@mcp.tool()
+async def add_gem_example(name: str, input: str, output: str, note: str = "") -> dict:
+    """
+    Add a worked example to a gem (roadmap 31): an input and the answer you want. Examples are
+    rendered into the prompt inside <examples> tags at {{examples}}, or at the end when the prompt
+    has no marker, and the change is kept in the gem's history.
+    """
+    from app.models import Example, GemUpdate
+    from app.services.gem_service import update_gem as _update
+    gem = await get_gem_by_name(name)
+    if not gem:
+        return {"error": f"Gem '{name}' not found."}
+    try:
+        updated = await _update(gem.id, GemUpdate(examples=[*gem.examples, Example(input=input, output=output, note=note)],
+                                                  note="added an example"), source="mcp")
+    except ValueError as exc:
+        return {"error": str(exc)}
+    return {"name": updated.name, "examples": len(updated.examples)}
 
 
 @mcp.tool()

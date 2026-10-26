@@ -20,7 +20,7 @@ const checkLabel = (c: string) => CHECKS.find((x) => x.id === c)?.label ?? c;
 const aiName = (provider: string) => (provider === "local" ? "the AI on this PC" : providerLabel(provider));
 
 /** Tests for a prompt (roadmap 28): cases, the cost before a run, the score, and regressions against the baseline. */
-export default function GemEvals({ gem }: { gem: Gem }) {
+export default function GemEvals({ gem, refresh = 0 }: { gem: Gem; refresh?: number }) {
   const [cases, setCases] = useState<EvalCase[] | null>(null);
   const [estimate, setEstimate] = useState<EvalEstimate | null>(null);
   const [runs, setRuns] = useState<EvalRun[]>([]);
@@ -38,7 +38,7 @@ export default function GemEvals({ gem }: { gem: Gem }) {
       .then(([c, e, r]) => { if (!cancelled) { setCases(c); setEstimate(e); setRuns(r); } })
       .catch((e) => { if (!cancelled) setError(explain(e, "Could not load the tests.")); });
     return () => { cancelled = true; };
-  }, [gem.id, gem.updated_at, reload]);
+  }, [gem.id, gem.updated_at, reload, refresh]);
 
   const add = async (e: React.FormEvent) => {
     e.preventDefault();

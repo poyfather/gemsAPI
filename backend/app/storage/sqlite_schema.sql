@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS gems (
   tools         TEXT NOT NULL DEFAULT '[]',
   memory        INTEGER NOT NULL DEFAULT 0,
   variable_specs TEXT NOT NULL DEFAULT '{}',
+  examples      TEXT NOT NULL DEFAULT '[]',
   is_active     INTEGER NOT NULL DEFAULT 1,
   created_at    TEXT NOT NULL,
   updated_at    TEXT NOT NULL

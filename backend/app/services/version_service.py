@@ -41,6 +41,7 @@ async def versions(gem_id: str) -> list[GemVersion]:
     found = await _store().list_gem_versions(gem_id)
     for v in found:   # versions saved before typed blanks existed had none
         v.snapshot.setdefault("variable_specs", {})
+        v.snapshot.setdefault("examples", [])
     return found
 
 

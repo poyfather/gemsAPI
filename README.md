@@ -22,7 +22,7 @@ Two tricks make the drawer more than a list:
 - **Prompts can contain other prompts.** Write a short `base_assistant` once ("be direct, be honest about uncertainty"), then start `code_reviewer` with `{{gem:base_assistant}}` and add only the review rules. Improve the base, and everything built on it improves too.
 - **Prompts can have blanks.** Leave `{language}` or `{tone}` in the text and fill it in at the moment you use it, so one prompt serves many situations.
 
-Who it is for: anyone who writes prompts as part of their work and uses them from more than one place. Who it is not for yet: a casual user with three prompts in a notes app, since setting up a database and two services is more than that problem needs. [docs/ROADMAP.md](docs/ROADMAP.md) lists what would change that; version history, per-prompt tests, side-by-side runs and typed blanks are done; few-shot examples as data are next.
+Who it is for: anyone who writes prompts as part of their work and uses them from more than one place. Who it is not for yet: a casual user with three prompts in a notes app, since setting up a database and two services is more than that problem needs. [docs/ROADMAP.md](docs/ROADMAP.md) lists what would change that; version history, per-prompt tests, side-by-side runs, typed blanks and examples as data are done; import and export are next.
 
 ## How it fits together
 
@@ -68,7 +68,7 @@ Every surface hands the gem to the same resolver, which expands `{{gem:name}}` r
 |---|---|
 | **Web UI** (Next.js 16, port 3000) | Browse, search and tag gems, edit them with a live resolved preview, test any gem in a chat view with streamed replies, run agent gems and watch each tool call as it happens, and open any past run by id |
 | **REST API** (FastAPI, port 8000) | CRUD on `/gems`, `POST /gems/resolve` to expand a gem, `POST /chat` with optional SSE streaming, Swagger at `/docs` |
-| **MCP server** (FastMCP, stdio or HTTP at `/mcp`) | Tools `list_gems`, `search_gems`, `get_gem`, `resolve_gem_prompt`, `chat_with_gem`, `create_gem`, `run_agent`, `approve_run`, `list_agent_tools`, `list_available_models`, `search_memory`, `get_memories`, `remember`, `forget`, `list_pipelines`, `run_pipeline`, `resume_pipeline`, `update_gem`, `gem_history`, `diff_gem_versions`, `revert_gem`, `add_gem_eval`, `run_gem_evals`, `compare_gem`, plus `gems://list`, `gems://{name}` and `runs://{id}` resources |
+| **MCP server** (FastMCP, stdio or HTTP at `/mcp`) | Tools `list_gems`, `search_gems`, `get_gem`, `resolve_gem_prompt`, `chat_with_gem`, `create_gem`, `run_agent`, `approve_run`, `list_agent_tools`, `list_available_models`, `search_memory`, `get_memories`, `remember`, `forget`, `list_pipelines`, `run_pipeline`, `resume_pipeline`, `update_gem`, `add_gem_example`, `gem_history`, `diff_gem_versions`, `revert_gem`, `add_gem_eval`, `run_gem_evals`, `compare_gem`, plus `gems://list`, `gems://{name}` and `runs://{id}` resources |
 | **Agent runs** | A gem of kind `agent` lists tools it may call; `POST /agents/{name}/runs` runs the loop (model turn, tool calls, results, repeat) and records every step in `runs` and `run_events` |
 | **Seed gems** | `base_assistant`, `code_reviewer`, `creative_writer`, `summarizer`, `engineering_lead`, `prompt_enhancer`, the newcomer prompts `study_buddy`, `writing_coach` and `research_assistant`, `memory_summarizer`, the gate gems `test_runner` and `adversarial_reviewer`, and the agents `gem_librarian`, `rea_analyst`, `windows_operator` and `program_builder`, each also kept as a reviewable file in [`prompts/`](prompts/) |
 
@@ -145,6 +145,7 @@ Compose builds both images, waits for the backend's `/health` before starting th
 |---|---|
 | `{variable}` | Placeholder filled from the `variables` map at call time. Names are identifiers (`[A-Za-z_][A-Za-z0-9_]*`), so JSON or code braces such as `{"key": 1}` or `{}` are left alone |
 | `{{gem:name}}` | Embed another gem. Expanded first, recursively, up to 10 levels, with cycle detection |
+| `{{examples}}` | Where the gem's worked examples go, inside `<examples>` tags. Without the marker they go at the end |
 
 Variables are substituted after all references are expanded, so a value passed to the outer gem also fills placeholders in embedded gems. For example, the seed gem `engineering_lead` embeds `code_reviewer`, which embeds `base_assistant` and uses `{language}`:
 
@@ -155,6 +156,8 @@ curl -s http://localhost:8000/gems/resolve \
 ```
 
 The response carries `resolved_prompt`, `referenced_gems` (`["code_reviewer", "base_assistant"]`), `variables_used` and `variables_missing` for anything left unfilled. Gems can be fetched, updated and deleted by name or by id.
+
+**Worked examples** (roadmap item 31). A gem carries examples as data: a question, the answer you want, and a note for people. They are rendered into the prompt as literal text inside `<examples>` tags at `{{examples}}`, or at the end, so braces inside an example are never taken for blanks; embedded gems bring their own. The editor adds, reorders and removes them, the chat page saves a good answer as an example in one click, and the prompt page turns any example into a judged test. Over MCP, `get_gem` returns them and `add_gem_example` adds one. Examples are part of the version history.
 
 **Typed blanks** (roadmap item 29). Each `{variable}` can say what it expects in `variable_specs`: a description, a type (`text`, `long_text`, `number`, `choice` with its `options`, or `boolean`), a `default` and whether it is `required`. An empty blank uses its default; a value that does not fit, or a required blank left empty, stops a chat or a run with a message such as "Fill in the blanks: {audience} is required: Who will read it". Blanks without a spec behave as before, and the resolve preview reports problems instead of stopping. The editor has a Blanks section for this, and every place you type values (chat, the prompt page, Compare, Tests) shows a dropdown for a choice, yes or no, a number field or a text area to match. MCP clients get the specs as a JSON schema in `variables_schema` from `list_gems` and `get_gem`, so Claude Desktop or Cursor can fill them in correctly; `create_gem` and `update_gem` take specs too (`update_gem` merges them per blank).
 
@@ -300,7 +303,7 @@ desktop/            Lapidary Console, the Windows 11 Electron application (see d
 backend/mcp_server.py   FastMCP server over the same services
 frontend/           Next.js 16 app router UI (app/ including runs/[id], components/ including RunEvents, lib/api.ts with the SSE client, proxy.ts)
 configs/            mcp_servers.json (copy the example) for tools from other MCP servers
-supabase/           schema.sql (tables, RLS, seed gems; also the seed source for SQLite) and one-off migrations such as lock_down_rls.sql, add_agent_runs.sql, add_newcomer_gems.sql, add_memory.sql, add_pipelines.sql, add_gem_versions.sql, add_evals.sql and add_variable_specs.sql
+supabase/           schema.sql (tables, RLS, seed gems; also the seed source for SQLite) and one-off migrations such as lock_down_rls.sql, add_agent_runs.sql, add_newcomer_gems.sql, add_memory.sql, add_pipelines.sql, add_gem_versions.sql, add_evals.sql, add_variable_specs.sql and add_examples.sql
 prompts/            the shipped gems as markdown, one file per gem
 evals/              live-API quality checks for gems (eval_prompt_enhancer.py)
 tests/              pytest unit tests, no network
